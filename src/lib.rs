@@ -206,6 +206,55 @@ where
 
         second_accumulate
     }
+
+    /// Hybrid encoding: naive first phase, fused second phase.
+    ///
+    /// Keeps sequential repeat (cache-friendly), fuses second_permute + second_multiply.
+    /// Reduces from 7 passes and 7 vectors to 5 passes and 5 vectors.
+    pub fn encode_fused_end(&self, msg: Vec<C::Alphabet>) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let mut repeat_vector: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut first_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut first_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut second_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+
+        let base_encoding = self.base_code.encode(msg);
+
+        // Sequential repeat (cache-friendly)
+        for i in 0..self.block_length {
+            repeat_vector[i] = base_encoding[i % self.base_code.block_length()];
+        }
+
+        for i in 0..self.block_length {
+            first_permute[i] = repeat_vector[self.p1_vector[i]];
+        }
+
+        for i in 0..self.block_length {
+            first_multiply[i] = first_permute[i] * self.m1_vector[i];
+        }
+
+        let mut acc = F::ZERO;
+        for i in 0..self.block_length {
+            acc += first_multiply[i];
+            first_accumulate[i] = acc;
+        }
+
+        // Fused: second_permute + second_multiply
+        for i in 0..self.block_length {
+            second_multiply[i] = first_accumulate[self.p2_vector[i]] * self.m2_vector[i];
+        }
+
+        let mut acc = F::ZERO;
+        for i in 0..self.block_length {
+            acc += second_multiply[i];
+            second_accumulate[i] = acc;
+        }
+
+        second_accumulate
+    }
 }
 
 impl<C, F> ErrorCorrectingCode for EraCode<C, F>
@@ -416,11 +465,16 @@ mod tests {
                 .collect();
 
             let naive_result = era_code.encode_naive(msg.clone());
-            let fused_result = era_code.encode_fused(msg);
+            let fused_result = era_code.encode_fused(msg.clone());
+            let fused_end_result = era_code.encode_fused_end(msg);
 
             assert_eq!(
                 naive_result, fused_result,
-                "Mismatch for message_size={message_size}, repetition={repetition}"
+                "Fused mismatch for message_size={message_size}, repetition={repetition}"
+            );
+            assert_eq!(
+                naive_result, fused_end_result,
+                "Fused-end mismatch for message_size={message_size}, repetition={repetition}"
             );
         }
     }

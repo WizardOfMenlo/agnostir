@@ -1,1 +1,37 @@
-fn main() {}
+use std::{hint::black_box, time::Instant};
+
+use agnostir::{EraCode, IdentityCode, random_permutation};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
+
+use p3_koala_bear::KoalaBear;
+
+fn random_field_vector(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
+    (0..n).map(|_| KoalaBear::new(rng.random())).collect()
+}
+
+fn random_message(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
+    (0..n).map(|_| KoalaBear::new(rng.random())).collect()
+}
+
+fn main() {
+    let message_size = 1 << 26;
+    let repetition = 1;
+    let block_length = message_size * repetition;
+
+    let mut rng = SmallRng::seed_from_u64(12345);
+
+    let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
+    let p1 = random_permutation(&mut rng, block_length);
+    let p2 = random_permutation(&mut rng, block_length);
+    let m1 = random_field_vector(&mut rng, block_length);
+    let m2 = random_field_vector(&mut rng, block_length);
+
+    let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
+    let msg = random_message(&mut rng, message_size);
+
+    let encode_time = Instant::now();
+    let encoding = era_code.encode_naive(msg);
+
+    dbg!(encode_time.elapsed());
+    black_box(encoding);
+}
