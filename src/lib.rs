@@ -80,8 +80,10 @@ where
         let mut repeat_vector: Vec<C::Alphabet> = Vec::with_capacity(self.block_length);
         let mut first_permute: Vec<C::Alphabet> = Vec::with_capacity(self.block_length);
         let mut first_multiply: Vec<C::Alphabet> = Vec::with_capacity(self.block_length);
+        let mut first_accumulate: Vec<C::Alphabet> = Vec::with_capacity(self.block_length);
         let mut second_permute: Vec<C::Alphabet> = Vec::with_capacity(self.block_length);
         let mut second_multiply: Vec<C::Alphabet> = Vec::with_capacity(self.block_length);
+        let mut second_accumulate: Vec<C::Alphabet> = Vec::with_capacity(self.block_length);
 
         let base_encoding = self.base_code.encode(msg);
 
@@ -97,15 +99,27 @@ where
             first_multiply[i] = first_permute[i] * self.m1_vector[i];
         }
 
+        let mut acc = F::ZERO;
         for i in 0..self.block_length {
-            second_permute[i] = first_multiply[self.p2_vector[i]];
+            acc += first_multiply[i];
+            first_accumulate[i] = acc;
+        }
+
+        for i in 0..self.block_length {
+            second_permute[i] = first_accumulate[self.p2_vector[i]];
         }
 
         for i in 0..self.block_length {
             second_multiply[i] = second_permute[i] * self.m2_vector[i];
         }
 
-        second_multiply
+        let mut acc = F::ZERO;
+        for i in 0..self.block_length {
+            acc += second_multiply[i];
+            second_accumulate[i] = acc;
+        }
+
+        second_accumulate
     }
 }
 
