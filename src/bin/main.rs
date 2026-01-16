@@ -15,7 +15,7 @@ fn random_message(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
 
 fn main() {
     let message_size = 1 << 23;
-    let repetition = 1;
+    let repetition = 6;
     let block_length = message_size * repetition;
 
     let mut rng = SmallRng::seed_from_u64(12345);
@@ -30,8 +30,10 @@ fn main() {
     let msg = random_message(&mut rng, message_size);
 
     let encode_time = Instant::now();
-    let encoding = era_code.encode_naive(&msg);
+    for _ in 0..100 {
+        let encoding = era_code.encode_fast(&msg);
 
+        black_box(encoding);
+    }
     dbg!(encode_time.elapsed());
-    black_box(encoding);
 }

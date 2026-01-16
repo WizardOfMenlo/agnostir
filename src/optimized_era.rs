@@ -216,6 +216,7 @@ where
         let base_encoding = self.base_code.encode(msg);
         debug_assert_eq!(base_encoding.len(), self.base_block_length);
 
+        let pack_width = F::Packing::WIDTH;
         let chunk_len = Self::chunk_len(self.block_length);
         let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
 
@@ -224,19 +225,32 @@ where
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
                 let start = chunk_idx * chunk_len;
-                let base_ptr = base_encoding.as_ptr();
-                let p1_ptr = self.p1_vector.as_ptr();
-                let m1_ptr = self.m1_vector.as_ptr();
-                let out_ptr = chunk.as_mut_ptr();
                 let len = chunk.len();
-                for offset in 0..len {
-                    let idx = start + offset;
-                    unsafe {
-                        let base_idx = *p1_ptr.add(idx) as usize;
-                        let base_val = *base_ptr.add(base_idx);
-                        let mul = *m1_ptr.add(idx);
-                        *out_ptr.add(offset) = base_val * mul;
-                    }
+                let m1_slice = &self.m1_vector[start..start + len];
+                let p1_slice = &self.p1_vector[start..start + len];
+
+                let (out_packed, out_suffix) = F::Packing::pack_slice_with_suffix_mut(chunk);
+                let (m1_packed, m1_suffix) = F::Packing::pack_slice_with_suffix(m1_slice);
+
+                let base_ptr = base_encoding.as_ptr();
+                let p1_ptr = p1_slice.as_ptr();
+
+                for (pack_idx, (out, m1)) in out_packed.iter_mut().zip(m1_packed.iter()).enumerate()
+                {
+                    let base = F::Packing::from_fn(|lane| unsafe {
+                        let idx = *p1_ptr.add(pack_idx * pack_width + lane) as usize;
+                        *base_ptr.add(idx)
+                    });
+                    *out = base * *m1;
+                }
+
+                let suffix_start = out_packed.len() * pack_width;
+                for (offset, out) in out_suffix.iter_mut().enumerate() {
+                    let idx = suffix_start + offset;
+                    let base_idx = unsafe { *p1_ptr.add(idx) as usize };
+                    let mul = unsafe { *m1_suffix.get_unchecked(offset) };
+                    let base_val = unsafe { *base_ptr.add(base_idx) };
+                    *out = base_val * mul;
                 }
             });
 
@@ -248,19 +262,32 @@ where
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
                 let start = chunk_idx * chunk_len;
-                let src_ptr = first_accumulate.as_ptr();
-                let p2_ptr = self.p2_vector.as_ptr();
-                let m2_ptr = self.m2_vector.as_ptr();
-                let out_ptr = chunk.as_mut_ptr();
                 let len = chunk.len();
-                for offset in 0..len {
-                    let idx = start + offset;
-                    unsafe {
-                        let src_idx = *p2_ptr.add(idx) as usize;
-                        let src_val = *src_ptr.add(src_idx);
-                        let mul = *m2_ptr.add(idx);
-                        *out_ptr.add(offset) = src_val * mul;
-                    }
+                let m2_slice = &self.m2_vector[start..start + len];
+                let p2_slice = &self.p2_vector[start..start + len];
+
+                let (out_packed, out_suffix) = F::Packing::pack_slice_with_suffix_mut(chunk);
+                let (m2_packed, m2_suffix) = F::Packing::pack_slice_with_suffix(m2_slice);
+
+                let src_ptr = first_accumulate.as_ptr();
+                let p2_ptr = p2_slice.as_ptr();
+
+                for (pack_idx, (out, m2)) in out_packed.iter_mut().zip(m2_packed.iter()).enumerate()
+                {
+                    let src = F::Packing::from_fn(|lane| unsafe {
+                        let idx = *p2_ptr.add(pack_idx * pack_width + lane) as usize;
+                        *src_ptr.add(idx)
+                    });
+                    *out = src * *m2;
+                }
+
+                let suffix_start = out_packed.len() * pack_width;
+                for (offset, out) in out_suffix.iter_mut().enumerate() {
+                    let idx = suffix_start + offset;
+                    let src_idx = unsafe { *p2_ptr.add(idx) as usize };
+                    let mul = unsafe { *m2_suffix.get_unchecked(offset) };
+                    let src_val = unsafe { *src_ptr.add(src_idx) };
+                    *out = src_val * mul;
                 }
             });
 
