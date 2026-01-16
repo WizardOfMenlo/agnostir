@@ -13,7 +13,7 @@ pub trait ErrorCorrectingCode {
 
     fn message_size(&self) -> usize;
     fn block_length(&self) -> usize;
-    fn encode(&self, msg: Vec<Self::Alphabet>) -> Vec<Self::Alphabet>;
+    fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet>;
 }
 
 /// Generate a random permutation of 0..n using Fisher-Yates shuffle
@@ -48,7 +48,7 @@ mod tests {
         assert_eq!(code.block_length(), message_size);
 
         let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
-        let encoded = code.encode(msg.clone());
+        let encoded = code.encode(&msg);
 
         // Identity code should return the message unchanged
         assert_eq!(encoded, msg);
@@ -75,7 +75,7 @@ mod tests {
         assert_eq!(era_code.block_length(), block_length);
 
         let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
-        let encoded = era_code.encode(msg);
+        let encoded = era_code.encode(&msg);
 
         assert_eq!(encoded.len(), block_length);
     }
@@ -99,8 +99,8 @@ mod tests {
 
         let msg: Vec<KoalaBear> = (1..=message_size as u32).map(KoalaBear::new).collect();
 
-        let encoded1 = era_code.encode(msg.clone());
-        let encoded2 = era_code.encode(msg);
+        let encoded1 = era_code.encode(&msg);
+        let encoded2 = era_code.encode(&msg);
 
         // Same input should produce same output
         assert_eq!(encoded1, encoded2);
@@ -126,8 +126,8 @@ mod tests {
         let msg1: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
         let msg2: Vec<KoalaBear> = (10..10 + message_size as u32).map(KoalaBear::new).collect();
 
-        let encoded1 = era_code.encode(msg1);
-        let encoded2 = era_code.encode(msg2);
+        let encoded1 = era_code.encode(&msg1);
+        let encoded2 = era_code.encode(&msg2);
 
         // Different inputs should (with high probability) produce different outputs
         assert_ne!(encoded1, encoded2);
@@ -151,7 +151,7 @@ mod tests {
             let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
 
             let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
-            let encoded = era_code.encode(msg);
+            let encoded = era_code.encode(&msg);
 
             assert_eq!(
                 encoded.len(),
@@ -180,7 +180,7 @@ mod tests {
 
         // All-zero message
         let msg: Vec<KoalaBear> = vec![KoalaBear::ZERO; message_size];
-        let encoded = era_code.encode(msg);
+        let encoded = era_code.encode(&msg);
 
         // Encoding should complete without panic and have correct length
         assert_eq!(encoded.len(), block_length);
@@ -199,7 +199,7 @@ mod tests {
         let code: ReedSolomonCode<KoalaBear, _> = ReedSolomonCode::new(message_size, block_length);
 
         let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
-        let encoded = code.encode(msg.clone());
+        let encoded = code.encode(&msg);
 
         assert_eq!(encoded.len(), block_length);
 

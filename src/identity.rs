@@ -18,7 +18,7 @@ impl<F> IdentityCode<F> {
     }
 }
 
-impl<F> ErrorCorrectingCode for IdentityCode<F> {
+impl<F: Clone> ErrorCorrectingCode for IdentityCode<F> {
     type Alphabet = F;
 
     fn message_size(&self) -> usize {
@@ -29,7 +29,7 @@ impl<F> ErrorCorrectingCode for IdentityCode<F> {
         self.message_size
     }
 
-    fn encode(&self, msg: Vec<Self::Alphabet>) -> Vec<Self::Alphabet> {
-        msg
+    fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
+        msg.to_vec()
     }
 }

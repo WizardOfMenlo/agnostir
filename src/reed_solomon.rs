@@ -68,12 +68,12 @@ where
         self.block_length
     }
 
-    fn encode(&self, msg: Vec<Self::Alphabet>) -> Vec<Self::Alphabet> {
+    fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
         debug_assert!(self.validate_parameters());
         debug_assert_eq!(msg.len(), self.message_size);
 
         let mut coeffs = vec![F::ZERO; self.block_length];
-        coeffs[..self.message_size].copy_from_slice(&msg);
+        coeffs[..self.message_size].copy_from_slice(msg);
 
         self.dft.dft(coeffs)
     }

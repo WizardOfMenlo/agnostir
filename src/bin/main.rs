@@ -30,7 +30,7 @@ fn main() {
     let msg = random_message(&mut rng, message_size);
 
     let encode_time = Instant::now();
-    let encoding = era_code.encode_naive(msg);
+    let encoding = era_code.encode_naive(&msg);
 
     dbg!(encode_time.elapsed());
     black_box(encoding);

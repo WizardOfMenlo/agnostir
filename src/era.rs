@@ -69,7 +69,7 @@ where
             && self.repetition_parameter * self.base_code.block_length() == self.block_length()
     }
 
-    pub fn encode_naive(&self, msg: Vec<C::Alphabet>) -> Vec<C::Alphabet> {
+    pub fn encode_naive(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
         let mut repeat_vector: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
@@ -133,7 +133,7 @@ where
         self.block_length
     }
 
-    fn encode(&self, msg: Vec<Self::Alphabet>) -> Vec<Self::Alphabet> {
+    fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
         self.encode_naive(msg)
     }
 }
