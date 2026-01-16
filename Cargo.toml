@@ -79,7 +79,6 @@ tracing-subscriber = { version = "0.3.17", default-features = false, features = 
 bincode = { version = "1.3", optional = true }
 
 [dev-dependencies]
-criterion = "0.8"
 proptest = { version = "1.0", default-features = true }
 
 [features]
@@ -87,8 +86,4 @@ default = ["parallel", "cli"]
 parallel = ["dep:rayon", "p3-maybe-rayon/parallel", "p3-util/parallel"]
 rayon = ["dep:rayon"]
 cli = ["dep:clap", "dep:tracing-subscriber", "dep:tracing-forest", "dep:bincode", "rand/default"]
-
-[[bench]]
-name = "era_encode"
-harness = false
 
