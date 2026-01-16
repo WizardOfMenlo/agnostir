@@ -1,6 +1,6 @@
 use std::{hint::black_box, time::Instant};
 
-use agnostir::{EraCode, IdentityCode, random_permutation};
+use agnostir::{IdentityCode, OptimizedEraCode, random_permutation};
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use p3_koala_bear::KoalaBear;
@@ -14,7 +14,7 @@ fn random_message(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
 }
 
 fn main() {
-    let message_size = 1 << 26;
+    let message_size = 1 << 23;
     let repetition = 1;
     let block_length = message_size * repetition;
 
@@ -26,7 +26,7 @@ fn main() {
     let m1 = random_field_vector(&mut rng, block_length);
     let m2 = random_field_vector(&mut rng, block_length);
 
-    let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
+    let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
     let msg = random_message(&mut rng, message_size);
 
     let encode_time = Instant::now();
