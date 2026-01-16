@@ -16,6 +16,9 @@ fn bench_encode_naive(c: &mut Criterion) {
     let mut group = c.benchmark_group("encode_naive");
 
     for log_size in 20..=26 {
+        // Reduce sample count for larger sizes to speed up benchmarks
+        let sample_size = if log_size >= 24 { 10 } else { 100 };
+        group.sample_size(sample_size);
         let message_size = 1 << log_size;
         let repetition = 1;
         let block_length = message_size * repetition;
@@ -48,6 +51,9 @@ fn bench_encode_fused(c: &mut Criterion) {
     let mut group = c.benchmark_group("encode_fused");
 
     for log_size in 20..=26 {
+        // Reduce sample count for larger sizes to speed up benchmarks
+        let sample_size = if log_size >= 24 { 10 } else { 100 };
+        group.sample_size(sample_size);
         let message_size = 1 << log_size;
         let repetition = 1;
         let block_length = message_size * repetition;
@@ -80,6 +86,9 @@ fn bench_encode_fused_end(c: &mut Criterion) {
     let mut group = c.benchmark_group("encode_fused_end");
 
     for log_size in 20..=26 {
+        // Reduce sample count for larger sizes to speed up benchmarks
+        let sample_size = if log_size >= 24 { 10 } else { 100 };
+        group.sample_size(sample_size);
         let message_size = 1 << log_size;
         let repetition = 1;
         let block_length = message_size * repetition;
