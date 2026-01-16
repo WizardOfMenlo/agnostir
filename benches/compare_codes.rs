@@ -1,5 +1,5 @@
-use agnostir::{EraCode, ErrorCorrectingCode, IdentityCode, ReedSolomonCode, random_permutation};
-use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
+use agnostir::{random_permutation, EraCode, ErrorCorrectingCode, IdentityCode, ReedSolomonCode};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use p3_koala_bear::KoalaBear;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
@@ -52,5 +52,9 @@ fn bench_compare(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_compare);
+criterion_group! {
+    name = benches;
+    config = Criterion::default().sample_size(10);
+    targets = bench_compare
+}
 criterion_main!(benches);
