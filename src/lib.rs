@@ -166,95 +166,6 @@ where
 
         second_accumulate
     }
-
-    /// Optimized encoding that fuses multiple passes to reduce memory traffic.
-    ///
-    /// Fuses: repeat + first_permute + first_multiply into one pass
-    /// Fuses: second_permute + second_multiply into one pass
-    /// Reduces from 7 passes and 7 vectors to 4 passes and 4 vectors.
-    pub fn encode_fused(&self, msg: Vec<C::Alphabet>) -> Vec<C::Alphabet> {
-        debug_assert!(self.validate_parameters());
-
-        let mut first_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-
-        let base_encoding = self.base_code.encode(msg);
-        let base_len = self.base_code.block_length();
-
-        for i in 0..self.block_length {
-            let src_idx = self.p1_vector[i] % base_len;
-            first_multiply[i] = base_encoding[src_idx] * self.m1_vector[i];
-        }
-
-        let mut acc = F::ZERO;
-        for i in 0..self.block_length {
-            acc += first_multiply[i];
-            first_accumulate[i] = acc;
-        }
-
-        for i in 0..self.block_length {
-            second_multiply[i] = first_accumulate[self.p2_vector[i]] * self.m2_vector[i];
-        }
-
-        let mut acc = F::ZERO;
-        for i in 0..self.block_length {
-            acc += second_multiply[i];
-            second_accumulate[i] = acc;
-        }
-
-        second_accumulate
-    }
-
-    /// Hybrid encoding: naive first phase, fused second phase.
-    ///
-    /// Keeps sequential repeat (cache-friendly), fuses second_permute + second_multiply.
-    /// Reduces from 7 passes and 7 vectors to 5 passes and 5 vectors.
-    pub fn encode_fused_end(&self, msg: Vec<C::Alphabet>) -> Vec<C::Alphabet> {
-        debug_assert!(self.validate_parameters());
-
-        let mut repeat_vector: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-
-        let base_encoding = self.base_code.encode(msg);
-
-        // Sequential repeat (cache-friendly)
-        for i in 0..self.block_length {
-            repeat_vector[i] = base_encoding[i % self.base_code.block_length()];
-        }
-
-        for i in 0..self.block_length {
-            first_permute[i] = repeat_vector[self.p1_vector[i]];
-        }
-
-        for i in 0..self.block_length {
-            first_multiply[i] = first_permute[i] * self.m1_vector[i];
-        }
-
-        let mut acc = F::ZERO;
-        for i in 0..self.block_length {
-            acc += first_multiply[i];
-            first_accumulate[i] = acc;
-        }
-
-        // Fused: second_permute + second_multiply
-        for i in 0..self.block_length {
-            second_multiply[i] = first_accumulate[self.p2_vector[i]] * self.m2_vector[i];
-        }
-
-        let mut acc = F::ZERO;
-        for i in 0..self.block_length {
-            acc += second_multiply[i];
-            second_accumulate[i] = acc;
-        }
-
-        second_accumulate
-    }
 }
 
 impl<C, F> ErrorCorrectingCode for EraCode<C, F>
@@ -439,43 +350,6 @@ mod tests {
         // after accumulate we should still have all zeros
         for elem in &encoded {
             assert_eq!(*elem, KoalaBear::ZERO);
-        }
-    }
-
-    #[test]
-    fn test_encode_fused_matches_naive() {
-        let mut rng = SmallRng::seed_from_u64(54321);
-
-        // Test with various sizes and repetition parameters
-        for (message_size, repetition) in [(4, 2), (8, 3), (16, 4), (32, 2)] {
-            let block_length = message_size * repetition;
-
-            let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
-
-            let p1 = random_permutation(&mut rng, block_length);
-            let p2 = random_permutation(&mut rng, block_length);
-            let m1 = random_field_vector(&mut rng, block_length);
-            let m2 = random_field_vector(&mut rng, block_length);
-
-            let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
-
-            // Random message
-            let msg: Vec<KoalaBear> = (0..message_size)
-                .map(|_| KoalaBear::new(rng.random()))
-                .collect();
-
-            let naive_result = era_code.encode_naive(msg.clone());
-            let fused_result = era_code.encode_fused(msg.clone());
-            let fused_end_result = era_code.encode_fused_end(msg);
-
-            assert_eq!(
-                naive_result, fused_result,
-                "Fused mismatch for message_size={message_size}, repetition={repetition}"
-            );
-            assert_eq!(
-                naive_result, fused_end_result,
-                "Fused-end mismatch for message_size={message_size}, repetition={repetition}"
-            );
         }
     }
 }

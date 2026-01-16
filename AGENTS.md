@@ -18,7 +18,7 @@
 ## Coding Style & Naming Conventions
 
 - Follow standard Rust formatting; use `cargo fmt` before committing.
-- Prefer clear, descriptive names for algorithmic steps (see `encode_naive`, `encode_fused`).
+- Prefer clear, descriptive names for algorithmic steps (see `encode_naive`).
 - Keep public APIs in `src/lib.rs` and keep binaries small and purpose-specific.
 - Rust edition is 2024; toolchain should support `rust-version = "1.91"`.
 
