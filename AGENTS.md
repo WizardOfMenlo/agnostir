@@ -4,6 +4,7 @@
 
 - `src/lib.rs` contains the core error-correcting code implementations and unit tests.
 - `src/bin/main.rs` is a standalone binary used for timing/experiments.
+- `benches/compare_codes.rs` holds Criterion benchmarks.
 - `target/` is build output and should not be edited manually.
 
 ## Build, Test, and Development Commands
@@ -11,6 +12,7 @@
 - `cargo build` compiles the library and default binary.
 - `cargo run --bin main` runs the experimental encoder binary.
 - `cargo test` runs unit tests in `src/lib.rs`.
+- `cargo bench` runs Criterion benchmarks in `benches/`.
 - `cargo clippy` runs linting; this crate enables strict Rust + Clippy lints in `Cargo.toml`.
 
 ## Coding Style & Naming Conventions
