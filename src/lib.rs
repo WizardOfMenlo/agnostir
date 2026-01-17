@@ -160,6 +160,32 @@ mod tests {
     }
 
     #[test]
+    fn test_optimized_era_code_matches_naive() {
+        let mut rng = SmallRng::seed_from_u64(2024);
+
+        let message_size = 1 << 16;
+        let repetition = 6;
+        let block_length = message_size * repetition;
+
+        let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
+
+        let p1 = random_permutation(&mut rng, block_length);
+        let p2 = random_permutation(&mut rng, block_length);
+        let m1 = random_field_vector(&mut rng, block_length);
+        let m2 = random_field_vector(&mut rng, block_length);
+
+        let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+
+        for _ in 0..5 {
+            let msg = random_field_vector(&mut rng, message_size);
+            let fast = era_code.encode_fast(&msg);
+            let naive = era_code.encode_naive(&msg);
+
+            assert_eq!(fast, naive);
+        }
+    }
+
+    #[test]
     fn test_era_code_different_inputs_different_outputs() {
         let mut rng = SmallRng::seed_from_u64(999);
 
