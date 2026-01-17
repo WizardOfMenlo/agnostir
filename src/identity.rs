@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::ErrorCorrectingCode;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct IdentityCode<F> {
     message_size: usize,
     alphabet: PhantomData<F>,

@@ -174,6 +174,14 @@ mod tests {
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
 
+        let era_code_standard = EraCode::new(
+            base_code.clone(),
+            repetition,
+            p1.clone(),
+            p2.clone(),
+            m1.clone(),
+            m2.clone(),
+        );
         let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
 
         for _ in 0..5 {
