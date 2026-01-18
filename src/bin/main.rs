@@ -7,12 +7,14 @@ use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use p3_koala_bear::KoalaBear;
 
-fn random_field_vector(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
-    (0..n).map(|_| KoalaBear::new(rng.random())).collect()
+type F = KoalaBear;
+
+fn random_field_vector(rng: &mut impl Rng, n: usize) -> Vec<F> {
+    (0..n).map(|_| F::from(rng.random())).collect()
 }
 
-fn random_message(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
-    (0..n).map(|_| KoalaBear::new(rng.random())).collect()
+fn random_message(rng: &mut impl Rng, n: usize) -> Vec<F> {
+    (0..n).map(|_| F::from(rng.random())).collect()
 }
 
 fn main() {
@@ -23,10 +25,10 @@ fn main() {
 
     let mut rng = SmallRng::seed_from_u64(12345);
 
-    let reed_solomon_code: ReedSolomonCode<KoalaBear, p3_dft::Radix2DFTSmallBatch<KoalaBear>> =
+    let reed_solomon_code: ReedSolomonCode<F, p3_dft::Radix2DFTSmallBatch<F>> =
         ReedSolomonCode::new(message_size, rs_block_size);
 
-    let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
+    let base_code: IdentityCode<F> = IdentityCode::new(message_size);
     let p1 = random_permutation(&mut rng, block_length);
     let p2 = random_permutation(&mut rng, block_length);
     let m1 = random_field_vector(&mut rng, block_length);
