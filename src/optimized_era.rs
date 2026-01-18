@@ -4,7 +4,7 @@ use std::sync::OnceLock;
 
 use crate::ErrorCorrectingCode;
 
-const PERMUTE_CHUNK_SIZE: usize = 1 << 10;
+const PERMUTE_CHUNK_SIZE: usize = 1 << 12;
 
 #[derive(Debug)]
 pub struct OptimizedEraCode<C, F> {
