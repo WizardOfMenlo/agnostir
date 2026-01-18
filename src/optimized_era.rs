@@ -4,6 +4,8 @@ use std::sync::OnceLock;
 
 use crate::ErrorCorrectingCode;
 
+const P1_CHUNK_SIZE: usize = 1 << 10;
+
 #[derive(Debug)]
 pub struct OptimizedEraCode<C, F> {
     message_size: usize,
@@ -146,8 +148,6 @@ where
     pub fn encode_blocked(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
-        let mut first_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
         let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
         let mut second_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
         let mut second_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
@@ -156,26 +156,16 @@ where
         let base_encoding = self.base_code.encode(msg);
         debug_assert_eq!(base_encoding.len(), self.base_block_length);
 
-        first_permute
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(i, out)| {
-                let src_idx = self.p1_vector[i] as usize;
-                *out = base_encoding[src_idx];
-            });
-
-        first_multiply
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(i, out)| {
-                *out = first_permute[i] * self.m1_vector[i];
-            });
-
         first_accumulate
-            .par_iter_mut()
+            .par_chunks_mut(P1_CHUNK_SIZE)
             .enumerate()
-            .for_each(|(i, out)| {
-                *out = first_multiply[i];
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * P1_CHUNK_SIZE;
+                for (offset, out) in chunk.iter_mut().enumerate() {
+                    let i = start + offset;
+                    let src_idx = self.p1_vector[i] as usize;
+                    *out = base_encoding[src_idx] * self.m1_vector[i];
+                }
             });
         Self::prefix_sum_in_place(&mut first_accumulate, Self::chunk_len(self.block_length));
 
