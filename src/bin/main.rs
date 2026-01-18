@@ -35,7 +35,7 @@ fn main() {
     let msg = random_message(&mut rng, message_size);
 
     let encode_time = Instant::now();
-    for _ in 0..100 {
+    for _ in 0..1 {
         let encoding = reed_solomon_code.encode(&msg);
 
         black_box(encoding);
@@ -43,7 +43,7 @@ fn main() {
     dbg!(encode_time.elapsed());
 
     let encode_blocked_time = Instant::now();
-    for _ in 0..100 {
+    for _ in 0..1 {
         let encoding = era_code.encode_blocked(&msg);
 
         black_box(encoding);
