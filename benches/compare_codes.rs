@@ -80,6 +80,14 @@ fn bench_compare(c: &mut Criterion) {
             BatchSize::LargeInput,
         );
     });
+
+    c.bench_function("optimized_era_blocked_repetition_6", |b| {
+        b.iter_batched(
+            || msg.clone(),
+            |input| optimized_era_code.encode_blocked(&input),
+            BatchSize::LargeInput,
+        );
+    });
 }
 
 criterion_group! {

@@ -143,6 +143,75 @@ where
         second_accumulate
     }
 
+    pub fn encode_blocked(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let mut repeat_vector: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut first_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut first_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut second_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut second_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+
+        let base_encoding = self.base_code.encode(msg);
+        debug_assert_eq!(base_encoding.len(), self.base_block_length);
+
+        repeat_vector
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(i, out)| {
+                *out = base_encoding[i % self.base_block_length];
+            });
+
+        let mut p1_indices: Vec<usize> = (0..self.block_length).collect();
+        p1_indices.par_sort_unstable_by_key(|&i| self.p1_vector[i]);
+        for &i in &p1_indices {
+            let src_idx = self.p1_vector[i] as usize;
+            first_permute[i] = repeat_vector[src_idx];
+        }
+
+        first_multiply
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(i, out)| {
+                *out = first_permute[i] * self.m1_vector[i];
+            });
+
+        first_accumulate
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(i, out)| {
+                *out = first_multiply[i];
+            });
+        Self::prefix_sum_in_place(&mut first_accumulate, Self::chunk_len(self.block_length));
+
+        second_permute
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(i, out)| {
+                let src_idx = self.p2_vector[i] as usize;
+                *out = first_accumulate[src_idx];
+            });
+
+        second_multiply
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(i, out)| {
+                *out = second_permute[i] * self.m2_vector[i];
+            });
+
+        second_accumulate
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(i, out)| {
+                *out = second_multiply[i];
+            });
+        Self::prefix_sum_in_place(&mut second_accumulate, Self::chunk_len(self.block_length));
+
+        second_accumulate
+    }
+
     fn add_const_in_place(slice: &mut [F], offset: F) {
         let (packed, suffix) = F::Packing::pack_slice_with_suffix_mut(slice);
         let packed_offset: F::Packing = offset.into();

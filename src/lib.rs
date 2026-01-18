@@ -179,8 +179,10 @@ mod tests {
             let msg = random_field_vector(&mut rng, message_size);
             let fast = era_code.encode_fast(&msg);
             let naive = era_code.encode_naive(&msg);
+            let blocked = era_code.encode_blocked(&msg);
 
             assert_eq!(fast, naive);
+            assert_eq!(blocked, naive);
         }
     }
 

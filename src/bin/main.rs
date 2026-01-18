@@ -36,4 +36,12 @@ fn main() {
         black_box(encoding);
     }
     dbg!(encode_time.elapsed());
+
+    let encode_blocked_time = Instant::now();
+    for _ in 0..1 {
+        let encoding = era_code.encode_blocked(&msg);
+
+        black_box(encoding);
+    }
+    dbg!(encode_blocked_time.elapsed());
 }
