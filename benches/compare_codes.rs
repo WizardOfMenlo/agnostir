@@ -10,8 +10,10 @@ const MESSAGE_SIZE: usize = 1 << 23;
 const RS_BLOCK_LENGTH: usize = 1 << 24;
 const ERA_REPETITION: usize = 6;
 
-fn build_message() -> Vec<KoalaBear> {
-    (0..MESSAGE_SIZE as u32).map(KoalaBear::new).collect()
+fn build_message(rng: &mut impl Rng) -> Vec<KoalaBear> {
+    (0..MESSAGE_SIZE)
+        .map(|_| KoalaBear::new(rng.random()))
+        .collect()
 }
 
 fn build_era_code(rng: &mut impl Rng) -> EraCode<IdentityCode<KoalaBear>, KoalaBear> {
@@ -49,8 +51,8 @@ fn build_optimized_era_code(
 }
 
 fn bench_compare(c: &mut Criterion) {
-    let msg = build_message();
     let mut rng = SmallRng::seed_from_u64(2025);
+    let msg = build_message(&mut rng);
 
     let rs_code: ReedSolomonCode<KoalaBear, _> =
         ReedSolomonCode::new(MESSAGE_SIZE, RS_BLOCK_LENGTH);

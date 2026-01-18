@@ -17,13 +17,14 @@ fn random_message(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
 
 fn main() {
     let message_size = 1 << 23;
+    let rs_block_size = 1 << 24;
     let repetition = 6;
     let block_length = message_size * repetition;
 
     let mut rng = SmallRng::seed_from_u64(12345);
 
     let reed_solomon_code: ReedSolomonCode<KoalaBear, p3_dft::Radix2DFTSmallBatch<KoalaBear>> =
-        ReedSolomonCode::new(message_size, 1 << 24);
+        ReedSolomonCode::new(message_size, rs_block_size);
 
     let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
     let p1 = random_permutation(&mut rng, block_length);
@@ -34,16 +35,16 @@ fn main() {
     let mut era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
     let msg = random_message(&mut rng, message_size);
 
-    let encode_time = Instant::now();
-    for _ in 0..1 {
+    let rs_encode_time = Instant::now();
+    for _ in 0..100 {
         let encoding = reed_solomon_code.encode(&msg);
 
         black_box(encoding);
     }
-    dbg!(encode_time.elapsed());
+    dbg!(rs_encode_time.elapsed());
 
     let encode_blocked_time = Instant::now();
-    for _ in 0..1 {
+    for _ in 0..100 {
         let encoding = era_code.encode_blocked(&msg);
 
         black_box(encoding);
