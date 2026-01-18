@@ -149,8 +149,6 @@ where
         debug_assert!(self.validate_parameters());
 
         let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
         let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
 
         let base_encoding = self.base_code.encode(msg);
@@ -169,26 +167,12 @@ where
             });
         Self::prefix_sum_in_place(&mut first_accumulate, Self::chunk_len(self.block_length));
 
-        second_permute
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(i, out)| {
-                let src_idx = self.p2_vector[i] as usize;
-                *out = first_accumulate[src_idx];
-            });
-
-        second_multiply
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(i, out)| {
-                *out = second_permute[i] * self.m2_vector[i];
-            });
-
         second_accumulate
             .par_iter_mut()
             .enumerate()
             .for_each(|(i, out)| {
-                *out = second_multiply[i];
+                let src_idx = self.p2_vector[i] as usize;
+                *out = first_accumulate[src_idx] * self.m2_vector[i];
             });
         Self::prefix_sum_in_place(&mut second_accumulate, Self::chunk_len(self.block_length));
 
