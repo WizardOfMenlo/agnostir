@@ -146,7 +146,6 @@ where
     pub fn encode_blocked(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
-        let mut repeat_vector: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
         let mut first_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
         let mut first_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
         let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
@@ -157,19 +156,13 @@ where
         let base_encoding = self.base_code.encode(msg);
         debug_assert_eq!(base_encoding.len(), self.base_block_length);
 
-        repeat_vector
+        first_permute
             .par_iter_mut()
             .enumerate()
             .for_each(|(i, out)| {
-                *out = base_encoding[i % self.base_block_length];
+                let src_idx = self.p1_vector[i] as usize;
+                *out = base_encoding[src_idx];
             });
-
-        let mut p1_indices: Vec<usize> = (0..self.block_length).collect();
-        p1_indices.par_sort_unstable_by_key(|&i| self.p1_vector[i]);
-        for &i in &p1_indices {
-            let src_idx = self.p1_vector[i] as usize;
-            first_permute[i] = repeat_vector[src_idx];
-        }
 
         first_multiply
             .par_iter_mut()
