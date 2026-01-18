@@ -4,7 +4,7 @@ use std::sync::OnceLock;
 
 use crate::ErrorCorrectingCode;
 
-const P1_CHUNK_SIZE: usize = 1 << 10;
+const PERMUTE_CHUNK_SIZE: usize = 1 << 10;
 
 #[derive(Debug)]
 pub struct OptimizedEraCode<C, F> {
@@ -154,25 +154,52 @@ where
         let base_encoding = self.base_code.encode(msg);
         debug_assert_eq!(base_encoding.len(), self.base_block_length);
 
+        debug_assert_eq!(self.block_length % PERMUTE_CHUNK_SIZE, 0);
+        debug_assert_eq!(PERMUTE_CHUNK_SIZE % F::Packing::WIDTH, 0);
+
         first_accumulate
-            .par_chunks_mut(P1_CHUNK_SIZE)
+            .par_chunks_mut(PERMUTE_CHUNK_SIZE)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
-                let start = chunk_idx * P1_CHUNK_SIZE;
-                for (offset, out) in chunk.iter_mut().enumerate() {
-                    let i = start + offset;
-                    let src_idx = self.p1_vector[i] as usize;
-                    *out = base_encoding[src_idx] * self.m1_vector[i];
+                let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+                let end = start + chunk.len();
+                let m1_chunk = &self.m1_vector[start..end];
+                let packed_out = F::Packing::pack_slice_mut(chunk);
+                let packed_m1 = F::Packing::pack_slice(m1_chunk);
+                let width = F::Packing::WIDTH;
+
+                for (pack_idx, out_pack) in packed_out.iter_mut().enumerate() {
+                    let base = start + pack_idx * width;
+                    let packed_in = F::Packing::from_fn(|lane| {
+                        let i = base + lane;
+                        let src_idx = self.p1_vector[i] as usize;
+                        base_encoding[src_idx]
+                    });
+                    *out_pack = packed_in * packed_m1[pack_idx];
                 }
             });
         Self::prefix_sum_in_place(&mut first_accumulate, Self::chunk_len(self.block_length));
 
         second_accumulate
-            .par_iter_mut()
+            .par_chunks_mut(PERMUTE_CHUNK_SIZE)
             .enumerate()
-            .for_each(|(i, out)| {
-                let src_idx = self.p2_vector[i] as usize;
-                *out = first_accumulate[src_idx] * self.m2_vector[i];
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+                let end = start + chunk.len();
+                let m2_chunk = &self.m2_vector[start..end];
+                let packed_out = F::Packing::pack_slice_mut(chunk);
+                let packed_m2 = F::Packing::pack_slice(m2_chunk);
+                let width = F::Packing::WIDTH;
+
+                for (pack_idx, out_pack) in packed_out.iter_mut().enumerate() {
+                    let base = start + pack_idx * width;
+                    let packed_in = F::Packing::from_fn(|lane| {
+                        let i = base + lane;
+                        let src_idx = self.p2_vector[i] as usize;
+                        first_accumulate[src_idx]
+                    });
+                    *out_pack = packed_in * packed_m2[pack_idx];
+                }
             });
         Self::prefix_sum_in_place(&mut second_accumulate, Self::chunk_len(self.block_length));
 
