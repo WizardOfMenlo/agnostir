@@ -173,7 +173,7 @@ mod tests {
         let p2 = random_permutation(&mut rng, block_length);
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
-        let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+        let mut era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
 
         for _ in 0..5 {
             let msg = random_field_vector(&mut rng, message_size);
@@ -182,8 +182,34 @@ mod tests {
             let blocked = era_code.encode_blocked(&msg);
 
             assert_eq!(fast, naive);
-            assert_eq!(blocked, naive);
+            assert_eq!(blocked, naive.as_slice());
         }
+    }
+
+    #[test]
+    fn test_optimized_era_code_blocked_reuse() {
+        let mut rng = SmallRng::seed_from_u64(2025);
+
+        let message_size = 1 << 12;
+        let repetition = 4;
+        let block_length = message_size * repetition;
+
+        let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
+
+        let p1 = random_permutation(&mut rng, block_length);
+        let p2 = random_permutation(&mut rng, block_length);
+        let m1 = random_field_vector(&mut rng, block_length);
+        let m2 = random_field_vector(&mut rng, block_length);
+        let mut era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+
+        let msg = random_field_vector(&mut rng, message_size);
+        let expected = era_code.encode_naive(&msg);
+
+        let first = era_code.encode_blocked(&msg);
+        assert_eq!(first, expected.as_slice());
+
+        let second = era_code.encode_blocked(&msg);
+        assert_eq!(second, expected.as_slice());
     }
 
     #[test]

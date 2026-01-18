@@ -2,7 +2,7 @@ use agnostir::{
     EraCode, ErrorCorrectingCode, IdentityCode, OptimizedEraCode, ReedSolomonCode,
     random_permutation,
 };
-use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use p3_koala_bear::KoalaBear;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
@@ -55,7 +55,7 @@ fn bench_compare(c: &mut Criterion) {
     let rs_code: ReedSolomonCode<KoalaBear, _> =
         ReedSolomonCode::new(MESSAGE_SIZE, RS_BLOCK_LENGTH);
     let era_code = build_era_code(&mut rng);
-    let optimized_era_code = build_optimized_era_code(&mut rng);
+    let mut optimized_era_code = build_optimized_era_code(&mut rng);
 
     c.bench_function("reed_solomon_rate_half", |b| {
         b.iter_batched(
@@ -84,7 +84,10 @@ fn bench_compare(c: &mut Criterion) {
     c.bench_function("optimized_era_blocked_repetition_6", |b| {
         b.iter_batched(
             || msg.clone(),
-            |input| optimized_era_code.encode_blocked(&input),
+            |input| {
+                let output = optimized_era_code.encode_blocked(&input);
+                black_box(output);
+            },
             BatchSize::LargeInput,
         );
     });

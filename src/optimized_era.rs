@@ -1,6 +1,6 @@
 use p3_field::{Field, PackedValue};
 use p3_maybe_rayon::prelude::*;
-use std::sync::OnceLock;
+use std::{sync::OnceLock, time::Instant};
 
 use crate::ErrorCorrectingCode;
 
@@ -19,6 +19,9 @@ pub struct OptimizedEraCode<C, F> {
 
     m1_vector: Vec<F>,
     m2_vector: Vec<F>,
+
+    first_accumulate: Vec<F>,
+    second_accumulate: Vec<F>,
 }
 
 impl<C, F> OptimizedEraCode<C, F>
@@ -62,6 +65,8 @@ where
             p2_vector,
             m1_vector,
             m2_vector,
+            first_accumulate: vec![F::ZERO; block_length],
+            second_accumulate: vec![F::ZERO; block_length],
         };
 
         debug_assert!(code.validate_parameters());
@@ -108,6 +113,8 @@ where
             && self.m1_vector.len() == self.block_length
             && self.m2_vector.len() == self.block_length
             && Self::check_permutation_u32(&self.p2_vector)
+            && self.first_accumulate.len() == self.block_length
+            && self.second_accumulate.len() == self.block_length
             && self.base_code.message_size() == self.message_size
             && self.repetition_parameter * self.base_code.block_length() == self.block_length()
     }
@@ -145,25 +152,32 @@ where
         second_accumulate
     }
 
-    pub fn encode_blocked(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+    pub fn encode_blocked(&mut self, msg: &[C::Alphabet]) -> &[C::Alphabet] {
         debug_assert!(self.validate_parameters());
-
-        let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        debug_assert_eq!(self.block_length % PERMUTE_CHUNK_SIZE, 0);
+        debug_assert_eq!(PERMUTE_CHUNK_SIZE % F::Packing::WIDTH, 0);
+        debug_assert_eq!(self.first_accumulate.len(), self.block_length);
+        debug_assert_eq!(self.second_accumulate.len(), self.block_length);
 
         let base_encoding = self.base_code.encode(msg);
         debug_assert_eq!(base_encoding.len(), self.base_block_length);
 
-        debug_assert_eq!(self.block_length % PERMUTE_CHUNK_SIZE, 0);
-        debug_assert_eq!(PERMUTE_CHUNK_SIZE % F::Packing::WIDTH, 0);
+        let p1_vector = &self.p1_vector;
+        let p2_vector = &self.p2_vector;
+        let m1_vector = &self.m1_vector;
+        let m2_vector = &self.m2_vector;
 
+        let first_accumulate = &mut self.first_accumulate;
+        let second_accumulate = &mut self.second_accumulate;
+
+        let first_permute_and_mult = Instant::now();
         first_accumulate
             .par_chunks_mut(PERMUTE_CHUNK_SIZE)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
                 let start = chunk_idx * PERMUTE_CHUNK_SIZE;
                 let end = start + chunk.len();
-                let m1_chunk = &self.m1_vector[start..end];
+                let m1_chunk = &m1_vector[start..end];
                 let packed_out = F::Packing::pack_slice_mut(chunk);
                 let packed_m1 = F::Packing::pack_slice(m1_chunk);
                 let width = F::Packing::WIDTH;
@@ -172,21 +186,27 @@ where
                     let base = start + pack_idx * width;
                     let packed_in = F::Packing::from_fn(|lane| {
                         let i = base + lane;
-                        let src_idx = self.p1_vector[i] as usize;
+                        let src_idx = p1_vector[i] as usize;
                         base_encoding[src_idx]
                     });
                     *out_pack = packed_in * packed_m1[pack_idx];
                 }
             });
-        Self::prefix_sum_in_place(&mut first_accumulate, Self::chunk_len(self.block_length));
 
+        //dbg!(first_permute_and_mult.elapsed());
+        let first_acc = Instant::now();
+
+        Self::prefix_sum_in_place(first_accumulate, Self::chunk_len(self.block_length));
+        //dbg!(first_acc.elapsed());
+
+        let second_permute_and_mult = Instant::now();
         second_accumulate
             .par_chunks_mut(PERMUTE_CHUNK_SIZE)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
                 let start = chunk_idx * PERMUTE_CHUNK_SIZE;
                 let end = start + chunk.len();
-                let m2_chunk = &self.m2_vector[start..end];
+                let m2_chunk = &m2_vector[start..end];
                 let packed_out = F::Packing::pack_slice_mut(chunk);
                 let packed_m2 = F::Packing::pack_slice(m2_chunk);
                 let width = F::Packing::WIDTH;
@@ -195,13 +215,16 @@ where
                     let base = start + pack_idx * width;
                     let packed_in = F::Packing::from_fn(|lane| {
                         let i = base + lane;
-                        let src_idx = self.p2_vector[i] as usize;
+                        let src_idx = p2_vector[i] as usize;
                         first_accumulate[src_idx]
                     });
                     *out_pack = packed_in * packed_m2[pack_idx];
                 }
             });
-        Self::prefix_sum_in_place(&mut second_accumulate, Self::chunk_len(self.block_length));
+        //dbg!(second_permute_and_mult.elapsed());
+        let second_acc = Instant::now();
+        Self::prefix_sum_in_place(second_accumulate, Self::chunk_len(self.block_length));
+        //dbg!(second_acc.elapsed());
 
         second_accumulate
     }
