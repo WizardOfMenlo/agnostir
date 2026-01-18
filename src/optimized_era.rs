@@ -193,11 +193,11 @@ where
                 }
             });
 
-        //dbg!(first_permute_and_mult.elapsed());
+        dbg!(first_permute_and_mult.elapsed());
         let first_acc = Instant::now();
 
         Self::prefix_sum_in_place(first_accumulate, Self::chunk_len(self.block_length));
-        //dbg!(first_acc.elapsed());
+        dbg!(first_acc.elapsed());
 
         let second_permute_and_mult = Instant::now();
         second_accumulate
@@ -221,10 +221,10 @@ where
                     *out_pack = packed_in * packed_m2[pack_idx];
                 }
             });
-        //dbg!(second_permute_and_mult.elapsed());
+        dbg!(second_permute_and_mult.elapsed());
         let second_acc = Instant::now();
         Self::prefix_sum_in_place(second_accumulate, Self::chunk_len(self.block_length));
-        //dbg!(second_acc.elapsed());
+        dbg!(second_acc.elapsed());
 
         second_accumulate
     }
