@@ -1,6 +1,8 @@
 use std::{hint::black_box, time::Instant};
 
-use agnostir::{IdentityCode, OptimizedEraCode, random_permutation};
+use agnostir::{
+    ErrorCorrectingCode, IdentityCode, OptimizedEraCode, ReedSolomonCode, random_permutation,
+};
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use p3_koala_bear::KoalaBear;
@@ -20,6 +22,9 @@ fn main() {
 
     let mut rng = SmallRng::seed_from_u64(12345);
 
+    let reed_solomon_code: ReedSolomonCode<KoalaBear, p3_dft::Radix2DFTSmallBatch<KoalaBear>> =
+        ReedSolomonCode::new(message_size, 1 << 24);
+
     let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
     let p1 = random_permutation(&mut rng, block_length);
     let p2 = random_permutation(&mut rng, block_length);
@@ -30,15 +35,15 @@ fn main() {
     let msg = random_message(&mut rng, message_size);
 
     let encode_time = Instant::now();
-    for _ in 0..1 {
-        let encoding = era_code.encode_fast(&msg);
+    for _ in 0..100 {
+        let encoding = reed_solomon_code.encode(&msg);
 
         black_box(encoding);
     }
     dbg!(encode_time.elapsed());
 
     let encode_blocked_time = Instant::now();
-    for _ in 0..1 {
+    for _ in 0..100 {
         let encoding = era_code.encode_blocked(&msg);
 
         black_box(encoding);
