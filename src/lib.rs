@@ -7,7 +7,7 @@ mod reed_solomon;
 
 pub use era::EraCode;
 pub use identity::IdentityCode;
-pub use optimized_era::OptimizedEraCode;
+pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode};
 pub use reed_solomon::ReedSolomonCode;
 
 pub trait ErrorCorrectingCode {
@@ -97,7 +97,7 @@ mod tests {
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
 
-        let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+        let era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
         assert_eq!(era_code.message_size(), message_size);
         assert_eq!(era_code.block_length(), block_length);
@@ -149,7 +149,7 @@ mod tests {
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
 
-        let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+        let era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
         let msg: Vec<KoalaBear> = (1..=message_size as u32).map(KoalaBear::new).collect();
 
@@ -173,7 +173,7 @@ mod tests {
         let p2 = random_permutation(&mut rng, block_length);
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
-        let mut era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+        let mut era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
         for _ in 0..5 {
             let msg = random_field_vector(&mut rng, message_size);
@@ -200,7 +200,7 @@ mod tests {
         let p2 = random_permutation(&mut rng, block_length);
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
-        let mut era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+        let mut era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
         let msg = random_field_vector(&mut rng, message_size);
         let expected = era_code.encode_naive(&msg);
@@ -254,7 +254,7 @@ mod tests {
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
 
-        let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+        let era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
         let msg1: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
         let msg2: Vec<KoalaBear> = (10..10 + message_size as u32).map(KoalaBear::new).collect();
@@ -308,7 +308,7 @@ mod tests {
             let m1 = random_field_vector(&mut rng, block_length);
             let m2 = random_field_vector(&mut rng, block_length);
 
-            let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+            let era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
             let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
             let encoded = era_code.encode(&msg);
@@ -367,7 +367,7 @@ mod tests {
         let m1 = random_field_vector(&mut rng, block_length);
         let m2 = random_field_vector(&mut rng, block_length);
 
-        let era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+        let era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
         let msg: Vec<KoalaBear> = vec![KoalaBear::ZERO; message_size];
         let encoded = era_code.encode(&msg);

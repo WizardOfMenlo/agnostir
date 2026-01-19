@@ -34,7 +34,7 @@ fn main() {
     let m1 = random_field_vector(&mut rng, block_length);
     let m2 = random_field_vector(&mut rng, block_length);
 
-    let mut era_code = OptimizedEraCode::new(base_code, repetition, p1, p2, m1, m2);
+    let mut era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
     let msg = random_message(&mut rng, message_size);
 
     let rs_encode_time = Instant::now();

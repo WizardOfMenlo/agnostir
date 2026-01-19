@@ -1,3 +1,4 @@
+use voracious_radix_sort::{RadixSort, Radixable};
 use p3_field::{Field, PackedValue};
 use p3_maybe_rayon::prelude::*;
 use std::{sync::OnceLock, time::Instant};
@@ -10,8 +11,11 @@ const PERMUTE_CHUNK_SIZE: usize = 1 << 12;
 pub struct OptimizedEraCode<C, F> {
     message_size: usize,
     block_length: usize,
+    block_length_segment: usize,
     base_block_length: usize,
     repetition_parameter: usize,
+    interleaving_parameter: usize,
+    segment_count: usize,
     base_code: C,
 
     p1_vector: Vec<u32>,
@@ -24,6 +28,41 @@ pub struct OptimizedEraCode<C, F> {
     second_accumulate: Vec<F>,
 }
 
+#[derive(Debug, Default)]
+pub struct EncodeNaiveBuffers<F> {
+    base_columns: Vec<Vec<F>>,
+    first_accumulate: Vec<Vec<F>>,
+    second_accumulate: Vec<Vec<F>>,
+}
+
+#[derive(Clone, Copy)]
+struct RadixEntry<F: Copy> {
+    key: u32,
+    value: F,
+    mul: F,
+}
+
+impl<F: Copy> PartialEq for RadixEntry<F> {
+    fn eq(&self, other: &Self) -> bool {
+        self.key == other.key
+    }
+}
+
+impl<F: Copy> PartialOrd for RadixEntry<F> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.key.partial_cmp(&other.key)
+    }
+}
+
+impl<F: Copy + Send + Sync> Radixable<u32> for RadixEntry<F> {
+    type Key = u32;
+
+    #[inline]
+    fn key(&self) -> Self::Key {
+        self.key
+    }
+}
+
 impl<C, F> OptimizedEraCode<C, F>
 where
     C: ErrorCorrectingCode<Alphabet = F> + Sync,
@@ -32,14 +71,17 @@ where
     pub fn new(
         base_code: C,
         repetition_parameter: usize,
+        interleaving_parameter: usize,
         p1_vector: Vec<usize>,
         p2_vector: Vec<usize>,
         m1_vector: Vec<F>,
         m2_vector: Vec<F>,
     ) -> Self {
-        let message_size = base_code.message_size();
+        let segment_count = 1usize << interleaving_parameter;
+        let message_size = base_code.message_size() * segment_count;
         let base_block_length = base_code.block_length();
-        let block_length = repetition_parameter * base_block_length;
+        let block_length_segment = repetition_parameter * base_block_length;
+        let block_length = block_length_segment * segment_count;
 
         assert!(
             block_length <= u32::MAX as usize,
@@ -58,8 +100,11 @@ where
         let code = Self {
             message_size,
             block_length,
+            block_length_segment,
             base_block_length,
             repetition_parameter,
+            interleaving_parameter,
+            segment_count,
             base_code,
             p1_vector,
             p2_vector,
@@ -104,52 +149,153 @@ where
     }
 
     fn validate_parameters(&self) -> bool {
-        self.p1_vector.len() == self.block_length
+        self.p1_vector.len() == self.block_length_segment
             && self
                 .p1_vector
                 .iter()
                 .all(|&x| (x as usize) < self.base_block_length)
-            && self.p2_vector.len() == self.block_length
-            && self.m1_vector.len() == self.block_length
-            && self.m2_vector.len() == self.block_length
+            && self.p2_vector.len() == self.block_length_segment
+            && self.m1_vector.len() == self.block_length_segment
+            && self.m2_vector.len() == self.block_length_segment
             && Self::check_permutation_u32(&self.p2_vector)
-            && self.first_accumulate.len() == self.block_length
-            && self.second_accumulate.len() == self.block_length
-            && self.base_code.message_size() == self.message_size
-            && self.repetition_parameter * self.base_code.block_length() == self.block_length()
+            && self.first_accumulate.len() == self.block_length_segment
+            && self.second_accumulate.len() == self.block_length_segment
+            && self.base_code.message_size() * self.segment_count == self.message_size
+            && self.repetition_parameter * self.base_code.block_length()
+                == self.block_length_segment
     }
 
     pub fn encode_naive(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        let mut buffers = EncodeNaiveBuffers::default();
+        self.encode_naive_with_buffer(msg, &mut buffers)
+    }
+
+    pub fn encode_naive_with_buffer(
+        &self,
+        msg: &[C::Alphabet],
+        buffers: &mut EncodeNaiveBuffers<C::Alphabet>,
+    ) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
-        let base_encoding = self.base_code.encode(msg);
-        debug_assert_eq!(base_encoding.len(), self.base_block_length);
+        let profiling = std::env::var("AGNOSTIR_PROFILE_ENCODE_NAIVE").is_ok();
+        let mut t_encode_segments = 0.0f64;
+        let mut t_first_perm_mul = 0.0f64;
+        let mut t_first_prefix = 0.0f64;
+        let mut t_second_perm_mul = 0.0f64;
+        let mut t_second_prefix = 0.0f64;
 
-        let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        for i in 0..self.block_length {
+        let segment_len = self.base_code.message_size();
+
+        if buffers.base_columns.len() != self.base_block_length {
+            buffers
+                .base_columns
+                .resize_with(self.base_block_length, || vec![F::ZERO; self.segment_count]);
+        }
+        for col in buffers.base_columns.iter_mut() {
+            if col.len() != self.segment_count {
+                col.resize(self.segment_count, F::ZERO);
+            }
+        }
+
+        if buffers.first_accumulate.len() != self.block_length_segment {
+            buffers
+                .first_accumulate
+                .resize_with(self.block_length_segment, || {
+                    vec![F::ZERO; self.segment_count]
+                });
+        }
+        for row in buffers.first_accumulate.iter_mut() {
+            if row.len() != self.segment_count {
+                row.resize(self.segment_count, F::ZERO);
+            }
+        }
+
+        if buffers.second_accumulate.len() != self.block_length_segment {
+            buffers
+                .second_accumulate
+                .resize_with(self.block_length_segment, || {
+                    vec![F::ZERO; self.segment_count]
+                });
+        }
+        for row in buffers.second_accumulate.iter_mut() {
+            if row.len() != self.segment_count {
+                row.resize(self.segment_count, F::ZERO);
+            }
+        }
+
+        // Encode each segment using the base code
+        let timer = if profiling { Some(Instant::now()) } else { None };
+        for segment in 0..self.segment_count {
+            let start = segment * segment_len;
+            let end = start + segment_len;
+            let enc = self.base_code.encode(&msg[start..end]);
+            for i in 0..self.base_block_length {
+                buffers.base_columns[i][segment] = enc[i];
+            }
+        }
+        if let Some(start) = timer {
+            t_encode_segments = start.elapsed().as_secs_f64();
+        }
+
+        // Apply first permutation (p1_vector)
+        let timer = if profiling { Some(Instant::now()) } else { None };
+        for i in 0..self.block_length_segment {
             let base_idx = self.p1_vector[i] as usize;
-            first_accumulate[i] = base_encoding[base_idx] * self.m1_vector[i];
+            buffers.first_accumulate[i].copy_from_slice(&buffers.base_columns[base_idx]);
+        }
+        if let Some(start) = timer {
+            t_first_perm_mul = start.elapsed().as_secs_f64();
         }
 
-        let mut acc = F::ZERO;
-        for value in first_accumulate.iter_mut() {
-            acc += *value;
-            *value = acc;
+        // Apply first accumulation
+        let timer = if profiling { Some(Instant::now()) } else { None };
+        let mut acc = vec![F::ZERO; self.segment_count];
+        for i in 0..self.block_length_segment {
+            for segment in 0..self.segment_count {
+                acc[segment] += self.m1_vector[i] * buffers.first_accumulate[i][segment];
+            }
+            buffers.first_accumulate[i].copy_from_slice(&acc);
+        }
+        if let Some(start) = timer {
+            t_first_prefix = start.elapsed().as_secs_f64();
         }
 
-        let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        for i in 0..self.block_length {
-            let src_idx = self.p2_vector[i] as usize;
-            second_accumulate[i] = first_accumulate[src_idx] * self.m2_vector[i];
+        // Apply second permutation (p2_vector)
+        let timer = if profiling { Some(Instant::now()) } else { None };
+        for i in 0..self.block_length_segment {
+            let src_i = self.p2_vector[i] as usize;
+            buffers
+                .second_accumulate[i]
+                .copy_from_slice(&buffers.first_accumulate[src_i]);
+        }
+        if let Some(start) = timer {
+            t_second_perm_mul = start.elapsed().as_secs_f64();
         }
 
-        let mut acc = F::ZERO;
-        for value in second_accumulate.iter_mut() {
-            acc += *value;
-            *value = acc;
+        // Apply second accumulation
+        let timer = if profiling { Some(Instant::now()) } else { None };
+        let mut acc = vec![F::ZERO; self.segment_count];
+        for i in 0..self.block_length_segment {
+            for segment in 0..self.segment_count {
+                acc[segment] += self.m2_vector[i] * buffers.second_accumulate[i][segment];
+            }
+            buffers.second_accumulate[i].copy_from_slice(&acc);
+        }
+        if let Some(start) = timer {
+            t_second_prefix = start.elapsed().as_secs_f64();
         }
 
-        second_accumulate
+        let mut out = Vec::with_capacity(self.block_length_segment * self.segment_count);
+        for i in 0..self.block_length_segment {
+            out.extend_from_slice(&buffers.second_accumulate[i]);
+        }
+
+        if profiling {
+            eprintln!(
+                "encode_naive timings (s): encode_segments={t_encode_segments:.6}, first_perm_mul={t_first_perm_mul:.6}, first_prefix={t_first_prefix:.6}, second_perm_mul={t_second_perm_mul:.6}, second_prefix={t_second_prefix:.6}"
+            );
+        }
+        out
     }
 
     pub fn encode_blocked(&mut self, msg: &[C::Alphabet]) -> &[C::Alphabet] {
@@ -294,6 +440,89 @@ where
                     Self::add_const_in_place(chunk, offset);
                 }
             });
+    }
+
+    fn permute_multiply_radix_sort(input: &[F], keys: &[u32], muls: &[F]) -> Vec<F> {
+        debug_assert_eq!(keys.len(), muls.len());
+
+        let mut entries: Vec<RadixEntry<F>> = Vec::with_capacity(keys.len());
+        for i in 0..keys.len() {
+            let key = keys[i];
+            let idx = key as usize;
+            debug_assert!(idx < input.len());
+            let value = input[idx];
+            let mul = muls[i];
+            entries.push(RadixEntry { key, value, mul });
+        }
+
+        entries.voracious_mt_sort(current_num_threads());
+
+        entries.into_iter().map(|entry| entry.value * entry.mul).collect()
+    }
+
+    fn permute_multiply_sort(input: &[F], keys: &[u32], muls: &[F]) -> Vec<F> {
+        debug_assert_eq!(keys.len(), muls.len());
+
+        #[derive(Clone, Copy)]
+        struct Entry<F> {
+            key: u32,
+            value: F,
+            mul: F,
+        }
+
+        let mut entries: Vec<Entry<F>> = Vec::with_capacity(keys.len());
+        for i in 0..keys.len() {
+            let key = keys[i];
+            let idx = key as usize;
+            debug_assert!(idx < input.len());
+            let value = input[idx];
+            let mul = muls[i];
+            entries.push(Entry { key, value, mul });
+        }
+
+        entries.par_sort_unstable_by_key(|entry| entry.key);
+
+        entries.into_iter().map(|entry| entry.value * entry.mul).collect()
+    }
+
+    /// Encode using sort-based permutation of (key, value) pairs.
+    pub fn encode_radix_sort_perm(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let base_encoding = self.base_code.encode(msg);
+        debug_assert_eq!(base_encoding.len(), self.base_block_length);
+
+        let chunk_len = Self::chunk_len(self.block_length);
+
+        let mut first_accumulate =
+            Self::permute_multiply_radix_sort(&base_encoding, &self.p1_vector, &self.m1_vector);
+        Self::prefix_sum_in_place(&mut first_accumulate, chunk_len);
+
+        let mut second_accumulate =
+            Self::permute_multiply_radix_sort(&first_accumulate, &self.p2_vector, &self.m2_vector);
+        Self::prefix_sum_in_place(&mut second_accumulate, chunk_len);
+
+        second_accumulate
+    }
+
+    /// Encode using parallel unstable sort for permutation of (key, value) pairs.
+    pub fn encode_sort_perm(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let base_encoding = self.base_code.encode(msg);
+        debug_assert_eq!(base_encoding.len(), self.base_block_length);
+
+        let chunk_len = Self::chunk_len(self.block_length);
+
+        let mut first_accumulate =
+            Self::permute_multiply_sort(&base_encoding, &self.p1_vector, &self.m1_vector);
+        Self::prefix_sum_in_place(&mut first_accumulate, chunk_len);
+
+        let mut second_accumulate =
+            Self::permute_multiply_sort(&first_accumulate, &self.p2_vector, &self.m2_vector);
+        Self::prefix_sum_in_place(&mut second_accumulate, chunk_len);
+
+        second_accumulate
     }
 
     pub fn encode_fast(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
