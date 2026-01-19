@@ -6,7 +6,7 @@ use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main
 use p3_koala_bear::KoalaBear;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-const MESSAGE_SIZE: usize = 1 << 19;
+const MESSAGE_SIZE: usize = 1 << 23;
 const RS_INV_RATE: usize = 1;
 const INTERLEAVING_FACTOR: usize = 4;
 const ERA_REPETITION: usize = 6;
