@@ -1,6 +1,6 @@
 use agnostir::{
     EncodeNaiveBuffers, EraCode, ErrorCorrectingCode, IdentityCode, OptimizedEraCode,
-    ReedSolomonCode, random_permutation,
+    RadixSortBuffers, ReedSolomonCode, encode_interleaved, random_permutation,
 };
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use p3_koala_bear::KoalaBear;
@@ -62,19 +62,19 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     let msg = build_message(&mut rng);
 
     let rs_code: ReedSolomonCode<KoalaBear, _> =
-        ReedSolomonCode::new(MESSAGE_SIZE, MESSAGE_SIZE << RS_INV_RATE);
+        ReedSolomonCode::new(MESSAGE_SIZE >> INTERLEAVING_FACTOR, (MESSAGE_SIZE >> INTERLEAVING_FACTOR) << RS_INV_RATE);
     let mut optimized_era_code = build_optimized_era_code(&mut rng, INTERLEAVING_FACTOR);
     let mut naive_buffers = EncodeNaiveBuffers::<KoalaBear>::default();
 
-    c.bench_function("reed_solomon_rate_half", |b| {
+    c.bench_function("reed_solomon_interleaved_rate_half", |b| {
         b.iter_batched(
             || msg.clone(),
-            |input| rs_code.encode(&input),
+            |input| encode_interleaved(&input, &rs_code, INTERLEAVING_FACTOR),
             BatchSize::LargeInput,
         );
     });
 
-    c.bench_function("era_repetition_6", |b| {
+    c.bench_function("era_interleaved_repetition_6", |b| {
         b.iter_batched_ref(
             || msg.clone(),
             |input| optimized_era_code.encode_naive_with_buffer(input, &mut naive_buffers),
@@ -95,6 +95,7 @@ fn bench_compare(c: &mut Criterion) {
     let era_code = build_era_code(&mut rng, 0);
     let mut optimized_era_code = build_optimized_era_code(&mut rng, 0);
     let mut naive_buffers = EncodeNaiveBuffers::<KoalaBear>::default();
+    let mut radix_buffers = RadixSortBuffers::with_capacity(MESSAGE_SIZE * ERA_REPETITION);
 
     c.bench_function("reed_solomon_rate_half", |b| {
         b.iter_batched(
@@ -104,13 +105,13 @@ fn bench_compare(c: &mut Criterion) {
         );
     });
 
-    c.bench_function("era_repetition_6", |b| {
-        b.iter_batched(
-            || msg.clone(),
-            |input| era_code.encode(&input),
-            BatchSize::LargeInput,
-        );
-    });
+    // c.bench_function("era_repetition_6", |b| {
+    //     b.iter_batched(
+    //         || msg.clone(),
+    //         |input| era_code.encode(&input),
+    //         BatchSize::LargeInput,
+    //     );
+    // });
 
     c.bench_function("optimized_era_repetition_6", |b| {
         b.iter_batched(
@@ -120,24 +121,24 @@ fn bench_compare(c: &mut Criterion) {
         );
     });
 
-    c.bench_function("optimized_era_blocked_repetition_6", |b| {
-        b.iter_batched(
-            || msg.clone(),
-            |input| {
-                let output = optimized_era_code.encode_blocked(&input);
-                black_box(output);
-            },
-            BatchSize::LargeInput,
-        );
-    });
+    // c.bench_function("optimized_era_blocked_repetition_6", |b| {
+    //     b.iter_batched(
+    //         || msg.clone(),
+    //         |input| {
+    //             let output = optimized_era_code.encode_blocked(&input);
+    //             black_box(output);
+    //         },
+    //         BatchSize::LargeInput,
+    //     );
+    // });
 
-    c.bench_function("optimized_era_naive_buffered", |b| {
-        b.iter_batched_ref(
-            || msg.clone(),
-            |input| optimized_era_code.encode_naive_with_buffer(input, &mut naive_buffers),
-            BatchSize::LargeInput,
-        );
-    });
+    // c.bench_function("optimized_era_naive_buffered", |b| {
+    //     b.iter_batched_ref(
+    //         || msg.clone(),
+    //         |input| optimized_era_code.encode_naive_with_buffer(input, &mut naive_buffers),
+    //         BatchSize::LargeInput,
+    //     );
+    // });
 
     // c.bench_function("optimized_era_sort_perm", |b| {
     //     b.iter_batched(
@@ -147,18 +148,23 @@ fn bench_compare(c: &mut Criterion) {
     //     );
     // });
 
-    // c.bench_function("optimized_era_radix_sort_perm", |b| {
-    //     b.iter_batched(
-    //         || msg.clone(),
-    //         |input| optimized_era_code.encode_radix_sort_perm(&input),
-    //         BatchSize::LargeInput,
-    //     );
-    // });
+    c.bench_function("optimized_era_radix_sort_perm", |b| {
+        b.iter_batched_ref(
+            || msg.clone(),
+            |input| {
+                black_box(
+                    optimized_era_code
+                        .encode_radix_sort_perm_with_buffer(input, &mut radix_buffers),
+                );
+            },
+            BatchSize::LargeInput,
+        );
+    });
 }
 
 criterion_group! {
     name = benches;
     config = Criterion::default().sample_size(10);
-    targets = bench_compare, bench_compare_interleaved
+    targets = bench_compare_interleaved
 }
 criterion_main!(benches);

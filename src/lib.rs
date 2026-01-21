@@ -7,7 +7,7 @@ mod reed_solomon;
 
 pub use era::EraCode;
 pub use identity::IdentityCode;
-pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode};
+pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
 pub use reed_solomon::ReedSolomonCode;
 
 pub trait ErrorCorrectingCode {
@@ -16,6 +16,29 @@ pub trait ErrorCorrectingCode {
     fn message_size(&self) -> usize;
     fn block_length(&self) -> usize;
     fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet>;
+}
+
+/// Encode by interleaving the message into 2^eta segments and concatenating encodings.
+pub fn encode_interleaved<C>(
+    msg: &[C::Alphabet],
+    code: &C,
+    eta: usize,
+) -> Vec<C::Alphabet>
+where
+    C: ErrorCorrectingCode,
+{
+    let segment_count = 1usize << eta;
+    let base_message_size = code.message_size();
+    debug_assert_eq!(msg.len(), base_message_size * segment_count);
+
+    let mut out = Vec::with_capacity(code.block_length() * segment_count);
+    for segment in 0..segment_count {
+        let start = segment * base_message_size;
+        let end = start + base_message_size;
+        let enc = code.encode(&msg[start..end]);
+        out.extend(enc);
+    }
+    out
 }
 
 /// Generate a random permutation of 0..n using Fisher-Yates shuffle
