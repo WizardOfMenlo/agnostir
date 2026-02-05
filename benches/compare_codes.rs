@@ -1,6 +1,7 @@
 use agnostir::{
-    EncodeNaiveBuffers, EraCode, ErrorCorrectingCode, IdentityCode, OptimizedEraCode,
-    RadixSortBuffers, ReedSolomonCode, encode_interleaved, random_permutation,
+    BrakedownCode, BrakedownParams, EaCode, EaParams, EncodeNaiveBuffers, EraCode,
+    ErrorCorrectingCode, IdentityCode, OptimizedEraCode, RadixSortBuffers, ReedSolomonCode,
+    encode_interleaved, random_permutation,
 };
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 use p3_koala_bear::KoalaBear;
@@ -57,6 +58,25 @@ fn build_optimized_era_code(
     OptimizedEraCode::new(base_code, ERA_REPETITION, interleaving_factor, p1, p2, m1, m2)
 }
 
+
+fn build_brakedown_code(
+    rng: &mut impl Rng,
+    message_size: usize,
+    params: BrakedownParams,
+) -> BrakedownCode<KoalaBear> {
+    BrakedownCode::new(message_size, params, rng)
+}
+
+
+fn build_ea_code(
+    rng: &mut impl Rng,
+    message_size: usize,
+    params: EaParams,
+) -> EaCode<KoalaBear> {
+    EaCode::new(message_size, params, rng)
+}
+
+
 fn bench_compare_interleaved(c: &mut Criterion) {
     let mut rng = SmallRng::seed_from_u64(2025);
     let msg = build_message(&mut rng);
@@ -81,9 +101,52 @@ fn bench_compare_interleaved(c: &mut Criterion) {
             BatchSize::LargeInput,
         );
     });
+
+    let segment_size = MESSAGE_SIZE >> INTERLEAVING_FACTOR;
+    let segment_count = 1usize << INTERLEAVING_FACTOR;
+
+    let brakedown_params = BrakedownParams {
+        alpha: 0.238,
+        inverse_rate: 1.72,
+        cn: 9,
+        dn: 12,
+    };
+    let brakedown_code = build_brakedown_code(&mut rng, segment_size, brakedown_params);
+    c.bench_function("brakedown_interleaved_encoding", |b| {
+        b.iter_batched(
+            || msg.clone(),
+            |input| {
+                let mut out = Vec::with_capacity(brakedown_code.codeword_length() * segment_count);
+                for seg in 0..segment_count {
+                    let start = seg * segment_size;
+                    out.extend(brakedown_code.encode(&input[start..start + segment_size]));
+                }
+                out
+            },
+            BatchSize::LargeInput,
+        );
+    });
+
+    let ea_params = EaParams {
+        inverse_rate: 2,
+        prob_multiplier: 18,
+    };
+    let ea_code = build_ea_code(&mut rng, segment_size, ea_params);
+    c.bench_function("ea_interleaved_encoding", |b| {
+        b.iter_batched(
+            || msg.clone(),
+            |input| {
+                let mut out = Vec::with_capacity(ea_code.codeword_length() * segment_count);
+                for seg in 0..segment_count {
+                    let start = seg * segment_size;
+                    out.extend(ea_code.encode(&input[start..start + segment_size]));
+                }
+                out
+            },
+            BatchSize::LargeInput,
+        );
+    });
 }
-
-
 
 
 fn bench_compare(c: &mut Criterion) {
@@ -157,6 +220,34 @@ fn bench_compare(c: &mut Criterion) {
                         .encode_radix_sort_perm_with_buffer(input, &mut radix_buffers),
                 );
             },
+            BatchSize::LargeInput,
+        );
+    });
+
+    let brakedown_params = BrakedownParams {
+        alpha: 0.238,
+        inverse_rate: 1.72,
+        cn: 9,
+        dn: 12,
+    };
+    let brakedown_code = build_brakedown_code(&mut rng, MESSAGE_SIZE, brakedown_params);
+    c.bench_function("brakedown_encoding", |b| {
+        b.iter_batched(
+            || msg.clone(),
+            |input| brakedown_code.encode(&input),
+            BatchSize::LargeInput,
+        );
+    });
+
+    let ea_params = EaParams {
+        inverse_rate: 2,
+        prob_multiplier: 18,
+    };
+    let ea_code = build_ea_code(&mut rng, MESSAGE_SIZE, ea_params);
+    c.bench_function("ea_encoding", |b| {
+        b.iter_batched(
+            || msg.clone(),
+            |input| ea_code.encode(&input),
             BatchSize::LargeInput,
         );
     });

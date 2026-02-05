@@ -1,12 +1,10 @@
 use rand::Rng;
 
-mod era;
-mod identity;
+mod codes;
 mod optimized_era;
 mod reed_solomon;
 
-pub use era::EraCode;
-pub use identity::IdentityCode;
+pub use codes::{BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode, IdentityCode};
 pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
 pub use reed_solomon::ReedSolomonCode;
 
@@ -49,6 +47,35 @@ pub fn random_permutation(rng: &mut impl Rng, n: usize) -> Vec<usize> {
         perm.swap(i, j);
     }
     perm
+}
+
+/// A single non-zero entry `(row, col, val)` in a sparse matrix.
+#[derive(Debug, Clone)]
+pub struct SparseMatEntry<F> {
+    pub row: usize,
+    pub col: usize,
+    pub val: F,
+}
+
+/// Multiply a sparse matrix (stored column-major as a flat list of entries,
+/// `nnz_per_col` entries per output element) by a dense vector `x`.
+pub fn sparse_mat_vec<F: p3_field::Field>(
+    x: &[F],
+    entries: &[SparseMatEntry<F>],
+    y_len: usize,
+    nnz_per_col: usize,
+) -> Vec<F> {
+    (0..y_len)
+        .map(|i| {
+            let mut acc = F::ZERO;
+            for j in 0..nnz_per_col {
+                let e = &entries[i * nnz_per_col + j];
+                debug_assert_eq!(e.col, i);
+                acc += x[e.row] * e.val;
+            }
+            acc
+        })
+        .collect()
 }
 
 #[cfg(test)]
