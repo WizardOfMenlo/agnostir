@@ -1,5 +1,5 @@
-use bls12_381::Scalar;
-use ff::{Field, PrimeField};
+use ark_bls12_381::Fr;
+use ark_ff::FftField;
 
 use crate::ErrorCorrectingCode;
 
@@ -15,7 +15,7 @@ pub struct ReedSolomonCode {
     block_length: usize,
     /// Twiddle factors: omega^0, omega^1, ..., omega^{block_length-1}
     /// where omega is a primitive `block_length`-th root of unity.
-    twiddles: Vec<Scalar>,
+    twiddles: Vec<Fr>,
 }
 
 impl ReedSolomonCode {
@@ -34,21 +34,21 @@ impl ReedSolomonCode {
         );
         let log_n = block_length.trailing_zeros();
         assert!(
-            log_n <= Scalar::S,
+            log_n <= Fr::TWO_ADICITY,
             "block_length exceeds the 2-adicity of BLS12-381 scalar field"
         );
 
         // Compute the primitive `block_length`-th root of unity.
-        // ROOT_OF_UNITY is a primitive 2^S-th root; squaring (S - log_n) times
-        // gives a primitive 2^log_n-th root.
-        let mut omega = Scalar::ROOT_OF_UNITY;
-        for _ in 0..(Scalar::S - log_n) {
+        // TWO_ADIC_ROOT_OF_UNITY is a primitive 2^TWO_ADICITY-th root; squaring
+        // (TWO_ADICITY - log_n) times gives a primitive 2^log_n-th root.
+        let mut omega = Fr::TWO_ADIC_ROOT_OF_UNITY;
+        for _ in 0..(Fr::TWO_ADICITY - log_n) {
             omega = omega * omega;
         }
 
         // Pre-compute twiddle factors.
         let mut twiddles = Vec::with_capacity(block_length);
-        let mut w = Scalar::ONE;
+        let mut w = Fr::from(1u64);
         for _ in 0..block_length {
             twiddles.push(w);
             w = w * omega;
@@ -63,7 +63,7 @@ impl ReedSolomonCode {
 }
 
 /// In-place iterative radix-2 Cooley-Tukey NTT.
-fn ntt_in_place(a: &mut [Scalar], twiddles: &[Scalar]) {
+fn ntt_in_place(a: &mut [Fr], twiddles: &[Fr]) {
     let n = a.len();
     debug_assert!(n.is_power_of_two());
 
@@ -97,7 +97,7 @@ fn ntt_in_place(a: &mut [Scalar], twiddles: &[Scalar]) {
 }
 
 impl ErrorCorrectingCode for ReedSolomonCode {
-    type Alphabet = Scalar;
+    type Alphabet = Fr;
 
     fn message_size(&self) -> usize {
         self.message_size
@@ -110,7 +110,7 @@ impl ErrorCorrectingCode for ReedSolomonCode {
     fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
         debug_assert_eq!(msg.len(), self.message_size);
 
-        let mut coeffs = vec![Scalar::ZERO; self.block_length];
+        let mut coeffs = vec![Fr::from(0u64); self.block_length];
         coeffs[..self.message_size].copy_from_slice(msg);
 
         ntt_in_place(&mut coeffs, &self.twiddles);

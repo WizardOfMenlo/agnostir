@@ -4,10 +4,12 @@
 //! commitment scheme, distilled into a simple struct that works over any
 //! `FieldElement`.  The encoding is:
 //!
-//! 1. **Repetition base code** – each coefficient is repeated `inv_rate` times.
+//! 1. **Repetition base code** – each coefficient is repeated `rate` times.
 //! 2. **Butterfly mixing** – `log2(message_size)` rounds of parallel butterfly
 //!    passes, each using a pre-generated random table, transform the repeated
 //!    coefficients into a codeword.
+//! 3. **Bit-reversal** – a final bit-reversal permutation puts the codeword in
+//!    the canonical (Type-1) order.
 
 use rand::Rng;
 
@@ -16,8 +18,8 @@ use crate::FieldElement;
 /// Parameters that control the Basefold code construction.
 #[derive(Debug, Clone, Copy)]
 pub struct BasefoldParams {
-    /// Inverse rate: codeword_length = message_size * inv_rate.
-    pub inv_rate: usize,
+    /// log2 of the rate blow-up (codeword_length = message_size * 2^log_rate).
+    pub log_rate: usize,
 }
 
 /// Pre-computed code description for Basefold (random butterfly tables).
@@ -27,14 +29,32 @@ pub struct BasefoldCode<F> {
     message_size: usize,
     /// log2(message_size).
     log_message_size: usize,
-    /// Inverse rate (codeword_length / message_size).
-    inv_rate: usize,
-    /// Codeword length = message_size * inv_rate.
+    /// log2 of the rate blow-up.
+    log_rate: usize,
+    /// Rate = 2^log_rate.
+    rate: usize,
+    /// Codeword length = message_size * rate.
     codeword_length: usize,
     /// Butterfly table: one vector per level.
-    /// Level `i` (for i in 0..log_message_size) has `inv_rate * 2^i` entries
-    /// (one per half-chunk element at that level).
+    /// Level `i` (for i in 0..log_message_size) has `rate * 2^i` entries (one
+    /// per half-chunk element at that level).
     table: Vec<Vec<F>>,
+}
+
+/// In-place bit-reversal permutation on a slice whose length is a power of two.
+fn reverse_index_bits_in_place<T>(data: &mut [T]) {
+    let n = data.len();
+    assert!(n.is_power_of_two(), "length must be a power of two");
+    if n <= 1 {
+        return;
+    }
+    let log_n = n.trailing_zeros();
+    for i in 0..n {
+        let j = i.reverse_bits() >> (usize::BITS - log_n);
+        if i < j {
+            data.swap(i, j);
+        }
+    }
 }
 
 impl<F: FieldElement> BasefoldCode<F> {
@@ -48,15 +68,15 @@ impl<F: FieldElement> BasefoldCode<F> {
             "message_size must be a power of two"
         );
         let log_message_size = message_size.trailing_zeros() as usize;
-        let inv_rate = params.inv_rate;
-        assert!(inv_rate >= 1, "inv_rate must be at least 1");
-        let codeword_length = message_size * inv_rate;
+        let log_rate = params.log_rate;
+        let rate = 1usize << log_rate;
+        let codeword_length = message_size * rate;
 
         // Build one table level per butterfly round.
-        // Level i has size inv_rate * 2^i  (= half the chunk size at that round).
+        // Level i has size rate * 2^i  (= half the chunk size at that round).
         let mut table = Vec::with_capacity(log_message_size);
         for i in 0..log_message_size {
-            let level_size = inv_rate << i; // inv_rate * 2^i
+            let level_size = rate << i; // rate * 2^i
             let level: Vec<F> = (0..level_size)
                 .map(|_| F::random(rng))
                 .collect();
@@ -66,7 +86,8 @@ impl<F: FieldElement> BasefoldCode<F> {
         Self {
             message_size,
             log_message_size,
-            inv_rate,
+            log_rate,
+            rate,
             codeword_length,
             table,
         }
@@ -86,21 +107,22 @@ impl<F: FieldElement> BasefoldCode<F> {
 
     /// Encode a single message (segment).
     ///
-    /// 1. Repetition base code: each element repeated `inv_rate` times.
+    /// 1. Repetition base code: each element repeated `rate` times.
     /// 2. Butterfly mixing: `log_message_size` rounds.
+    /// 3. Bit-reversal permutation.
     pub fn encode(&self, msg: &[F]) -> Vec<F> {
         assert_eq!(msg.len(), self.message_size);
 
         // Step 1: repetition base code
         let mut codeword = Vec::with_capacity(self.codeword_length);
         for &coeff in msg {
-            for _ in 0..self.inv_rate {
+            for _ in 0..self.rate {
                 codeword.push(coeff);
             }
         }
 
         // Step 2: butterfly mixing passes
-        let mut chunk_size = self.inv_rate; // starts at base-code block length
+        let mut chunk_size = self.rate; // starts at base-code block length
         for i in 0..self.log_message_size {
             let level = &self.table[i];
             chunk_size <<= 1;
@@ -117,6 +139,9 @@ impl<F: FieldElement> BasefoldCode<F> {
                 }
             }
         }
+
+        // Step 3: bit-reversal permutation
+        reverse_index_bits_in_place(&mut codeword);
 
         codeword
     }

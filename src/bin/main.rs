@@ -1,12 +1,12 @@
 use std::{hint::black_box, time::Instant};
 
 use agnostir::{
-    ErrorCorrectingCode, IdentityCode, OptimizedEraCode, ReedSolomonCode, random_permutation,
+    ErrorCorrectingCode, FieldElement, IdentityCode, OptimizedEraCode, ReedSolomonCode, random_permutation,
 };
 use p3_koala_bear::KoalaBear;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-type BlsScalar = bls12_381::Scalar;
+type BlsScalar = ark_bls12_381::Fr;
 
 fn random_koala_vector(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
     (0..n).map(|_| KoalaBear::from(rng.random())).collect()
@@ -14,7 +14,7 @@ fn random_koala_vector(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
 
 fn random_bls_message(rng: &mut impl Rng, n: usize) -> Vec<BlsScalar> {
     (0..n)
-        .map(|_| BlsScalar::from(rng.random::<u64>()))
+        .map(|_| BlsScalar::random(rng))
         .collect()
 }
 

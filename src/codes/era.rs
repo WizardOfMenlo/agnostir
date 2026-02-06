@@ -70,49 +70,39 @@ where
     pub fn encode_naive(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
-        let mut repeat_vector: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut first_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_permute: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_multiply: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut second_accumulate: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut w0: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut m1: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut w1: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut m2: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        let mut w2: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
 
         let base_encoding = self.base_code.encode(msg);
 
         for i in 0..self.block_length {
-            repeat_vector[i] = base_encoding[i % self.base_code.block_length()];
+            w0[i] = base_encoding[i % self.base_code.block_length()];
         }
 
         for i in 0..self.block_length {
-            first_permute[i] = repeat_vector[self.p1_vector[i]];
-        }
-
-        for i in 0..self.block_length {
-            first_multiply[i] = first_permute[i] * self.m1_vector[i];
+            m1[i] = w0[self.p1_vector[i]] * self.m1_vector[i];
         }
 
         let mut acc = F::ZERO;
         for i in 0..self.block_length {
-            acc += first_multiply[i];
-            first_accumulate[i] = acc;
+            acc += m1[i];
+            w1[i] = acc;
         }
 
         for i in 0..self.block_length {
-            second_permute[i] = first_accumulate[self.p2_vector[i]];
-        }
-
-        for i in 0..self.block_length {
-            second_multiply[i] = second_permute[i] * self.m2_vector[i];
+            m2[i] = w1[self.p2_vector[i]] * self.m2_vector[i];
         }
 
         let mut acc = F::ZERO;
         for i in 0..self.block_length {
-            acc += second_multiply[i];
-            second_accumulate[i] = acc;
+            acc += m2[i];
+            w2[i] = acc;
         }
 
-        second_accumulate
+        w2
     }
 }
 

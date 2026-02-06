@@ -15,8 +15,8 @@ pub use reed_solomon::ReedSolomonCode;
 
 /// Minimal trait for field-like elements used by the error-correcting codes.
 ///
-/// Implemented for both `libsecp256k1::curve::Scalar` and all `p3_field::Field`
-/// types, so that the codes can be generic over both.
+/// Implemented for `ark_secp256k1::Fr`, `ark_bls12_381::Fr`, and all
+/// `p3_field::Field` types, so that the codes can be generic over both.
 pub trait FieldElement:
     Copy
     + Clone
@@ -43,24 +43,22 @@ pub trait FieldElement:
     fn is_zero(&self) -> bool;
 }
 
-// Implement FieldElement for libsecp256k1's Scalar.
-impl FieldElement for libsecp256k1::curve::Scalar {
-    const ZERO: Self = Self([0; 8]);
+// Implement FieldElement for arkworks secp256k1 scalar field.
+impl FieldElement for ark_secp256k1::Fr {
+    const ZERO: Self = <Self as ark_ff::AdditiveGroup>::ZERO;
 
     fn from_u32(val: u32) -> Self {
-        Self::from_int(val)
+        Self::from(u64::from(val))
     }
 
     fn random(rng: &mut impl Rng) -> Self {
         let mut bytes = [0u8; 32];
         rng.fill(&mut bytes);
-        let mut s = Self::default();
-        let _ = s.set_b32(&bytes);
-        s
+        <Self as ark_ff::PrimeField>::from_le_bytes_mod_order(&bytes)
     }
 
     fn is_zero(&self) -> bool {
-        Self::is_zero(self)
+        <Self as ark_ff::Zero>::is_zero(self)
     }
 }
 
@@ -81,28 +79,22 @@ impl FieldElement for p3_koala_bear::KoalaBear {
     }
 }
 
-// Implement FieldElement for bls12_381's Scalar (255-bit FFT-friendly field).
-impl FieldElement for bls12_381::Scalar {
-    const ZERO: Self = <Self as ff::Field>::ZERO;
+// Implement FieldElement for arkworks BLS12-381 scalar field.
+impl FieldElement for ark_bls12_381::Fr {
+    const ZERO: Self = <Self as ark_ff::AdditiveGroup>::ZERO;
 
     fn from_u32(val: u32) -> Self {
         Self::from(u64::from(val))
     }
 
     fn random(rng: &mut impl Rng) -> Self {
-        // bls12_381::Scalar is 255-bit; build from four random u64 limbs and
-        // use from_raw which reduces mod p.
-        let raw: [u64; 4] = [
-            rng.random(),
-            rng.random(),
-            rng.random(),
-            rng.random(),
-        ];
-        Self::from_raw(raw)
+        let mut bytes = [0u8; 32];
+        rng.fill(&mut bytes);
+        <Self as ark_ff::PrimeField>::from_le_bytes_mod_order(&bytes)
     }
 
     fn is_zero(&self) -> bool {
-        ff::Field::is_zero_vartime(self)
+        <Self as ark_ff::Zero>::is_zero(self)
     }
 }
 
@@ -179,7 +171,6 @@ pub fn sparse_mat_vec<F: FieldElement>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ff::PrimeField;
     use p3_field::PrimeCharacteristicRing;
     use p3_koala_bear::KoalaBear;
     use rand::{Rng, SeedableRng, rngs::SmallRng};
@@ -529,14 +520,16 @@ mod tests {
 
     #[test]
     fn test_reed_solomon_round_trip_with_intt() {
-        use ff::Field;
+        use ark_ff::{FftField, Field};
+
+        type Fr = ark_bls12_381::Fr;
 
         let message_size = 4;
         let block_length = 8;
         let code = ReedSolomonCode::new(message_size, block_length);
 
-        let msg: Vec<bls12_381::Scalar> = (0..message_size as u64)
-            .map(bls12_381::Scalar::from)
+        let msg: Vec<Fr> = (0..message_size as u64)
+            .map(Fr::from)
             .collect();
         let encoded = code.encode(&msg);
         assert_eq!(encoded.len(), block_length);
@@ -546,11 +539,11 @@ mod tests {
         let log_n = n.trailing_zeros();
 
         // Compute omega^{-1} for this size
-        let mut omega = bls12_381::Scalar::ROOT_OF_UNITY;
-        for _ in 0..(bls12_381::Scalar::S - log_n) {
+        let mut omega = Fr::TWO_ADIC_ROOT_OF_UNITY;
+        for _ in 0..(Fr::TWO_ADICITY - log_n) {
             omega = omega * omega;
         }
-        let omega_inv = omega.invert().unwrap();
+        let omega_inv = omega.inverse().unwrap();
 
         // Bit-reversal permutation
         let mut data = encoded;
@@ -571,7 +564,7 @@ mod tests {
             }
             let mut k = 0;
             while k < n {
-                let mut w = bls12_381::Scalar::ONE;
+                let mut w = Fr::from(1u64);
                 for j in 0..half {
                     let t = w * data[k + j + half];
                     let u = data[k + j];
@@ -584,7 +577,7 @@ mod tests {
         }
 
         // Divide by n
-        let n_inv = bls12_381::Scalar::from(n as u64).invert().unwrap();
+        let n_inv = Fr::from(n as u64).inverse().unwrap();
         for d in &mut data {
             *d = *d * n_inv;
         }
@@ -592,6 +585,6 @@ mod tests {
         // First `message_size` coefficients should match the original message
         assert_eq!(&data[..message_size], msg.as_slice());
         // Remaining coefficients (zero-padded) should be zero
-        assert!(data[message_size..].iter().all(|c| c.is_zero_vartime()));
+        assert!(data[message_size..].iter().all(|c| ark_ff::Zero::is_zero(c)));
     }
 }

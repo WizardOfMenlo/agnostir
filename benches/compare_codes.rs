@@ -4,32 +4,33 @@ use agnostir::{
     encode_interleaved, random_permutation,
 };
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
-use libsecp256k1::curve::Scalar;
+use std::hint::black_box;
+use ark_secp256k1::Fr as SecpScalar;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-type BlsScalar = bls12_381::Scalar;
+type BlsScalar = ark_bls12_381::Fr;
 
 const MESSAGE_SIZE: usize = 1 << 20;
 const RS_INV_RATE: usize = 1;
 const INTERLEAVING_FACTOR: usize = 4;
 const ERA_REPETITION: usize = 6;
 
-fn build_message(rng: &mut impl Rng) -> Vec<Scalar> {
+fn build_message(rng: &mut impl Rng) -> Vec<SecpScalar> {
     (0..MESSAGE_SIZE)
-        .map(|_| Scalar::from_int(rng.random()))
+        .map(|_| SecpScalar::random(rng))
         .collect()
 }
 
 fn build_bls_message(rng: &mut impl Rng) -> Vec<BlsScalar> {
     (0..MESSAGE_SIZE)
-        .map(|_| BlsScalar::from(rng.random::<u64>()))
+        .map(|_| BlsScalar::random(rng))
         .collect()
 }
 
 fn build_era_code(
     rng: &mut impl Rng,
     interleaving_factor: usize,
-) -> EraCode<TensorCode<BrakedownCode<Scalar>>, Scalar> {
+) -> EraCode<TensorCode<BrakedownCode<SecpScalar>>, SecpScalar> {
     let segment_msg_size = MESSAGE_SIZE >> interleaving_factor;
 
     // The tensor code's message_size is k^2 where k is the inner code's
@@ -44,17 +45,17 @@ fn build_era_code(
         dn: 11,
     };
     let inner_brakedown = BrakedownCode::new(k, inner_brakedown_params, rng);
-    let base_code: TensorCode<BrakedownCode<Scalar>> = TensorCode::new(inner_brakedown);
+    let base_code: TensorCode<BrakedownCode<SecpScalar>> = TensorCode::new(inner_brakedown);
 
     let block_length_segment = base_code.block_length() * ERA_REPETITION;
 
     let p1 = random_permutation(rng, block_length_segment);
     let p2 = random_permutation(rng, block_length_segment);
-    let m1: Vec<Scalar> = (0..block_length_segment)
-        .map(|_| Scalar::random(rng))
+    let m1: Vec<SecpScalar> = (0..block_length_segment)
+        .map(|_| SecpScalar::random(rng))
         .collect();
-    let m2: Vec<Scalar> = (0..block_length_segment)
-        .map(|_| Scalar::random(rng))
+    let m2: Vec<SecpScalar> = (0..block_length_segment)
+        .map(|_| SecpScalar::random(rng))
         .collect();
 
     EraCode::new(base_code, ERA_REPETITION, p1, p2, m1, m2)
@@ -64,7 +65,7 @@ fn build_brakedown_code(
     rng: &mut impl Rng,
     message_size: usize,
     params: BrakedownParams,
-) -> BrakedownCode<Scalar> {
+) -> BrakedownCode<SecpScalar> {
     BrakedownCode::new(message_size, params, rng)
 }
 
@@ -73,7 +74,7 @@ fn build_ea_code(
     rng: &mut impl Rng,
     message_size: usize,
     params: EaParams,
-) -> EaCode<Scalar> {
+) -> EaCode<SecpScalar> {
     EaCode::new(message_size, params, rng)
 }
 
@@ -81,7 +82,7 @@ fn build_basefold_code(
     rng: &mut impl Rng,
     message_size: usize,
     params: BasefoldParams,
-) -> BasefoldCode<Scalar> {
+) -> BasefoldCode<SecpScalar> {
     BasefoldCode::new(message_size, params, rng)
 }
 
@@ -156,7 +157,7 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     //     );
     // });
 
-    let basefold_params = BasefoldParams { inv_rate: 3 };
+    let basefold_params = BasefoldParams { log_rate: 2 };
     let basefold_code = build_basefold_code(&mut rng, segment_size, basefold_params);
     c.bench_function("basefold_interleaved_encoding", |b| {
         b.iter_batched(
@@ -227,9 +228,42 @@ fn bench_compare(c: &mut Criterion) {
     });
 }
 
+fn bench_field_ops(c: &mut Criterion) {
+    let mut rng = SmallRng::seed_from_u64(42);
+
+    let a_secp = SecpScalar::random(&mut rng);
+    let b_secp = SecpScalar::random(&mut rng);
+
+    let a_bls = BlsScalar::random(&mut rng);
+    let b_bls = BlsScalar::random(&mut rng);
+
+    c.bench_function("secp256k1_mul", |b| {
+        b.iter(|| black_box(black_box(a_secp) * black_box(b_secp)))
+    });
+
+    c.bench_function("secp256k1_add", |b| {
+        b.iter(|| black_box(black_box(a_secp) + black_box(b_secp)))
+    });
+
+    c.bench_function("bls12_381_mul", |b| {
+        b.iter(|| black_box(black_box(a_bls) * black_box(b_bls)))
+    });
+
+    c.bench_function("bls12_381_add", |b| {
+        b.iter(|| black_box(black_box(a_bls) + black_box(b_bls)))
+    });
+}
+
 criterion_group! {
     name = benches;
     config = Criterion::default().sample_size(10);
     targets = bench_compare_interleaved
 }
-criterion_main!(benches);
+
+criterion_group! {
+    name = field_ops;
+    config = Criterion::default();
+    targets = bench_field_ops
+}
+
+criterion_main!(field_ops);
