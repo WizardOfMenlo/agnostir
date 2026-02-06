@@ -1,6 +1,6 @@
 use agnostir::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
-    ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraBuffers,
+    EraCode, ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
     encode_interleaved, random_permutation,
 };
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
@@ -104,10 +104,20 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     });
 
     let era_code = build_era_code(&mut rng, INTERLEAVING_FACTOR);
+    let mut era_buf = EraBuffers::new(era_code.block_length());
     c.bench_function("era_interleaved_repetition_6", |b| {
         b.iter_batched(
             || sc_msg.clone(),
-            |input| encode_interleaved(&input, &era_code, INTERLEAVING_FACTOR),
+            |input| {
+                let segment_msg = era_code.message_size();
+                let seg_count = 1usize << INTERLEAVING_FACTOR;
+                let mut out = Vec::with_capacity(era_code.block_length() * seg_count);
+                for seg in 0..seg_count {
+                    let start = seg * segment_msg;
+                    out.extend(era_code.encode(&input[start..start + segment_msg], &mut era_buf));
+                }
+                out
+            },
             BatchSize::LargeInput,
         );
     });
@@ -176,57 +186,58 @@ fn bench_compare_interleaved(c: &mut Criterion) {
 }
 
 
-fn bench_compare(c: &mut Criterion) {
-    let mut rng = SmallRng::seed_from_u64(2025);
-    let sc_msg = build_message(&mut rng);
-    let bls_msg = build_bls_message(&mut rng);
+// fn bench_compare(c: &mut Criterion) {
+//     let mut rng = SmallRng::seed_from_u64(2025);
+//     let sc_msg = build_message(&mut rng);
+//     let bls_msg = build_bls_message(&mut rng);
 
-    let rs_code = ReedSolomonCode::new(MESSAGE_SIZE, MESSAGE_SIZE << RS_INV_RATE);
-    c.bench_function("reed_solomon_rate_half", |b| {
-        b.iter_batched(
-            || bls_msg.clone(),
-            |input| rs_code.encode(&input),
-            BatchSize::LargeInput,
-        );
-    });
+//     let rs_code = ReedSolomonCode::new(MESSAGE_SIZE, MESSAGE_SIZE << RS_INV_RATE);
+//     c.bench_function("reed_solomon_rate_half", |b| {
+//         b.iter_batched(
+//             || bls_msg.clone(),
+//             |input| rs_code.encode(&input),
+//             BatchSize::LargeInput,
+//         );
+//     });
 
-    let era_code = build_era_code(&mut rng, 0);
-    c.bench_function("era_repetition_6", |b| {
-        b.iter_batched(
-            || sc_msg.clone(),
-            |input| era_code.encode(&input),
-            BatchSize::LargeInput,
-        );
-    });
+//     let era_code = build_era_code(&mut rng, 0);
+//     let mut era_buf = EraBuffers::new(era_code.block_length());
+//     c.bench_function("era_repetition_6", |b| {
+//         b.iter_batched(
+//             || sc_msg.clone(),
+//             |input| era_code.encode(&input, &mut era_buf),
+//             BatchSize::LargeInput,
+//         );
+//     });
 
-    let brakedown_params = BrakedownParams {
-        alpha: 0.238,
-        inverse_rate: 1.72,
-        cn: 9,
-        dn: 12,
-    };
-    let brakedown_code = build_brakedown_code(&mut rng, MESSAGE_SIZE, brakedown_params);
-    c.bench_function("brakedown_encoding", |b| {
-        b.iter_batched(
-            || sc_msg.clone(),
-            |input| brakedown_code.encode(&input),
-            BatchSize::LargeInput,
-        );
-    });
+//     let brakedown_params = BrakedownParams {
+//         alpha: 0.238,
+//         inverse_rate: 1.72,
+//         cn: 9,
+//         dn: 12,
+//     };
+//     let brakedown_code = build_brakedown_code(&mut rng, MESSAGE_SIZE, brakedown_params);
+//     c.bench_function("brakedown_encoding", |b| {
+//         b.iter_batched(
+//             || sc_msg.clone(),
+//             |input| brakedown_code.encode(&input),
+//             BatchSize::LargeInput,
+//         );
+//     });
 
-    let ea_params = EaParams {
-        inverse_rate: 2,
-        prob_multiplier: 18,
-    };
-    let ea_code = build_ea_code(&mut rng, MESSAGE_SIZE, ea_params);
-    c.bench_function("ea_encoding", |b| {
-        b.iter_batched(
-            || sc_msg.clone(),
-            |input| ea_code.encode(&input),
-            BatchSize::LargeInput,
-        );
-    });
-}
+//     let ea_params = EaParams {
+//         inverse_rate: 2,
+//         prob_multiplier: 18,
+//     };
+//     let ea_code = build_ea_code(&mut rng, MESSAGE_SIZE, ea_params);
+//     c.bench_function("ea_encoding", |b| {
+//         b.iter_batched(
+//             || sc_msg.clone(),
+//             |input| ea_code.encode(&input),
+//             BatchSize::LargeInput,
+//         );
+//     });
+// }
 
 fn bench_field_ops(c: &mut Criterion) {
     let mut rng = SmallRng::seed_from_u64(42);
@@ -255,7 +266,7 @@ fn bench_field_ops(c: &mut Criterion) {
 }
 
 criterion_group! {
-    name = benches;
+    name = interleaved_encoding;
     config = Criterion::default().sample_size(10);
     targets = bench_compare_interleaved
 }
@@ -266,4 +277,4 @@ criterion_group! {
     targets = bench_field_ops
 }
 
-criterion_main!(field_ops);
+criterion_main!(interleaved_encoding);

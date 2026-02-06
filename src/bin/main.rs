@@ -1,57 +1,56 @@
-use std::{hint::black_box, time::Instant};
+use std::hint::black_box;
 
 use agnostir::{
-    ErrorCorrectingCode, FieldElement, IdentityCode, OptimizedEraCode, ReedSolomonCode, random_permutation,
+    BrakedownCode, BrakedownParams, EraBuffers, EraCode, ErrorCorrectingCode, FieldElement,
+    TensorCode, random_permutation,
 };
+use ark_secp256k1::Fr as SecpScalar;
 use p3_koala_bear::KoalaBear;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 
-type BlsScalar = ark_bls12_381::Fr;
-
-fn random_koala_vector(rng: &mut impl Rng, n: usize) -> Vec<KoalaBear> {
-    (0..n).map(|_| KoalaBear::from(rng.random())).collect()
-}
-
-fn random_bls_message(rng: &mut impl Rng, n: usize) -> Vec<BlsScalar> {
-    (0..n)
-        .map(|_| BlsScalar::random(rng))
-        .collect()
-}
-
 fn main() {
-    let message_size = 1 << 23;
-    let rs_block_size = 1 << 24;
+    let message_size = 1 << 20;
     let repetition = 6;
-    let block_length = message_size * repetition;
 
-    let mut rng = SmallRng::seed_from_u64(12345);
+    let mut rng = SmallRng::seed_from_u64(2025);
 
-    let reed_solomon_code = ReedSolomonCode::new(message_size, rs_block_size);
+    // Build ERA code with message_size = 2^20 (no interleaving split)
+    let k = (message_size as f64).sqrt() as usize;
+    assert_eq!(k * k, message_size);
 
-    let base_code: IdentityCode<KoalaBear> = IdentityCode::new(message_size);
-    let p1 = random_permutation(&mut rng, block_length);
-    let p2 = random_permutation(&mut rng, block_length);
-    let m1 = random_koala_vector(&mut rng, block_length);
-    let m2 = random_koala_vector(&mut rng, block_length);
+    let inner_brakedown = BrakedownCode::<SecpScalar>::new(
+        k,
+        BrakedownParams {
+            alpha: 0.045,
+            inverse_rate: 1.1,
+            cn: 7,
+            dn: 11,
+        },
+        &mut rng,
+    );
+    let base_code: TensorCode<BrakedownCode<SecpScalar>> = TensorCode::new(inner_brakedown);
+    let block_length_segment = base_code.block_length() * repetition;
 
-    let mut era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
-
-    let bls_msg = random_bls_message(&mut rng, message_size);
-    let koala_msg: Vec<KoalaBear> = (0..message_size)
-        .map(|_| KoalaBear::from(rng.random()))
+    let p1 = random_permutation(&mut rng, block_length_segment);
+    let p2 = random_permutation(&mut rng, block_length_segment);
+    let m1: Vec<SecpScalar> = (0..block_length_segment)
+        .map(|_| SecpScalar::random(&mut rng))
+        .collect();
+    let m2: Vec<SecpScalar> = (0..block_length_segment)
+        .map(|_| SecpScalar::random(&mut rng))
         .collect();
 
-    let rs_encode_time = Instant::now();
-    for _ in 0..100 {
-        let encoding = reed_solomon_code.encode(&bls_msg);
-        black_box(encoding);
-    }
-    dbg!(rs_encode_time.elapsed());
+    let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
+    let mut buf = EraBuffers::new(era_code.block_length());
 
-    let encode_blocked_time = Instant::now();
-    for _ in 0..100 {
-        let encoding = era_code.encode_blocked(&koala_msg);
-        black_box(encoding);
-    }
-    dbg!(encode_blocked_time.elapsed());
+    let msg: Vec<SecpScalar> = (0..message_size)
+        .map(|_| SecpScalar::random(&mut rng))
+        .collect();
+
+    eprintln!("ERA encode profile (msg_size={message_size}, block_length={block_length_segment}, repetition={repetition})");
+    eprintln!("Warm-up...");
+    black_box(era_code.encode(&msg, &mut buf));
+
+    eprintln!("Profiling...");
+    black_box(era_code.encode_profiled(&msg, &mut buf));
 }

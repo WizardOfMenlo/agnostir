@@ -1,4 +1,40 @@
+use std::time::Instant;
+
 use crate::{ErrorCorrectingCode, FieldElement};
+
+/// Pre-allocated scratch buffers for [`EraCode::encode`].
+///
+/// Create once with [`EraBuffers::new`] and reuse across repeated encode calls
+/// to avoid re-allocating each time.
+#[derive(Debug, Clone)]
+pub struct EraBuffers<F> {
+    pub w0: Vec<F>,
+    pub m1: Vec<F>,
+    pub w1: Vec<F>,
+    pub m2: Vec<F>,
+    pub w2: Vec<F>,
+}
+
+impl<F: FieldElement> EraBuffers<F> {
+    /// Allocate buffers sized for the given `block_length`.
+    #[must_use]
+    pub fn new(block_length: usize) -> Self {
+        Self {
+            w0: vec![F::ZERO; block_length],
+            m1: vec![F::ZERO; block_length],
+            w1: vec![F::ZERO; block_length],
+            m2: vec![F::ZERO; block_length],
+            w2: vec![F::ZERO; block_length],
+        }
+    }
+
+    /// Reset all buffers to zero (cheaper than re-allocating).
+    pub fn clear(&mut self) {
+        for v in [&mut self.w0, &mut self.m1, &mut self.w1, &mut self.m2, &mut self.w2] {
+            v.fill(F::ZERO);
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct EraCode<C, F> {
@@ -67,42 +103,128 @@ where
             && self.repetition_parameter * self.base_code.block_length() == self.block_length()
     }
 
-    pub fn encode_naive(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+    pub fn encode(&self, msg: &[C::Alphabet], buf: &mut EraBuffers<F>) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
-        let mut w0: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut m1: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut w1: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut m2: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
-        let mut w2: Vec<C::Alphabet> = vec![F::ZERO; self.block_length];
+        buf.clear();
 
         let base_encoding = self.base_code.encode(msg);
 
         for i in 0..self.block_length {
-            w0[i] = base_encoding[i % self.base_code.block_length()];
+            buf.w0[i] = base_encoding[i % self.base_code.block_length()];
         }
 
         for i in 0..self.block_length {
-            m1[i] = w0[self.p1_vector[i]] * self.m1_vector[i];
+            buf.m1[i] = buf.w0[self.p1_vector[i]];
+        }
+
+        for i in 0..self.block_length {
+            buf.m1[i] = buf.m1[i] * self.m1_vector[i];
         }
 
         let mut acc = F::ZERO;
         for i in 0..self.block_length {
-            acc += m1[i];
-            w1[i] = acc;
+            acc += buf.m1[i];
+            buf.w1[i] = acc;
         }
 
         for i in 0..self.block_length {
-            m2[i] = w1[self.p2_vector[i]] * self.m2_vector[i];
+            buf.m2[i] = buf.w1[self.p2_vector[i]];
+        }
+
+        for i in 0..self.block_length {
+            buf.m2[i] = buf.m2[i] * self.m2_vector[i];
         }
 
         let mut acc = F::ZERO;
         for i in 0..self.block_length {
-            acc += m2[i];
-            w2[i] = acc;
+            acc += buf.m2[i];
+            buf.w2[i] = acc;
         }
 
-        w2
+        buf.w2.clone()
+    }
+
+    /// Same as [`Self::encode`] but prints a table with per-step timings.
+    pub fn encode_profiled(&self, msg: &[C::Alphabet], buf: &mut EraBuffers<F>) -> Vec<C::Alphabet> {
+        buf.clear();
+
+        let t0 = Instant::now();
+        let base_encoding = self.base_code.encode(msg);
+        let t_base = t0.elapsed();
+
+        let t0 = Instant::now();
+        for i in 0..self.block_length {
+            buf.w0[i] = base_encoding[i % self.base_code.block_length()];
+        }
+        let t_repeat = t0.elapsed();
+
+        // Round 1: permutation (random read), then element-wise multiply
+        let t0 = Instant::now();
+        for i in 0..self.block_length {
+            buf.m1[i] = buf.w0[self.p1_vector[i]];
+        }
+        let t_perm1 = t0.elapsed();
+
+        let t0 = Instant::now();
+        for i in 0..self.block_length {
+            buf.m1[i] = buf.m1[i] * self.m1_vector[i];
+        }
+        let t_mul1 = t0.elapsed();
+
+        let t0 = Instant::now();
+        let mut acc = F::ZERO;
+        for i in 0..self.block_length {
+            acc += buf.m1[i];
+            buf.w1[i] = acc;
+        }
+        let t_prefix1 = t0.elapsed();
+
+        // Round 2: permutation (random read), then element-wise multiply
+        let t0 = Instant::now();
+        for i in 0..self.block_length {
+            buf.m2[i] = buf.w1[self.p2_vector[i]];
+        }
+        let t_perm2 = t0.elapsed();
+
+        let t0 = Instant::now();
+        for i in 0..self.block_length {
+            buf.m2[i] = buf.m2[i] * self.m2_vector[i];
+        }
+        let t_mul2 = t0.elapsed();
+
+        let t0 = Instant::now();
+        let mut acc = F::ZERO;
+        for i in 0..self.block_length {
+            acc += buf.m2[i];
+            buf.w2[i] = acc;
+        }
+        let t_prefix2 = t0.elapsed();
+
+        let total = t_base + t_repeat + t_perm1 + t_mul1 + t_prefix1 + t_perm2 + t_mul2 + t_prefix2;
+
+        eprintln!();
+        eprintln!("┌──────────────────────────┬────────────┬─────────┐");
+        eprintln!("│ Step                     │       Time │   % Tot │");
+        eprintln!("├──────────────────────────┼────────────┼─────────┤");
+        for (label, dur) in [
+            ("1. Base-code encode", t_base),
+            ("2. Repetition", t_repeat),
+            ("3a. Perm       (round 1)", t_perm1),
+            ("3b. Mul        (round 1)", t_mul1),
+            ("4.  Prefix sum (round 1)", t_prefix1),
+            ("5a. Perm       (round 2)", t_perm2),
+            ("5b. Mul        (round 2)", t_mul2),
+            ("6.  Prefix sum (round 2)", t_prefix2),
+        ] {
+            let pct = dur.as_secs_f64() / total.as_secs_f64() * 100.0;
+            eprintln!("│ {label:<24} │ {:>8.3} ms │ {:>5.1} % │", dur.as_secs_f64() * 1e3, pct);
+        }
+        eprintln!("├──────────────────────────┼────────────┼─────────┤");
+        eprintln!("│ Total                    │ {:>8.3} ms │ 100.0 % │", total.as_secs_f64() * 1e3);
+        eprintln!("└──────────────────────────┴────────────┴─────────┘");
+
+        buf.w2.clone()
     }
 }
 
@@ -122,6 +244,7 @@ where
     }
 
     fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
-        self.encode_naive(msg)
+        let mut buf = EraBuffers::new(self.block_length);
+        self.encode(msg, &mut buf)
     }
 }
