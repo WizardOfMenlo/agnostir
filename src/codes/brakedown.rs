@@ -3,10 +3,9 @@
 //! This module contains only the encoding logic from the Brakedown polynomial
 //! commitment scheme, ported to work over any `p3_field::Field`.
 
-use p3_field::PrimeField32;
 use rand::Rng;
 
-use crate::{SparseMatEntry, sparse_mat_vec};
+use crate::{ErrorCorrectingCode, FieldElement, SparseMatEntry, sparse_mat_vec};
 
 /// Parameters that control the Brakedown code construction.
 #[derive(Debug, Clone, Copy)]
@@ -50,7 +49,7 @@ fn brakedown_code_lengths(cur_msg_length: usize, params: &BrakedownParams) -> (u
     (cur_codeword_length, cur_y_length, cur_z_length, cur_v_length)
 }
 
-impl<F: PrimeField32> BrakedownCode<F> {
+impl<F: FieldElement> BrakedownCode<F> {
     /// Build a new Brakedown code for a given `message_size` and `params`.
     ///
     /// This pre-generates all the random sparse matrices needed at every
@@ -76,7 +75,7 @@ impl<F: PrimeField32> BrakedownCode<F> {
                         level_e1.push(SparseMatEntry {
                             row: rng.random_range(0..cur_msg_length),
                             col: i,
-                            val: F::from_int(rng.random::<u32>()),
+                            val: F::random(rng),
                         });
                     }
                 }
@@ -88,14 +87,14 @@ impl<F: PrimeField32> BrakedownCode<F> {
                         level_e2.push(SparseMatEntry {
                             row: rng.random_range(0..cur_z_length),
                             col: i,
-                            val: F::from_int(rng.random::<u32>()),
+                            val: F::random(rng),
                         });
                     }
                 }
             } else {
                 // Base case: just store random values
                 for _ in 0..cur_v_length {
-                    base_vals.push(F::from_int(rng.random::<u32>()));
+                    base_vals.push(F::random(rng));
                 }
             }
 
@@ -161,5 +160,21 @@ impl<F: PrimeField32> BrakedownCode<F> {
         }
 
         x
+    }
+}
+
+impl<F: FieldElement> ErrorCorrectingCode for BrakedownCode<F> {
+    type Alphabet = F;
+
+    fn message_size(&self) -> usize {
+        self.message_size
+    }
+
+    fn block_length(&self) -> usize {
+        self.codeword_length()
+    }
+
+    fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
+        self.encode(msg)
     }
 }

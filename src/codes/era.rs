@@ -1,6 +1,4 @@
-use p3_field::Field;
-
-use crate::ErrorCorrectingCode;
+use crate::{ErrorCorrectingCode, FieldElement};
 
 #[derive(Debug)]
 pub struct EraCode<C, F> {
@@ -19,7 +17,7 @@ pub struct EraCode<C, F> {
 impl<C, F> EraCode<C, F>
 where
     C: ErrorCorrectingCode<Alphabet = F>,
-    F: Field,
+    F: FieldElement,
 {
     pub fn new(
         base_code: C,
@@ -121,7 +119,7 @@ where
 impl<C, F> ErrorCorrectingCode for EraCode<C, F>
 where
     C: ErrorCorrectingCode<Alphabet = F>,
-    F: Field,
+    F: FieldElement,
 {
     type Alphabet = C::Alphabet;
 

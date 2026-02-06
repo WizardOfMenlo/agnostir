@@ -72,6 +72,9 @@ tracing = { version = "0.1.37", default-features = false, features = [
 ] }
 rand = { version = "0.9", default-features = false, features = ["small_rng"] }
 voracious_radix_sort = { version = "1.2.0", features = ["voracious_multithread"] }
+libsecp256k1 = "0.7"
+bls12_381 = "0.8"
+ff = "0.13"
 
 # Bin-only deps pulling std
 clap = { version = "4.5", features = ["derive"], optional = true }

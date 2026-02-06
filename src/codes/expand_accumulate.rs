@@ -4,10 +4,9 @@
 //! commitment scheme (sparse-matrix multiplication followed by a prefix-sum
 //! accumulation), ported to work over any `p3_field::Field`.
 
-use p3_field::PrimeField32;
 use rand::Rng;
 
-use crate::{SparseMatEntry, sparse_mat_vec};
+use crate::{FieldElement, SparseMatEntry, sparse_mat_vec};
 
 /// Parameters that control the EA code construction.
 #[derive(Debug, Clone, Copy)]
@@ -32,7 +31,7 @@ pub struct EaCode<F> {
     e: Vec<SparseMatEntry<F>>,
 }
 
-impl<F: PrimeField32> EaCode<F> {
+impl<F: FieldElement> EaCode<F> {
     /// Build a new EA code for a given `message_size` and `params`.
     pub fn new(message_size: usize, params: EaParams, rng: &mut impl Rng) -> Self {
         let codeword_length = params.inverse_rate * message_size;
@@ -45,7 +44,7 @@ impl<F: PrimeField32> EaCode<F> {
                 e.push(SparseMatEntry {
                     row: rng.random_range(0..message_size),
                     col: i,
-                    val: F::from_int(rng.random::<u32>()),
+                    val: F::random(rng),
                 });
             }
         }

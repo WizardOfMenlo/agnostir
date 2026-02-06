@@ -1,12 +1,110 @@
+use std::ops::{Add, AddAssign, Mul, MulAssign};
+
 use rand::Rng;
 
 mod codes;
 mod optimized_era;
 mod reed_solomon;
 
-pub use codes::{BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode, IdentityCode};
+pub use codes::{
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
+    IdentityCode, TensorCode,
+};
 pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
 pub use reed_solomon::ReedSolomonCode;
+
+/// Minimal trait for field-like elements used by the error-correcting codes.
+///
+/// Implemented for both `libsecp256k1::curve::Scalar` and all `p3_field::Field`
+/// types, so that the codes can be generic over both.
+pub trait FieldElement:
+    Copy
+    + Clone
+    + Default
+    + std::fmt::Debug
+    + PartialEq
+    + Send
+    + Sync
+    + Add<Output = Self>
+    + AddAssign
+    + Mul<Output = Self>
+    + MulAssign
+{
+    /// The additive identity.
+    const ZERO: Self;
+
+    /// Create a field element from a `u32`.
+    fn from_u32(val: u32) -> Self;
+
+    /// Sample a uniformly random field element.
+    fn random(rng: &mut impl Rng) -> Self;
+
+    /// Whether this element is the additive identity.
+    fn is_zero(&self) -> bool;
+}
+
+// Implement FieldElement for libsecp256k1's Scalar.
+impl FieldElement for libsecp256k1::curve::Scalar {
+    const ZERO: Self = Self([0; 8]);
+
+    fn from_u32(val: u32) -> Self {
+        Self::from_int(val)
+    }
+
+    fn random(rng: &mut impl Rng) -> Self {
+        let mut bytes = [0u8; 32];
+        rng.fill(&mut bytes);
+        let mut s = Self::default();
+        let _ = s.set_b32(&bytes);
+        s
+    }
+
+    fn is_zero(&self) -> bool {
+        Self::is_zero(self)
+    }
+}
+
+// Implement FieldElement for KoalaBear (used by OptimizedEraCode).
+impl FieldElement for p3_koala_bear::KoalaBear {
+    const ZERO: Self = <Self as p3_field::PrimeCharacteristicRing>::ZERO;
+
+    fn from_u32(val: u32) -> Self {
+        <Self as p3_field::integers::QuotientMap<u32>>::from_int(val)
+    }
+
+    fn random(rng: &mut impl Rng) -> Self {
+        Self::from_u32(rng.random::<u32>())
+    }
+
+    fn is_zero(&self) -> bool {
+        *self == Self::ZERO
+    }
+}
+
+// Implement FieldElement for bls12_381's Scalar (255-bit FFT-friendly field).
+impl FieldElement for bls12_381::Scalar {
+    const ZERO: Self = <Self as ff::Field>::ZERO;
+
+    fn from_u32(val: u32) -> Self {
+        Self::from(u64::from(val))
+    }
+
+    fn random(rng: &mut impl Rng) -> Self {
+        // bls12_381::Scalar is 255-bit; build from four random u64 limbs and
+        // use from_raw which reduces mod p.
+        let raw: [u64; 4] = [
+            rng.random(),
+            rng.random(),
+            rng.random(),
+            rng.random(),
+        ];
+        Self::from_raw(raw)
+    }
+
+    fn is_zero(&self) -> bool {
+        ff::Field::is_zero_vartime(self)
+    }
+}
 
 pub trait ErrorCorrectingCode {
     type Alphabet;
@@ -59,7 +157,7 @@ pub struct SparseMatEntry<F> {
 
 /// Multiply a sparse matrix (stored column-major as a flat list of entries,
 /// `nnz_per_col` entries per output element) by a dense vector `x`.
-pub fn sparse_mat_vec<F: p3_field::Field>(
+pub fn sparse_mat_vec<F: FieldElement>(
     x: &[F],
     entries: &[SparseMatEntry<F>],
     y_len: usize,
@@ -81,7 +179,7 @@ pub fn sparse_mat_vec<F: p3_field::Field>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use p3_dft::{Radix2DFTSmallBatch, TwoAdicSubgroupDft};
+    use ff::PrimeField;
     use p3_field::PrimeCharacteristicRing;
     use p3_koala_bear::KoalaBear;
     use rand::{Rng, SeedableRng, rngs::SmallRng};
@@ -389,7 +487,7 @@ mod tests {
         let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
 
         // All-zero message
-        let msg: Vec<KoalaBear> = vec![KoalaBear::ZERO; message_size];
+        let msg: Vec<KoalaBear> = vec![<KoalaBear as PrimeCharacteristicRing>::ZERO; message_size];
         let encoded = era_code.encode(&msg);
 
         // Encoding should complete without panic and have correct length
@@ -398,7 +496,7 @@ mod tests {
         // With zero input, after repeat we get zeros, after multiply we get zeros,
         // after accumulate we should still have all zeros
         for elem in &encoded {
-            assert_eq!(*elem, KoalaBear::ZERO);
+            assert_eq!(*elem, <KoalaBear as PrimeCharacteristicRing>::ZERO);
         }
     }
 
@@ -419,35 +517,81 @@ mod tests {
 
         let era_code = OptimizedEraCode::new(base_code, repetition, 0, p1, p2, m1, m2);
 
-        let msg: Vec<KoalaBear> = vec![KoalaBear::ZERO; message_size];
+        let msg: Vec<KoalaBear> = vec![<KoalaBear as PrimeCharacteristicRing>::ZERO; message_size];
         let encoded = era_code.encode(&msg);
 
         assert_eq!(encoded.len(), block_length);
 
         for elem in &encoded {
-            assert_eq!(*elem, KoalaBear::ZERO);
+            assert_eq!(*elem, <KoalaBear as PrimeCharacteristicRing>::ZERO);
         }
     }
 
     #[test]
-    fn test_reed_solomon_round_trip_with_idft() {
+    fn test_reed_solomon_round_trip_with_intt() {
+        use ff::Field;
+
         let message_size = 4;
         let block_length = 8;
-        let code: ReedSolomonCode<KoalaBear, _> = ReedSolomonCode::new(message_size, block_length);
+        let code = ReedSolomonCode::new(message_size, block_length);
 
-        let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
+        let msg: Vec<bls12_381::Scalar> = (0..message_size as u64)
+            .map(bls12_381::Scalar::from)
+            .collect();
         let encoded = code.encode(&msg);
-
         assert_eq!(encoded.len(), block_length);
 
-        let dft = Radix2DFTSmallBatch::<KoalaBear>::default();
-        let decoded_coeffs = dft.idft(encoded);
+        // Manual inverse NTT: same butterfly structure but with inverse twiddle factors
+        let n = block_length;
+        let log_n = n.trailing_zeros();
 
-        assert_eq!(&decoded_coeffs[..message_size], msg.as_slice());
-        assert!(
-            decoded_coeffs[message_size..]
-                .iter()
-                .all(|coeff| *coeff == KoalaBear::ZERO)
-        );
+        // Compute omega^{-1} for this size
+        let mut omega = bls12_381::Scalar::ROOT_OF_UNITY;
+        for _ in 0..(bls12_381::Scalar::S - log_n) {
+            omega = omega * omega;
+        }
+        let omega_inv = omega.invert().unwrap();
+
+        // Bit-reversal permutation
+        let mut data = encoded;
+        for i in 0..n {
+            let j = i.reverse_bits() >> (usize::BITS - log_n);
+            if i < j {
+                data.swap(i, j);
+            }
+        }
+
+        // Butterfly passes with inverse twiddles
+        for s in 0..log_n {
+            let m = 1 << (s + 1);
+            let half = m >> 1;
+            let mut wm = omega_inv;
+            for _ in 0..(log_n - s - 1) {
+                wm = wm * wm;
+            }
+            let mut k = 0;
+            while k < n {
+                let mut w = bls12_381::Scalar::ONE;
+                for j in 0..half {
+                    let t = w * data[k + j + half];
+                    let u = data[k + j];
+                    data[k + j] = u + t;
+                    data[k + j + half] = u - t;
+                    w = w * wm;
+                }
+                k += m;
+            }
+        }
+
+        // Divide by n
+        let n_inv = bls12_381::Scalar::from(n as u64).invert().unwrap();
+        for d in &mut data {
+            *d = *d * n_inv;
+        }
+
+        // First `message_size` coefficients should match the original message
+        assert_eq!(&data[..message_size], msg.as_slice());
+        // Remaining coefficients (zero-padded) should be zero
+        assert!(data[message_size..].iter().all(|c| c.is_zero_vartime()));
     }
 }
