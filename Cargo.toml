@@ -87,12 +87,12 @@ ark-ff = "0.5"
 ark-secp256k1 = "0.5"
 ark-bls12-381 = "0.5"
 ark-std = "0.5"
+blake3 = "1"
 
 [dev-dependencies]
 criterion = "0.8"
 proptest = { version = "1.0", default-features = true }
 rayon = "1.0"
-blake3 = "1"
 
 [features]
 default = ["parallel", "cli"]

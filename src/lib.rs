@@ -2,13 +2,13 @@ use std::ops::{Add, AddAssign, Mul, MulAssign};
 
 use rand::Rng;
 
-mod codes;
+mod commit;
 mod optimized_era;
 mod reed_solomon;
 
-pub use codes::{
+pub use commit::{
     BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
-    IdentityCode, TensorCode,
+    IdentityCode, TensorCode, blake3_merkle_commit,
 };
 pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
 pub use reed_solomon::ReedSolomonCode;
