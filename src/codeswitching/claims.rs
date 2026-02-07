@@ -454,6 +454,45 @@ impl<F> CodeswitchClaimsBuilder<F> {
         oracle
     }
 
+    /// Register each split chunk as its own auxiliary oracle and return refs in
+    /// chunk order.
+    pub fn register_aux_oracle_chunks(
+        &mut self,
+        label_prefix: impl AsRef<str>,
+        split_encoding: SplitEncoding<F>,
+    ) -> Vec<OracleRef> {
+        assert!(
+            !split_encoding.chunks.is_empty(),
+            "aux split encoding must contain at least one chunk"
+        );
+        assert_eq!(
+            split_encoding.chunks.len(),
+            split_encoding.codewords.len(),
+            "aux split encoding has mismatched chunk/codeword counts"
+        );
+
+        let label_prefix = label_prefix.as_ref();
+        let mut refs = Vec::with_capacity(split_encoding.chunks.len());
+
+        for (chunk_index, (chunk, codeword)) in split_encoding
+            .chunks
+            .into_iter()
+            .zip(split_encoding.codewords.into_iter())
+            .enumerate()
+        {
+            let chunk_ref = self.register_aux_oracle(
+                format!("{label_prefix}[{chunk_index}]"),
+                SplitEncoding {
+                    chunks: vec![chunk],
+                    codewords: vec![codeword],
+                },
+            );
+            refs.push(chunk_ref);
+        }
+
+        refs
+    }
+
     pub fn add_ip_claim(
         &mut self,
         label: impl Into<String>,
