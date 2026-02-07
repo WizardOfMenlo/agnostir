@@ -2,9 +2,11 @@
 //!
 //! Implemented so far:
 //! - Steps 1-6 (through the codeswitch IP claim over sampled spotchecks).
+//! - The first base-code step: `word^CodeB = Enc_CodeB(msg)` and split/encode it.
 //!
 //! Not implemented yet:
-//! - "Checking the base code encoding" and all subsequent sections.
+//! - Remaining checks inside "Checking the base code encoding".
+//! - All subsequent sections.
 
 use rand::Rng;
 
@@ -57,6 +59,11 @@ pub struct CodeswitchClaimsOutput<F> {
     /// Claims produced by `SplitClaimIP(word^ERA, v_cs, sigma_cs, ...)`.
     pub codeswitch_ip_claims: Vec<SplitIpClaim<F>>,
 
+    /// `word^CodeB = Enc_CodeB(msg)`.
+    pub word_code_b: Vec<F>,
+    /// Split output-code commitments to `word^CodeB`.
+    pub code_b_oracles: SplitEncoding<F>,
+
     /// Accumulated protocol artifacts.
     pub aux_oracles: Vec<SplitEncoding<F>>,
     pub ip_claims: Vec<SplitIpClaim<F>>,
@@ -80,8 +87,8 @@ fn pow_field<F: FieldElement>(base: F, exp: usize) -> F {
     result
 }
 
-/// Internal helper implementing steps 1-6, i.e. up to (but excluding)
-/// "Checking the base code encoding".
+/// Internal helper implementing steps 1-6 and the first base-code step:
+/// compute `word^CodeB = Enc_CodeB(msg)` and split/encode it.
 #[must_use]
 pub fn generate_codeswitch_claims_up_to_base_code_encoding<F, CEra, CBase, COut>(
     input: &CodeswitchClaimsInput<F>,
@@ -159,6 +166,15 @@ where
     // Step 6.
     let codeswitch_ip_claims = split_claim_ip(&word_era, &v_cs, sigma_cs, k_prime);
 
+    // First step inside "Checking the base code encoding".
+    let word_code_b = base_code.encode(&input.msg);
+    assert_eq!(
+        word_code_b.len(),
+        base_code.block_length(),
+        "base-code encoding length must match base-code block length"
+    );
+    let code_b_oracles = split_and_encode(&word_code_b, output_code);
+
     let mut ip_claims = Vec::with_capacity(ood_ip_claims.len() + codeswitch_ip_claims.len());
     ip_claims.extend(ood_ip_claims.iter().cloned());
     ip_claims.extend(codeswitch_ip_claims.iter().cloned());
@@ -173,7 +189,9 @@ where
         v_cs,
         sigma_cs,
         codeswitch_ip_claims,
-        aux_oracles: vec![era_oracles],
+        word_code_b,
+        code_b_oracles: code_b_oracles.clone(),
+        aux_oracles: vec![era_oracles, code_b_oracles],
         ip_claims,
         tip_claims: Vec::new(),
     }
@@ -181,11 +199,11 @@ where
 
 /// Build all claims/oracles required by the `CodeswitchClaims` subprotocol.
 ///
-/// Currently implemented through step 6.
+/// Currently implemented through step 6 and the first base-code encoding step.
 ///
 /// # Panics
-/// Always panics with `todo!` at the start of
-/// "Checking the base code encoding" (remaining steps not yet implemented).
+/// Always panics with `todo!` after base-code encoding, before the remaining
+/// checks in "Checking the base code encoding".
 #[must_use]
 pub fn generate_codeswitch_claims<F, CEra, CBase, COut>(
     input: CodeswitchClaimsInput<F>,
@@ -208,7 +226,7 @@ where
         rng,
     );
 
-    todo!("CodeswitchClaims: Checking the base code encoding and subsequent steps")
+    todo!("CodeswitchClaims: remaining checks for base-code encoding and subsequent steps")
 }
 
 #[cfg(test)]
@@ -255,6 +273,8 @@ mod tests {
 
         assert_eq!(out.word_era, vec![f(1), f(2), f(3), f(4)]);
         assert_eq!(out.era_oracles.chunk_count(), 2);
+        assert_eq!(out.word_code_b, vec![f(1), f(2), f(3), f(4)]);
+        assert_eq!(out.code_b_oracles.chunk_count(), 2);
 
         // Replay verifier randomness.
         let mut replay_rng = SmallRng::seed_from_u64(42);
@@ -284,7 +304,7 @@ mod tests {
         assert_eq!(out.ood_ip_claims.len(), 2);
         assert_eq!(out.codeswitch_ip_claims.len(), 2);
         assert_eq!(out.ip_claims.len(), 4);
-        assert_eq!(out.aux_oracles.len(), 1);
+        assert_eq!(out.aux_oracles.len(), 2);
         assert!(out.tip_claims.is_empty());
     }
 
@@ -315,7 +335,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "not yet implemented")]
-    fn test_generate_codeswitch_claims_hits_todo_after_step_6() {
+    fn test_generate_codeswitch_claims_hits_todo_after_base_code_encoding_step() {
         let era_code = IdentityCode::<KoalaBear>::new(4);
         let base_code = IdentityCode::<KoalaBear>::new(4);
         let output_code = IdentityCode::<KoalaBear>::new(2);
