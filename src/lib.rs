@@ -1,9 +1,12 @@
-use std::ops::{Add, AddAssign, Mul, MulAssign};
+use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use rand::Rng;
 
+mod algebra;
+pub mod codeswitch;
 mod commit;
 mod optimized_era;
+pub mod poly_utils;
 mod reed_solomon;
 
 pub use commit::{
@@ -27,11 +30,17 @@ pub trait FieldElement:
     + Sync
     + Add<Output = Self>
     + AddAssign
+    + Sub<Output = Self>
+    + SubAssign
     + Mul<Output = Self>
     + MulAssign
+    + Neg<Output = Self>
 {
     /// The additive identity.
     const ZERO: Self;
+
+    /// The multiplicative identity.
+    const ONE: Self;
 
     /// Create a field element from a `u32`.
     fn from_u32(val: u32) -> Self;
@@ -41,11 +50,18 @@ pub trait FieldElement:
 
     /// Whether this element is the additive identity.
     fn is_zero(&self) -> bool;
+
+    /// Multiplicative inverse, if it exists.
+    fn inverse(self) -> Option<Self>;
+
+    /// Square this element.
+    fn square(self) -> Self;
 }
 
 // Implement FieldElement for arkworks secp256k1 scalar field.
 impl FieldElement for ark_secp256k1::Fr {
     const ZERO: Self = <Self as ark_ff::AdditiveGroup>::ZERO;
+    const ONE: Self = <Self as ark_ff::Field>::ONE;
 
     fn from_u32(val: u32) -> Self {
         Self::from(u64::from(val))
@@ -60,11 +76,20 @@ impl FieldElement for ark_secp256k1::Fr {
     fn is_zero(&self) -> bool {
         <Self as ark_ff::Zero>::is_zero(self)
     }
+
+    fn inverse(self) -> Option<Self> {
+        <Self as ark_ff::Field>::inverse(&self)
+    }
+
+    fn square(self) -> Self {
+        <Self as ark_ff::Field>::square(&self)
+    }
 }
 
 // Implement FieldElement for KoalaBear (used by OptimizedEraCode).
 impl FieldElement for p3_koala_bear::KoalaBear {
     const ZERO: Self = <Self as p3_field::PrimeCharacteristicRing>::ZERO;
+    const ONE: Self = <Self as p3_field::PrimeCharacteristicRing>::ONE;
 
     fn from_u32(val: u32) -> Self {
         <Self as p3_field::integers::QuotientMap<u32>>::from_int(val)
@@ -77,11 +102,20 @@ impl FieldElement for p3_koala_bear::KoalaBear {
     fn is_zero(&self) -> bool {
         *self == Self::ZERO
     }
+
+    fn inverse(self) -> Option<Self> {
+        <Self as p3_field::Field>::try_inverse(&self)
+    }
+
+    fn square(self) -> Self {
+        <Self as p3_field::PrimeCharacteristicRing>::square(&self)
+    }
 }
 
 // Implement FieldElement for arkworks BLS12-381 scalar field.
 impl FieldElement for ark_bls12_381::Fr {
     const ZERO: Self = <Self as ark_ff::AdditiveGroup>::ZERO;
+    const ONE: Self = <Self as ark_ff::Field>::ONE;
 
     fn from_u32(val: u32) -> Self {
         Self::from(u64::from(val))
@@ -96,6 +130,14 @@ impl FieldElement for ark_bls12_381::Fr {
     fn is_zero(&self) -> bool {
         <Self as ark_ff::Zero>::is_zero(self)
     }
+
+    fn inverse(self) -> Option<Self> {
+        <Self as ark_ff::Field>::inverse(&self)
+    }
+
+    fn square(self) -> Self {
+        <Self as ark_ff::Field>::square(&self)
+    }
 }
 
 pub trait ErrorCorrectingCode {
@@ -107,11 +149,7 @@ pub trait ErrorCorrectingCode {
 }
 
 /// Encode by interleaving the message into 2^eta segments and concatenating encodings.
-pub fn encode_interleaved<C>(
-    msg: &[C::Alphabet],
-    code: &C,
-    eta: usize,
-) -> Vec<C::Alphabet>
+pub fn encode_interleaved<C>(msg: &[C::Alphabet], code: &C, eta: usize) -> Vec<C::Alphabet>
 where
     C: ErrorCorrectingCode,
 {
@@ -528,9 +566,7 @@ mod tests {
         let block_length = 8;
         let code = ReedSolomonCode::new(message_size, block_length);
 
-        let msg: Vec<Fr> = (0..message_size as u64)
-            .map(Fr::from)
-            .collect();
+        let msg: Vec<Fr> = (0..message_size as u64).map(Fr::from).collect();
         let encoded = code.encode(&msg);
         assert_eq!(encoded.len(), block_length);
 
@@ -585,6 +621,10 @@ mod tests {
         // First `message_size` coefficients should match the original message
         assert_eq!(&data[..message_size], msg.as_slice());
         // Remaining coefficients (zero-padded) should be zero
-        assert!(data[message_size..].iter().all(|c| ark_ff::Zero::is_zero(c)));
+        assert!(
+            data[message_size..]
+                .iter()
+                .all(|c| ark_ff::Zero::is_zero(c))
+        );
     }
 }

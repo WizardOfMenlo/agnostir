@@ -98,6 +98,7 @@ rayon = "1.0"
 default = ["parallel", "cli"]
 parallel = ["dep:rayon", "p3-maybe-rayon/parallel", "p3-util/parallel"]
 rayon = ["dep:rayon"]
+tracing = []
 cli = ["dep:clap", "dep:tracing-subscriber", "dep:tracing-forest", "dep:bincode", "rand/default"]
 
 [[bench]]

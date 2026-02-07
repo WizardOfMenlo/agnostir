@@ -1,13 +1,13 @@
-use voracious_radix_sort::{RadixSort, Radixable};
 use p3_field::{Field, PackedValue};
 use p3_maybe_rayon::prelude::*;
 use std::{sync::OnceLock, time::Instant};
+use voracious_radix_sort::{RadixSort, Radixable};
 
 use crate::ErrorCorrectingCode;
 
 const PERMUTE_CHUNK_SIZE: usize = 1 << 12;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OptimizedEraCode<C, F> {
     message_size: usize,
     block_length: usize,
@@ -240,7 +240,11 @@ where
         }
 
         // Encode each segment using the base code
-        let timer = if profiling { Some(Instant::now()) } else { None };
+        let timer = if profiling {
+            Some(Instant::now())
+        } else {
+            None
+        };
         for segment in 0..self.segment_count {
             let start = segment * segment_len;
             let end = start + segment_len;
@@ -254,7 +258,11 @@ where
         }
 
         // Apply first permutation (p1_vector)
-        let timer = if profiling { Some(Instant::now()) } else { None };
+        let timer = if profiling {
+            Some(Instant::now())
+        } else {
+            None
+        };
         for i in 0..self.block_length_segment {
             let base_idx = self.p1_vector[i] as usize;
             buffers.first_accumulate[i].copy_from_slice(&buffers.base_columns[base_idx]);
@@ -264,7 +272,11 @@ where
         }
 
         // Apply first accumulation
-        let timer = if profiling { Some(Instant::now()) } else { None };
+        let timer = if profiling {
+            Some(Instant::now())
+        } else {
+            None
+        };
         let mut acc = vec![F::ZERO; self.segment_count];
         for i in 0..self.block_length_segment {
             for segment in 0..self.segment_count {
@@ -277,19 +289,25 @@ where
         }
 
         // Apply second permutation (p2_vector)
-        let timer = if profiling { Some(Instant::now()) } else { None };
+        let timer = if profiling {
+            Some(Instant::now())
+        } else {
+            None
+        };
         for i in 0..self.block_length_segment {
             let src_i = self.p2_vector[i] as usize;
-            buffers
-                .second_accumulate[i]
-                .copy_from_slice(&buffers.first_accumulate[src_i]);
+            buffers.second_accumulate[i].copy_from_slice(&buffers.first_accumulate[src_i]);
         }
         if let Some(start) = timer {
             t_second_perm_mul = start.elapsed().as_secs_f64();
         }
 
         // Apply second accumulation
-        let timer = if profiling { Some(Instant::now()) } else { None };
+        let timer = if profiling {
+            Some(Instant::now())
+        } else {
+            None
+        };
         let mut acc = vec![F::ZERO; self.segment_count];
         for i in 0..self.block_length_segment {
             for segment in 0..self.segment_count {
@@ -508,12 +526,7 @@ where
             second_accumulate,
         } = buffers;
 
-        self.permute_radix_sort(
-            &base_encoding,
-            &self.p1_vector,
-            entries,
-            first_accumulate,
-        );
+        self.permute_radix_sort(&base_encoding, &self.p1_vector, entries, first_accumulate);
         Self::prefix_sum_in_place(first_accumulate, &self.m1_vector, chunk_len);
 
         self.permute_radix_sort(
@@ -535,7 +548,6 @@ where
     }
 
     fn permute_sort(&self, input: &[F], keys: &[u32]) -> Vec<F> {
-
         #[derive(Clone, Copy)]
         struct Entry<F> {
             key: u32,
