@@ -28,6 +28,13 @@ pub struct OptimizedEraCode<C, F> {
     second_accumulate: Vec<F>,
 }
 
+impl<C, F> OptimizedEraCode<C, F> {
+    #[inline]
+    pub fn base_code(&self) -> &C {
+        &self.base_code
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct EncodeNaiveBuffers<F> {
     base_columns: Vec<Vec<F>>,
