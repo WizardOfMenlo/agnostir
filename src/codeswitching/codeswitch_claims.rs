@@ -2,17 +2,13 @@ use super::claims::{
     CodeswitchClaimContext, CodeswitchClaimsBuilder, CodeswitchClaimsPlan, OracleNamespace,
     OracleRef,
 };
-use super::oracles::{CodeswitchOraclesOutput, split_and_encode};
+use super::oracles::{CodeswitchOraclesInput, build_codeswitch_oracles, split_and_encode};
 use crate::{ErrorCorrectingCode, FieldElement};
 
-/// Parameters/challenges needed to scaffold `CodeswitchClaims`.
+/// Verifier challenges and transcript values needed to scaffold
+/// `CodeswitchClaims`.
 #[derive(Debug, Clone)]
 pub struct CodeswitchClaimsParams<F> {
-    pub permutation_1: Vec<usize>,
-    pub permutation_2: Vec<usize>,
-    pub multiplier_1: Vec<F>,
-    pub multiplier_2: Vec<F>,
-
     /// Spot-check positions over `[0, n_era)`.
     pub spotcheck_indices: Vec<usize>,
     /// Claimed ERA evaluations at `spotcheck_indices`.
@@ -32,29 +28,9 @@ pub struct CodeswitchClaimsParams<F> {
 }
 
 impl<F: FieldElement> CodeswitchClaimsParams<F> {
-    pub fn n_era(&self) -> usize {
-        self.multiplier_1.len()
-    }
-
-    pub fn validate(&self) {
-        let n_era = self.n_era();
+    pub fn validate(&self, n_era: usize) {
         assert!(n_era > 0, "CodeswitchClaims requires n_era > 0");
 
-        assert_eq!(
-            self.permutation_1.len(),
-            n_era,
-            "permutation_1 length must equal n_era"
-        );
-        assert_eq!(
-            self.permutation_2.len(),
-            n_era,
-            "permutation_2 length must equal n_era"
-        );
-        assert_eq!(
-            self.multiplier_2.len(),
-            n_era,
-            "multiplier_2 length must equal n_era"
-        );
         assert_eq!(
             self.r_acc_round_1.len(),
             n_era,
@@ -75,9 +51,6 @@ impl<F: FieldElement> CodeswitchClaimsParams<F> {
             !self.spotcheck_indices.is_empty(),
             "at least one spotcheck index is required"
         );
-
-        assert_is_permutation(&self.permutation_1, n_era, "permutation_1");
-        assert_is_permutation(&self.permutation_2, n_era, "permutation_2");
 
         for &index in &self.spotcheck_indices {
             assert!(
@@ -147,7 +120,7 @@ pub fn generate_codeswitch_claims<F, CBase, COut>(
     msg: &[F],
     base_code: &CBase,
     output_code: &COut,
-    index_oracles: &CodeswitchOraclesOutput<F>,
+    index_input: &CodeswitchOraclesInput<F>,
     params: &CodeswitchClaimsParams<F>,
 ) -> CodeswitchClaimsArtifacts<F>
 where
@@ -155,8 +128,6 @@ where
     CBase: ErrorCorrectingCode<Alphabet = F>,
     COut: ErrorCorrectingCode<Alphabet = F>,
 {
-    params.validate();
-
     let k_prime = output_code.message_size();
     assert!(k_prime > 0, "output code message_size must be > 0");
     assert_eq!(
@@ -171,7 +142,11 @@ where
         "CodeswitchClaims requires at least one msg chunk"
     );
 
-    let n_era = params.n_era();
+    let index_oracles = build_codeswitch_oracles(index_input, output_code);
+
+    let n_era = index_input.n_era;
+    params.validate(n_era);
+
     assert_eq!(
         n_era % k_prime,
         0,
@@ -179,7 +154,7 @@ where
     );
     let l_era = n_era / k_prime;
 
-    let context = CodeswitchClaimContext::from_codeswitch_oracles(l_msg, index_oracles);
+    let context = CodeswitchClaimContext::from_codeswitch_oracles(l_msg, &index_oracles);
     assert_eq!(
         context.index_oracles.identity, l_era,
         "index identity chunk count must match l_era"
@@ -209,12 +184,12 @@ where
     assert!(!base.is_empty(), "base code output must be non-empty");
 
     let repeat_round_1 = repeat_to_length(&base, n_era);
-    let perm_round_1 = apply_permutation(&repeat_round_1, &params.permutation_1);
-    let mult_round_1 = hadamard_product(&perm_round_1, &params.multiplier_1);
+    let perm_round_1 = apply_permutation(&repeat_round_1, &index_input.permutation_1);
+    let mult_round_1 = hadamard_product(&perm_round_1, &index_input.multiplier_1);
     let acc_round_1 = prefix_sum(&mult_round_1);
 
-    let perm_round_2 = apply_permutation(&acc_round_1, &params.permutation_2);
-    let mult_round_2 = hadamard_product(&perm_round_2, &params.multiplier_2);
+    let perm_round_2 = apply_permutation(&acc_round_1, &index_input.permutation_2);
+    let mult_round_2 = hadamard_product(&perm_round_2, &index_input.multiplier_2);
     let era = prefix_sum(&mult_round_2);
 
     // Spot-check consistency against the claimed ERA evaluations.
@@ -272,14 +247,14 @@ where
     trace.push("SplitClaimTIP/IP: first multiply step".to_string());
     let r_mult_round_1 = geometric_vector(params.r_mult_round_1, n_era);
     let sigma_mult_round_1 =
-        triple_product_full(&perm_round_1, &params.multiplier_1, &r_mult_round_1);
+        triple_product_full(&perm_round_1, &index_input.multiplier_1, &r_mult_round_1);
     let index_multiplier_1_refs =
         oracle_refs_for_namespace(OracleNamespace::IndexMultiplier1, l_era);
 
     let _tip_chunk_sigmas_round_1 = builder.split_claim_tip(
         "codeswitch.round1.multiply.tip",
         &perm_round_1,
-        &params.multiplier_1,
+        &index_input.multiplier_1,
         &r_mult_round_1,
         sigma_mult_round_1,
         &perm_round_1_refs,
@@ -319,14 +294,14 @@ where
     trace.push("SplitClaimTIP/IP: second multiply step".to_string());
     let r_mult_round_2 = geometric_vector(params.r_mult_round_2, n_era);
     let sigma_mult_round_2 =
-        triple_product_full(&perm_round_2, &params.multiplier_2, &r_mult_round_2);
+        triple_product_full(&perm_round_2, &index_input.multiplier_2, &r_mult_round_2);
     let index_multiplier_2_refs =
         oracle_refs_for_namespace(OracleNamespace::IndexMultiplier2, l_era);
 
     let _tip_chunk_sigmas_round_2 = builder.split_claim_tip(
         "codeswitch.round2.multiply.tip",
         &perm_round_2,
-        &params.multiplier_2,
+        &index_input.multiplier_2,
         &r_mult_round_2,
         sigma_mult_round_2,
         &perm_round_2_refs,
@@ -390,17 +365,6 @@ where
         oracles,
         wires,
         trace,
-    }
-}
-
-fn assert_is_permutation(perm: &[usize], n: usize, label: &str) {
-    assert_eq!(perm.len(), n, "{label} length must be exactly n_era");
-
-    let mut seen = vec![false; n];
-    for &value in perm {
-        assert!(value < n, "{label} contains out-of-range value {value}");
-        assert!(!seen[value], "{label} contains duplicate value {value}");
-        seen[value] = true;
     }
 }
 
@@ -564,7 +528,7 @@ mod tests {
     use p3_koala_bear::KoalaBear;
 
     use super::*;
-    use crate::codeswitching::oracles::{CodeswitchOraclesInput, build_codeswitch_oracles};
+    use crate::codeswitching::oracles::CodeswitchOraclesInput;
     use crate::{FieldElement, IdentityCode};
 
     fn f(x: u32) -> KoalaBear {
@@ -601,10 +565,6 @@ mod tests {
         let spotcheck_evals = spotcheck_indices.iter().map(|&i| era[i]).collect();
 
         let params = CodeswitchClaimsParams {
-            permutation_1: permutation_1.clone(),
-            permutation_2: permutation_2.clone(),
-            multiplier_1: multiplier_1.clone(),
-            multiplier_2: multiplier_2.clone(),
             spotcheck_indices,
             spotcheck_evals,
             beta_codeswitch: f(7),
@@ -622,10 +582,9 @@ mod tests {
             multiplier_1,
             multiplier_2,
         };
-        let index_oracles = build_codeswitch_oracles(&index_input, &output_code);
 
         let artifacts =
-            generate_codeswitch_claims(&msg, &base_code, &output_code, &index_oracles, &params);
+            generate_codeswitch_claims(&msg, &base_code, &output_code, &index_input, &params);
 
         let l_era = n_era / output_code.message_size();
 
@@ -670,10 +629,6 @@ mod tests {
         let multiplier_2: Vec<KoalaBear> = (100..100 + n_era as u32).map(f).collect();
 
         let params = CodeswitchClaimsParams {
-            permutation_1: permutation_1.clone(),
-            permutation_2: permutation_2.clone(),
-            multiplier_1: multiplier_1.clone(),
-            multiplier_2: multiplier_2.clone(),
             spotcheck_indices: vec![0, 7],
             spotcheck_evals: vec![f(1), f(2)], // wrong on purpose
             beta_codeswitch: f(7),
@@ -691,8 +646,7 @@ mod tests {
             multiplier_1,
             multiplier_2,
         };
-        let index_oracles = build_codeswitch_oracles(&index_input, &output_code);
 
-        let _ = generate_codeswitch_claims(&msg, &base_code, &output_code, &index_oracles, &params);
+        let _ = generate_codeswitch_claims(&msg, &base_code, &output_code, &index_input, &params);
     }
 }
