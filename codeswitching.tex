@@ -1,0 +1,261 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\doclearpage
+\section{Our reduction}
+\label{sec:codeswitching}
+
+In this section, we present our main IOR for reducing message length. Let
+\begin{itemize}
+    \item $\CodeB$ be a base code with parameters $\CodeParams{\Field}{k}{n_{\CodeB}}{\FracDistanceOf{\CodeB}}$,
+    \item $\ERA \define \ERA(\Field, \CodeB, r, \pi_1, \pi_2, \vB_1, \vB_2)$ be an Encode-Repeat-Accumulate code with parameters $\CodeParams{\Field}{k}{n_{\ERA}}{\FracDistanceOf{\ERA}}$, and
+    \item $\Code'$ be an output code with parameters $\CodeParams{\Field}{k'}{n_{\Code'}}{\FracDistanceOf{\Code'}}$,
+\end{itemize}
+such that $k = \ell_{\msg} \cdot k'$, $n_{\CodeB} = \ell_{\CodeB} \cdot k'$, and $n_{\ERA} = \ell_{\ERA} \cdot k'$, for integers $\ell_{\msg}, \ell_{\CodeB}, \ell_{\ERA} > 1$.
+We present an IOR from $\MEPRelation^{(\ERA, \distIndex)}$ to $\MEPRelation^{(\CodeC', \distIndex')}$ with the following efficiency properties \tushar{todo}.
+\tushar{Let's drop the P, and just call it ME.}
+
+
+\tushar{Important todo: change vector of oracles notation.}
+
+
+
+
+\input{figures/reduce-ior.tex}
+
+\tushar{Things left as todos:
+\begin{enumerate}
+    \item Optimize sending all the claimed evals.
+    \item Can do multiple ood point per thing. Also should every piece share the same ood point?
+\end{enumerate}
+}
+
+\tushar{
+   To present the optimizations, essentially say in line blah 
+}
+
+\subsection{Some useful shorthands}
+\label{sec:shorthands}
+
+Before we present the subprotocol $\CodeswitchClaims$, we introduce some useful shorthands for ideas that were already used implicitly in \cref{alg:reduce-ior}.
+
+Notice that in our protocols, we commit to long vectors of the form $\msg \in \Field^{\len}$, with $\len > k'$ by defining $\ell_\len \define \len/ k'$, parsing $\msg$ as $\msg = (\msg_1, \dotsc, \msg_{\ell_\len})$ where each $\msg_i \in \Field^{k'}$, and sending oracles to the encodings $\word_i \define \Enc{\CodeC'}(\msg_i)$ for each $i \in [\ell_\len]$.
+This is done so that we can only consider a single output code $\CodeC'$ throughout the protocol. 
+We use the following shorthand $\SplitAndEncode$ for this.
+
+\begin{tcolorbox}[breakable, enhanced, colback=white, boxrule=0.65pt]
+    $\SplitAndEncode(\msg, \ell_{\len}):$
+    \begin{enumerate}[nolistsep]
+        \item Parse $\msg = (\msg_1, \dotsc, \msg_{\ell_{\len}})$.
+        \item For each $i \in [\ell_{\len}]$, compute $\word_i \define \Enc{\CodeC'}(\msg_i)$.
+        \item Output $([\msg_i]_{i \in [\ell_{\len}]}, [\word_i]_{i \in [\ell_{\len}]})$.
+    \end{enumerate}
+\end{tcolorbox}
+
+However, we are still interested in making claims like $\InnerProduct{\msg}{\vB} = \sigma$, or even $\TripleProduct{\msg}{\msg'}{\vB} = \sigma$ for $\vB \in \Field^{\len}$ and $\sigma \in \Field$, and `split-committed' vectors $\msg, \msg' \in \Field^\len$. To do this, we define the shorthand interactions $\SplitClaimIP(\msg, \vB, \sigma, \VectorOf{\word}{\ell_{\len}})$ and $\SplitClaimTIP(\msg, \msg', \vB, \sigma, \VectorOf{\word}{\ell_{\len}}, \VectorOf{\word'}{\ell_{\len}})$ respectively.
+We describe the more involved $\SplitClaimTIP(\msg, \msg', \vB, \sigma; \VectorOf{\word}{\ell_{\len}}, \VectorOf{\word'}{\ell_{\len}})$ below, with the simpler $\SplitClaimIP(\msg, \vB, \sigma; \VectorOf{\word}{\ell_{\len}})$ being defined analogously.
+\begin{tcolorbox}[breakable, enhanced, colback=white, boxrule=0.65pt]
+    $\SplitClaimTIP(\msg, \msg', \vB, \sigma, \VectorOf{\word}{\ell_{\len}}, \VectorOf{\word'}{\ell_{\len}}):$
+    \begin{enumerate}[nolistsep]
+        \item Parse $\msg = (\msg_1, \dotsc, \msg_{\ell_{\len}})$ and $\msg' = (\msg'_1, \dotsc, \msg'_{\ell_{\len}})$ where each $\msg_i, \msg'_i \in \Field^{k'}$.
+        \item Parse $\vB = (\vB_1, \dotsc, \vB_{\ell_{\len}})$ where each $\vB_i \in \Field^{k'}$.
+        \item For each $i \in [\ell_{\len}]$, $\Prover$ computes $\sigma_i \define \InnerProduct{\msg_i}{\msg'_i, \vB_i}$ and sends it to $\Verifier$.
+        \item $\Verifier$ checks that $\sum_{i=1}^{\ell_{\len}} \sigma_i = \sigma$.
+        \item For each $i \in [\ell_{\len}]$, $\Prover$ and $\Verifier$ set up the claim $((\vB_i, \sigma_i), (\word_i, \word'_i), (\msg_i, \msg'_i)) \in \TIP^{(\CodeC', \distIndex')}$.
+    \end{enumerate}
+\end{tcolorbox}
+
+
+\subsection{Generating the codeswitch oracles and claims}
+\label{sec:codeswitch-claims}
+
+\tushar{Mention the output proximity parameter as being fixed here.}
+
+We present the helper function $\CodeswitchOracles$ in \cref{fig:codeswitch-oracles} and the subprotocol $\CodeswitchClaims$ in \cref{fig:codeswitch-claims}, using the foregoing shorthands.
+Readers familiar with the codeswitch of \cite{BrehmCFRRZ24} can directly read the protocol, but we provide some intuition after the protocol description for readers unfamiliar with prior work.
+\tushar{Maybe no exposition for the submission, just refer the reader to prior work.}
+
+In the interest of clarity, we will not be explicit about $\numIP, \numTIP, \ell_{\aux}$, or about denoting the auxilliary oracles $\VectorOracleOf{\word^{\aux}}{\ell_{\aux}}$ in the protocol description, but will instead analyze and count these oracles afterwards, in \XXX.
+
+\input{figures/CodeswitchOracles.tex}
+
+\input{figures/CodeswitchClaims.tex}
+
+\subsubsection{Optimizations}
+
+In the construction of the $\Reduce$ IOR presented in \cref{alg:reduce-ior} (including the subprotocol $\CodeswitchClaims$), we opted to prioritize clarity of exposition over optimizing the efficiency of the IOR.
+We detail some optimizations that improve the efficiency of the IOR below:
+\begin{itemize}
+    \item \textbf{A better  way to split claims. } 
+    As written, each invocation of $\SplitClaimIP(\msg, \vB, \sigma, \VectorOracleOf{\word}{\ell_{\len}})$, for a given $\msg = (\msg_1, \dotsc, \msg_{\ell_{\len}}), \vB = (\vB_1, \dotsc, \vB_{\ell_{\len}}) \in \Field^{\ell_{\len} \cdot k'}$, in $\CodeswitchClaims$ requires the prover to send $[\sigma_i \define \InnerProduct{\msg_i}{\vB_i}]_{i \in [\ell_{\len}]}$ to $\Verifier$.
+    A similar concern holds for the invocations of $\SplitClaimTIP$ as well.
+    This leads to an additional overhead of $\ell_{\len}$ field elements sent by the prover for each such claim, which turns out to be quite significant overall.
+
+    Instead, we can use an additional sumcheck claim to avoid the overhead of sending all the $\sigma_i$'s.
+    We explain in more detail using the notation from \cref{alg:reduce-ior}.
+    In \cref{item:IOR-codeswitch-claims}, instead of $\Prover$ sending $\sigma^{\IP}_i$ and $\sigma^{\TIP}_i$, for each $i \in [\numIP]$, we can have $\Prover$ commit to the vector
+    \[
+        \mB^{\sigma} \define (\sigma^{\IP}_1, \dotsc, \sigma^{\IP}_{\numIP}, \sigma^{\TIP}_1, \dotsc, \sigma^{\TIP}_{\numTIP}, 0^{k' - \numIP - \numTIP}) \in \Field^{k'} \enspace,
+    \]
+    by computing $\word^{\IP} \define \Enc{\CodeC'}(\mB^{\IP})$ and sending $\OracleOf{\word^{\IP}}$ to $\Verifier$.\footnote{We make the very reasonable assumption that $\numIP + \numTIP < k'$ here, but if this does not hold, $\Prover$ can simply use $\SplitAndEncode$ instead.}
+    Then, the sumcheck polynomial $f(\XB)$ in \cref{item:IOR-sumcheck-polynomial} is modified to $f'(\XB) \define f(\XB) + \mH^{\sigma}(\XB) \cdot \vH^{\sigma}(\XB)$, where
+    \[
+        \vB^{\sigma} \define (\beta^{2\ell_{\msg} + 1}, \dotsc, \beta^{2\ell_{\msg} + \numIP}, \beta^{2\ell_{\msg} + \numIP + 1}, \dotsc, \beta^{2\ell_{\msg} + \numIP + \numTIP}, 0^{k' - \numIP - \numTIP}) \enspace .
+    \]
+    The sumcheck value $\sigma$ in \cref{item:IOR-sumcheck-value} is also modified to 
+    \[
+        \sigma' \define \sigma - \left ( \sum_{i=1}^{\numIP} \beta^{2\ell_{\msg} + i} \cdot \sigma^{\IP}_i + \sum_{i=1}^{\numTIP} \beta^{2\ell_{\msg} + \numIP + i} \cdot \sigma^{\TIP}_i \right ) \enspace.
+    \]
+    $\Prover$ and $\Verifier$ then run the sumcheck protocol for the claim $\sum_{\bB \in \Field^{\log k'}} f'(\bB) = \sigma'$ instead of $\sum_{\bB \in \Field^{\log k'}} f(\bB) = \sigma$, and proceed to batch the resulting evaluation claims as before. 
+    The optimized protocol remains sound because the fact that $\sum_{\bB \in \Field^{\log k'}} f'(\bB) = \sigma'$ implies that there exist values $\sigma^{\IP}_i, \sigma^{\TIP}_i$ for each $i \in [\numIP]$ and $i \in [\numTIP]$ respectively such that $\sum_{\bB \in \Field^{\log k'}} f(\bB) = \sigma$.
+
+    \item \textbf{Stacking the oracles. } 
+    Another common IOPP optimization that can be implemented is to `stack' all the oracles sent by $\Prover$ to $\Verifier$, as far as possible.
+    The motivation for this is as follows. A query to the output oracle $\OracleOf{\word'}$ of $\Reduce$ at index $\alpha$ is simulated by querying its component oracles
+    \[
+        \VectorOracleOf{\word}{\ell_{\msg}}, \VectorOracleOf{\word^{\IP}}{\numIP}, (\OracleOf{\word^{\TIP}_{i,1}})_{i \in [\numTIP]} \text{ and } (\OracleOf{\word^{\TIP}_{i,1}})_{i \in [\numTIP]}
+    \] 
+    at the same index $\alpha$, and performing the appropriate linear combination of the obtained values.
+    Therefore, instead of sending these oracles separately as vectors in $\Field^{n_{\Code'}}$, $\Prover$ can instead send a single `stacked' oracle $\OracleOf{\word^{\stacked}} \in (\Field^{\ell_{\msg} + \numIP + 2\numTIP})^{n_{\Code'}}$. This can be interpreted as increasing the alphabet size of the IOR, so that in a single query, $\Verifier$ can obtain the values of all the component oracles at the queried index.
+
+    This is not just a syntactic optimization, but also translates to a significant improvement in the proof size of the SNARK obtained by applying the BCS transform to our IOPP.
+    This is because the Merkle commitment opening proofs for oracles are now batched together, whereas before, we would have to send separate opening proofs for each of the Merkle commitments to the component oracles.
+
+    There are two subtleties left to discuss. 
+    On the positive side: since the component oracles all come from the set of oracles $\left ( \VectorOracleOf{\word^{\ind}}{\ell_{\ind}}, \VectorOracleOf{\word}{\ell_{\msg}}, \VectorOracleOf{\word^{\aux}}{\ell_{\aux}} \right )$, the stacked oracle will only actually have a height of at most $\ell_{\ind} + \ell_{\msg} + \ell_{\aux}$, which is typically much smaller than $\ell_{\msg} + \numIP + 2 \cdot \numTIP$.
+
+    On the negative side: the soundness of certain parts of $\CodeswitchClaims$ relies on the fact that certain oracles are committed to before the verifier sends a random challenge.
+    In particular, $\Prover$ must have committed to $\VectorOracleOf{\oracle^{\rep}}{\ell_{\ERA}}$ and $\VectorOracleOf{\oracle^{\perm}}{\ell_{\ERA}}$ before receiving the challenges $\alpha, \beta \sample \Field$ from $\Verifier$ in \cref{item:codeswitch-claims-permutation-challenge}. Only then can $\Prover$ compute and send the `permutation witness' oracles to $\Verifier$.
+    This is not a problem however, since $\Prover$ can simply send two stacked oracles, one before these challenges are obtained, and on after.
+    The stacked oracle sent after the challenges will contain the `permutation witness' oracles, namely
+    \[
+        \VectorOracleOf{\word^{\aB_{1}}}{\ell_{\ERA}}, \VectorOracleOf{\word^{\aB_{2}}}{\ell_{\ERA}}, \VectorOracleOf{\word^{\bB_{1}}}{\ell_{\ERA}} \text{ and } \VectorOracleOf{\word^{\bB_{2}}}{\ell_{\ERA}} \enspace,
+    \] 
+    and the stacked oracle sent before will contain all the other oracles.
+    \tushar{I will come back and see if such a requirement shows up elsewhere.}
+\end{itemize}
+
+
+% \begin{remark}[reduction to product is a simplification]
+% \label{rem:product-relation}
+% The reduction in \cref{alg:mep-to-cip} is actually not to the product of $\CIPRelation$ and $\MEPRelation$, and is in fact to a subset which enforces that the witness $\msg$ is the same in both relations, and $\word'$ (the encoding of $\msg$ under $\CodeC'$) is also shared.
+% The exposition is simplified by stating it as a reduction to the product, but the actual reduction is to the aforementioned subset relation.
+% \end{remark}
+
+% \begin{lemma}
+% \label{lem:mep-to-cip}
+% There exists an IOR (see \Cref{alg:mep-to-cip}) from $\MEPRelation^{(\CodeC, \distIndex, 1)}$ to $\CIPRelation^{(\CodeC, \CodeC', \distIndex', \numSpotChecks)} \times \MEPRelation^{(\CodeC', \distIndex' + \distBatchLoss, 1)}$ with the following efficiency measures
+% \IOREfficiencyTable
+% {$1$}
+% {$O\paren*{\frac{-\SecParam}
+% {\log (1-\distIndex)}}$}
+% {$O\paren*{\frac{-\SecParam}{\log (1-\distIndex)}}$}
+% {$\BlockLength$}
+% {$O(\EncodeTime{\CodeC'})$}
+% {$O\paren*{\frac{-\SecParam}{\log (1-\distIndex)}}$}
+% Furthermore, there exists a vertical-predicate $\PredicateVert$ such that the IOR is $(\ArityParam \define (1), \PredicateVert, \PredicateHorizTrivial)$-\SoundnessAcronym{}.
+% \end{lemma}
+% \begin{proof}
+%     The efficiency parameters follow by inspection.
+%     % \pratyush{Double check, is this true? In particular the message size and verifier time.}
+
+%     \parhead{Vertical predicate}
+%     To show that the IOR is \SoundnessAcronym{}, we first define a vertical predicate $\PredicateVert$.
+%     Let $x_1 \define \OracleOf{\word'}$ be the prover's message in the first round, and let $y_1 \define (\alpha_1, \dotsc, \alpha_{\numSpotChecks})$ be the verifier's random challenges in the first round.
+%     Then $\SinglePredicateVert(\Index, \Instance, \InstanceOracle, x_1, y_1) = 0$ if and only if there exists $\msg_{\mathsf{lucky}} \in \Field^{\MesLength}$ such that $\FracDist(\word, \Enc{\CodeC}(\msg_{\mathsf{lucky}})) > \distIndex$ and yet it holds that
+%     \begin{itemize}[nolistsep]
+%         \item $\FracDist(\word', \Enc{\CodeC'}(\msg_{\mathsf{lucky}})) \leq \distIndex'$, and 
+%         \item $\GenMatC[\alpha_i] \cdot \msg_{\mathsf{lucky}} = \word[\alpha_i]$ for all $i \in [\numSpotChecks]$.
+%     \end{itemize}
+%     This corresponds to the event where a malicious prover gets ``lucky'' due to existence of such a witness $\msg_{\mathsf{lucky}}$.
+%     Clearly, for any $x_1 \in \Field^{\BlockLength'}$, we have
+%     \begin{align*}
+%         \Pr_{y_1 \sample [\BlockLength]^{\numSpotChecks}}\brac*{\SinglePredicateVert(\Index, \Instance, \InstanceOracle, x_1, y_1) = 0} &= \Pr_{\alpha_1, \dotsc, \alpha_{\numSpotChecks} \sample [\BlockLength]}\brac*{
+%             \begin{gathered}
+%                 \exists\ \msg_{\mathsf{lucky}} \text{ such that }\\
+%                 \forall i \in [\numSpotChecks], \GenMatC[\alpha_i] \cdot \msg_{\mathsf{lucky}} = \word[\alpha_i]  \\
+%                 \text{and} \\
+%                 \FracDist(\word, \Enc{\CodeC}(\msg_{\mathsf{lucky}})) > \distIndex \\
+%                 \text{and} \\
+%                 \FracDist(\word', \Enc{\CodeC'}(\msg_{\mathsf{lucky}})) \leq \distIndex'
+%             \end{gathered}
+%         }\\
+%         &= \Pr_{\alpha_1, \dotsc, \alpha_{\numSpotChecks} \sample [\BlockLength]}\brac*{
+%         \begin{aligned}
+%             \forall i \in [\numSpotChecks],  \GenMatC[\alpha_i] \cdot \Enc{\CodeC'}^{-1}(\word') = \word[\alpha_i]  \\
+%             \FracDist(\word, \Enc{\CodeC}(\Enc{\CodeC'}^{-1}(\word'))) > \distIndex \\
+%         \end{aligned}
+%         }\\
+%         &\leq \paren*{1 - \distIndex}^{\numSpotChecks} = \paren*{\paren*{1 - \distIndex}^{\ceil*{\frac{-\SecParam}{\log (1 - \distIndex)}}}} \leq 2^{-\SecParam} \enspace.
+%     \end{align*}
+%     where the second equality follows because $\distIndex'$ is less than the unique decoding radius of $\CodeC'$, and therefore, there exists only one message $\Enc{\CodeC'}^{-1}(\word')$ that can satisfy the third condition.
+
+%     \parhead{Tree extractor}
+%     We now construct a tree extractor that can extract a witness $\msg$ from a $(\ArityParam, \PredicateVert, \PredicateHorizTrivial, \Index, \Instance, \InstanceOracle)$-constrained transcript tree.
+%     Consider a leaf of this tree with the following label:
+%     \begin{displaymath}
+%         \Index' \define (\Index_{\CIP}, \Index_{\MEP}) \quad;\quad 
+%         \Instance' \define (\Instance_{\CIP}, \Instance_{\MEP}) \quad;\quad
+%         \InstanceOracle' \define (\word, \word') \quad;\quad
+%         \Witness' \define (\msg)
+%     \end{displaymath}
+%     Given as input this tree, the extractor simply outputs $\msg$.
+%     To show correctness, we must prove that $\mH(\EvalPoint) = \EvalValue$ and $\FracDist(\word, \Enc{\CodeC}(\msg)) \leq \distIndex$.
+%     \begin{itemize}[nolistsep]
+%         \item Since $(\Index', \Instance', \InstanceOracle', \Witness') \in \Relaxed\Relation'$, it must be the case that $\mH(\EvalPoint) = \EvalValue$.
+%         \item Since the verifier must have an accepting view of this leaf (by definition of the constrained transcript tree), it must also be the case that $\GenMatC[\alpha_i] \cdot \msg = \word[\alpha_i]$ for all $i \in [\numSpotChecks]$.
+%         Therefore, we must have $\FracDist(\word, \Enc{\CodeC}(\msg)) \leq \distIndex$, since the predicate $\SinglePredicateVert$ is not satisfied if $\FracDist(\word, \Enc{\CodeC}(\msg)) > \distIndex$ and $\GenMatC[\alpha_i] \cdot \msg = \word[\alpha_i]$ for all $i \in [\numSpotChecks]$.
+%     \end{itemize}
+%     Therefore, $\msg$ is a valid witness for $\MEPRelation^{(\CodeC, \distIndex, 1)}$.
+
+%     We note that the definition of our vertical predicate relies on the existence of the lucky message $\msg_{\mathsf{lucky}}$. Finding this message may not be possible in polynomial time, and therefore the vertical predicate might not be efficiently computable.
+%     However, this is not a problem as the extractor never has to compute the vertical predicate (see \cref{rem:vertical-predicate}).
+% \end{proof}
+
+
+% \subsection{Inner product IOR}
+% \label{sec:cip-to-sep-ior}
+
+% In \cref{sec:tech-tensor-codeswitch}, we considered tensor codes $\CodeC = \TensorCode{\CodeB}{2}$ and described the IOR from an instance of $\CIP^{(\CodeC, \CodeC', \distIndex, \numSpotChecks)}$ to $\SEP$ and $\MEP$ instances for such codes.
+% We generalize the techniques presented in \cref{sec:tech-tensor-codeswitch} to $\CodeC = \TensorCode{\CodeB}{t}$ for any constant $t \geq 2$.
+
+% We first prove the following structural lemma about the generator matrix of tensor codes:
+% \begin{lemma}
+% \label{lem:tech-tensor-code-structure}
+%     Consider a tensor code $\CodeC = \TensorCode{\CodeB}{t}$ with generator matrix $\GenMatC = \bigotimes_{i=1}^{t} \GenMatB$.
+%     Say $\hat{c} : \Field^{\log \BlockLength + \log \MesLength} \to \Field$ is the unique multilinear polynomial such that $\hat{c}(\BinaryRep{x}, \BinaryRep{y}) = \GenMatC[x][y]$ for all $x \in [\BlockLength]_0$ and $y \in [\MesLength]_0$.
+%     Also $\bH : \Field^{(\log \BlockLength + \log \MesLength)/t} \to \Field$ is the unique multilinear polynomial such that $\bH(\BinaryRep{x}, \BinaryRep{y}) = \GenMatB[x][y]$ for all $x \in [\BlockLength^{1/t}]_0$ and $y \in [\MesLength^{1/t}]_0$.
+%     Then we have that
+%     \begin{displaymath}
+%         \hat{c}(\xB, \yB) = \prod_{i=1}^{t} \bH(\xB_i, \yB_i) \enspace,
+%     \end{displaymath}
+%     where $\xB_i$ and $\yB_i$ are the $i$-th ``blocks'' of $\xB$ and $\yB$ respectively.
+%     That is, $\xB_i = \xB[(i-1) \cdot \log \BlockLength / t : i \cdot \log \BlockLength / t - 1]$ and $\yB_i = \yB[(i-1) \cdot \log \MesLength / t : i \cdot \log \MesLength / t - 1]$. 
+% \end{lemma}
+% \begin{proof}
+%     Consider $\GenMatC[x][y]$ for an arbitrary $x \in [\BlockLength]_0$ and $y \in [\MesLength]_0$.
+%     Since $\GenMatC = \bigotimes_{i=1}^{t} \GenMatB$, we have $\GenMatC[x][y] = \prod_{i=1}^{t} \GenMatB[x_i][y_i]$ where $x = \sum_{i=1}^{t} x_i \cdot \BlockLength^{(i-1)/t}$ and $y = \sum_{i=1}^{t} y_i \cdot \MesLength^{(i-1)/t}$ are the base-$\BlockLength^{1/t}$ and base-$\MesLength^{1/t}$ representations of $x$ and $y$ respectively.
+%     Since $k$-variate multilinear polynomials are defined by their evaluations over $\Bits^k$, the lemma follows.
+% \end{proof}
+
+% We recall from \cref{sec:tech-tensor-codeswitch} that we can prove a $\CIPRelation^{(\CodeC, \CodeC', \distIndex, \numSpotChecks)}$ instance by checking the following claims:
+% \begin{equation}
+%     \label{eq:decomp-claim-1}
+%     \sum_{\xB \in \Bits^{\log \BlockLength}} \wH(\xB) \cdot \hH(\xB) = \sum_{i=1}^{\numSpotChecks} \beta^{i-1} \cdot \word[\alpha_i] \enspace,
+% \end{equation}
+% \begin{equation}
+%     \label{eq:decomp-claim-3}
+%     \wH(\rB) = \tau \enspace,
+% \end{equation}
+% \begin{equation}
+%     \label{eq:decomp-claim-4-only-for-2}
+%     \sum_{\yB \in \Bits^{\log \MesLength}} \bH(\rB_1, \yB_1) \cdot \bH(\rB_2, \yB_2) \cdot \mH(\yB) = \tau \enspace.
+% \end{equation}
+
+% Using \cref{lem:tech-tensor-code-structure}, \cref{eq:decomp-claim-4-only-for-2} can be generalized to arbitrary $t \geq 2$ as follows:
+% \begin{equation}
+%     \label{eq:decomp-claim-4}
+%     \sum_{\yB \in \Bits^{\log \MesLength}} \paren*{\prod_{i=1}^{t} \bH(\rB_i, \yB_i)} \cdot \mH(\yB) = \tau \enspace.
+% \end{equation}
+% where $\rB_i = \rB[(i-1) \cdot \log \BlockLength / t : i \cdot \log \BlockLength / t - 1]$ and $\yB_i = \yB[(i-1) \cdot \log \MesLength / t : i \cdot \log \MesLength / t - 1]$.
+

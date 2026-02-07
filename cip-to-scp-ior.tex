@@ -1,0 +1,66 @@
+    \begin{tcolorbox}[breakable, enhanced, colback=white, boxrule=0.65pt]
+        \textbf{Indexer input: } Index of $\CIPRelation$, $(\CodeC, \CodeC', \distIndex', \numSpotChecks)$ such that $\CodeC = \TensorCode{\CodeB}{t}$.\\
+        \textbf{Indexer output: } Output index of $\FinalTensorRelation$ as defined in \cref{lem:cip-to-sep}.
+        Additionally, 
+        \begin{enumerate}[nolistsep]
+            \item Define $\bB \define (\GenMatB[0] \Concat \dotsc \Concat \GenMatB[\BlockLength-1])$.
+            \item Compute encoding of $\bB$ under $\InterleaveCode{\CodeC'}{(\BlockLength\MesLength)^{1/t}/\MesLength}$: $\bB'' \gets \Enc{\InterleaveCode{\CodeC'}{(\BlockLength\MesLength)^{1/t}/\MesLength}}(\bB)$.
+            \item Output $\IndexShort \define (\distIndex', \numSpotChecks)$ and $\IndexOracle \define \bB''$.
+        \end{enumerate}
+    \end{tcolorbox}
+    \vspace{-13.72pt}
+    \begin{tcolorbox}[breakable, enhanced, colback=white, boxrule=0.65pt]
+        \textbf{Input instance: } $\Instance \define ((\sigma_1, \dotsc, \sigma_{\numSpotChecks}), (\alpha_1, \dotsc, \alpha_{\numSpotChecks}))$, \\
+        \textbf{Input instance oracles: } $\InstanceOracle \define (\word, \word')$, purported codewords of $\CodeC$ and $\CodeC'$ respectively.\\
+        \textbf{Input witness: } $\Witness \define \msg$ such that $\GenMatC[\alpha_i] \cdot \msg = \sigma_i$ for all $i \in [\numSpotChecks]$.
+    \end{tcolorbox}
+    \vspace{-13.72pt}
+    \begin{tcolorbox}[breakable, enhanced, colback=white, boxrule=0.65pt]
+    \noindent
+    $\InnerProduct{\Prover(\NPIndex, \NPInstance, \InstanceOracle, \NPWitness)}{\Verifier^{\IndexOracle, \InstanceOracle}(\IndexShort, \NPInstance)}$:
+    \begin{enumerate}[nolistsep]
+        \item $\Prover$ computes encoding of $\word$ under $\InterleaveCode{\CodeC'}{\BlockLength/\MesLength}$: $\word'' \gets \Enc{\InterleaveCode{\CodeC'}{\BlockLength/\MesLength}}(\word)$, and sends $\OracleOf{\word''}$ to $\Verifier$.
+        \item For each $i \in [\BlockLength/\MesLength]$: define $\word_i \in \Field^{\MesLength}$ such that $\word_i \define \word{\restrict{(i-1) \MesLength}{i \MesLength-1}}$.
+        \item For each $i \in [\BlockLength/\MesLength]$: define $\word_i'' \in \Field^{\MesLength}$ such that $\word''_i \define \word''{\restrict{(i-1) \BlockLength'}{i \BlockLength'-1}}$.
+        \item $\Verifier$ samples $\beta \sample \Field$ and sends $\beta$ to $\Prover$.
+        \item $\Verifier$ samples $\rB \sample \Field^{\log \BlockLength}$ and sends $\rB$ to $\Prover$.
+        \item $\Prover$ computes $\tau \gets \wH(\rB)$ and sends $\tau$ to $\Verifier$.
+        \item For each $i \in [t]$: Define $\eB_i \in \Field^{\MesLength}$ such that $\eB_i[\integer(\yB)] \define \bH(\rB_i, \yB_i)$ for all $\yB \in \Bits^{\log \MesLength}$.
+        \item For each $i \in [t]$: $\Prover$ computes $\eB'_i \gets \Enc{\CodeC'}(\eB_i)$ and sends $\OracleOf{\eB'_i}$ to $\Verifier$.
+        \item $\Verifier$ samples $\sB \sample \Field^{\log \MesLength}$ and sends $\sB$ to $\Prover$.
+        \item For each $i \in [t]$: $\Prover$ computes $\tau_i \gets \bH(\rB_i, \sB_i)$ and sends $\tau_i$ to $\Verifier$ .
+        \item Define the sumcheck combination polynomial $f_1$ for the $\SEP_1$ instance:
+        \begin{align*}
+            f_1(\xB_2, Z_1, \dotsc, Z_{\frac{\BlockLength}{\MesLength}}) \define \sum_{\xB_1 \in \Bits^{\log \frac{\BlockLength}{\MesLength}}} \paren*{\sum_{j=1}^{\numSpotChecks} \beta^{j-1} \EqPoly(\BinaryRep{\alpha_j}, (\xB_1\Concat\xB_2))} \paren*{\sum_{j=1}^{\frac{\BlockLength}{\MesLength}} \EqPoly(\BinaryRep{j-1}, \xB_1)Z_j} \enspace.
+        \end{align*}
+        \item Define the sumcheck combination polynomial $f_2$ for the $\SEP_2$ instance:
+        \begin{align*}
+            f_2(\yB, Z_1, \dotsc, Z_{t+1}) \define \prod_{i=1}^{t+1} Z_i \enspace.
+        \end{align*}
+        \item Define
+        \begin{align*}
+            \Instance_{\SEP_1} &\define \paren*{f_1, \sum_{i=1}^{\numSpotChecks} \beta^{i-1} \cdot \sigma_i},
+            & \Instance_{\IMEP_1} &\define (\rB, \tau),
+            & \Instance_{\MEP} &\define ((\sB, \tau_1) \dotsc, (\sB, \tau_{t})), \\
+            \InstanceOracle_{\SEP_1} &\define (\word''_1, \dotsc, \word''_{\frac{\BlockLength}{\MesLength}}),
+            & \InstanceOracle_{\IMEP_1} &\define (\word''),
+            & \InstanceOracle_{\MEP} &\define (\eB'_1, \dotsc, \eB'_{t}) , \\
+            \Witness_{\SEP_1} &\define (\word_1, \dotsc, \word_{\frac{\BlockLength}{\MesLength}}),
+            & \Witness_{\IMEP_1} &\define (\word),
+            & \Witness_{\MEP} &\define (\eB_1, \dotsc, \eB_{t}) \enspace,
+        \end{align*}
+        \begin{align*}
+            \Instance_{\IMEP_2} &\define ((\rB_1 \Concat \sB_1, \tau_1), \dotsc, (\rB_{t} \Concat \sB_{t}, \tau_{t})),
+            & \Instance_{\SEP_2} &\define (f_2, \tau), \\
+            \InstanceOracle_{\IMEP_2} &\define (\bB'', \dotsc, \bB''),
+            & \InstanceOracle_{\SEP_2} &\define (\eB'_1, \dotsc, \eB'_{t}, \word'), \\
+            \Witness_{\IMEP_2} &\define (\bB, \dotsc, \bB),
+            & \Witness_{\SEP_2} &\define (\eB_1, \dotsc, \eB_{t}, \mB) \enspace.
+        \end{align*}
+        \item $\Prover$ outputs the appropriate tuple of instances, instance oracles, and witnesses, and $\Verifier$ outputs the appropriate tuple of instances and instance oracles.
+    \end{enumerate}
+    \end{tcolorbox}
+\begin{figure}[H]
+    \vspace{-10pt}
+    \caption{Inner product IOR from $\CIPRelation^{(\CodeC, \CodeC', \distIndex', \numSpotChecks)}$ to $\FinalTensorRelation$.} \label{alg:cip-to-sep}
+\end{figure}

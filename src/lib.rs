@@ -3,11 +3,13 @@ use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use rand::Rng;
 
 mod algebra;
-pub mod codeswitch;
+pub mod codeswitching;
 mod commit;
 mod optimized_era;
 pub mod poly_utils;
 mod reed_solomon;
+
+pub use codeswitching as codeswitch;
 
 pub use commit::{
     BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,

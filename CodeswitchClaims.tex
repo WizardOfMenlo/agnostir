@@ -1,0 +1,181 @@
+\begin{tcolorbox}[breakable, enhanced, colback=white, boxrule=0.65pt]
+    $\mathsf{CodeswitchClaims}:$\\
+    \textbf{Goal: } To prove that for all $j \in [\numSpotChecks]$, $\Enc{\ERA}(\msg)[\alpha_j] = \sigma^{\cs}_j$.\\
+    \textbf{Protocol: } 
+    \begin{enumerate}[nolistsep]
+        \item $\Prover$ computes the $\ERA$ encoding $\word^{\ERA} \gets \Enc{\ERA}(\msg)$, as well as $([\word^{\ERA}_i]_{i \in [\ell_{\ERA}]}, [\oracle^{\ERA}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\word^{\ERA}, \ell_{\ERA})$.
+        \item $\Prover$ sends the oracles $\VectorOracleOf{\oracle^{\ERA}}{\ell_{\ERA}}$ to $\Verifier$, and an out-of-domain sample is performed:
+        \begin{itemize}[nolistsep]
+            \item $\Verifier$ samples $\zB^{\ERA}_{\ood} \sample \Field^{\log n_{\ERA}}$ and sends it to $\Prover$.
+            \item $\Prover$ sends $\sigma^{\ERA}_{\ood} \define \wH^{\ERA}(\zB^{\ERA}_{\ood})$ to $\Verifier$.
+            \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\ERA}, \eqB(\zB^{\ERA}_{\ood}), \sigma^{\ERA}_{\ood}, \VectorOracleOf{\oracle^{\ERA}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \item $\Verifier$ samples $\beta \sample \Field$ and sends it to $\Prover$.
+        \item Define the `codeswitch vector' $\vB^{\cs} \in \Field^{n_{\ERA}}$ to have the entry $\beta^{\alpha_j - 1}$ at index $\alpha_j$, for each $j \in [\numSpotChecks]$, and $0$ everywhere else.
+        \item $\Prover$ and $\Verifier$ compute $\sigma^{\cs} \define \sum_{j \in [\nu]} \beta^{\alpha_{j} - 1} \cdot \sigma^{\cs}_j$.
+        \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\ERA}, \vB^{\cs}, \sigma^{\cs}, \VectorOracleOf{\oracle^{\ERA}}{\ell_{\ERA}})$.
+
+        \item[] \item[] \textbf{Checking the base code encoding.}
+        \item $\Prover$ computes the base code encoding $\word^{\CodeB} \gets \Enc{\CodeB}(\msg)$, as well as $([\word^{\CodeB}_i]_{i \in [\ell_{\CodeB}]}, [\oracle^{\CodeB}_i]_{i \in [\ell_{\CodeB}]}) \gets \SplitAndEncode(\word^{\CodeB}, \ell_{\CodeB})$.
+        \item $\Prover$ sends the oracles $\VectorOracleOf{\oracle^{\CodeB}}{\ell_{\CodeB}}$ to $\Verifier$, and an out-of-domain sample is performed:
+        \begin{itemize}[nolistsep]
+            \item $\Verifier$ samples $\zB^{\CodeB}_{\ood} \sample \Field^{\log n_{\CodeB}}$ and sends it to $\Prover$.
+            \item $\Prover$ sends $\sigma^{\CodeB}_{\ood} \define \wH^{\CodeB}(\zB^{\CodeB}_{\ood})$ to $\Verifier$.
+            \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\CodeB}, \eqB(\zB^{\CodeB}_{\ood}), \sigma^{\CodeB}_{\ood}, \VectorOracleOf{\oracle^{\CodeB}}{\ell_{\CodeB}})$.
+        \end{itemize}
+        \item $\Prover$ wants to convince $\Verifier$ that the following holds for all $\xB = (\xB_1, \xB_2) \in \Bits^{\log n_{\CodeB}}$:
+        \[
+            \sum_{\yB = (\yB_1, \yB_2) \in \Bits^{\log k}} \gH(\xB_1, \yB_1) \cdot \gH(\xB_2, \yB_2) \cdot \mH(\yB) = \wH^{\CodeB}(\xB) \enspace,
+        \]
+        where $\gH(\XB_1, \YB_1)$ is the multilinear extension of the generator matrix of the $\CodeB'$ such that $\CodeB = \CodeB' \otimes \CodeB'$, $\xB_1, \xB_2 \in (\log n_{\CodeB})/2$ and $\yB_1, \yB_2 \in \Field^{(\log k)/2}$.
+        \item Since the polynomials on both sides are multilinear in $\xB$, it suffices to check their equality at a random point. Thus $\Verifier$ samples $\rB^{\xB} \sample \Field^{\log n_{\CodeB}}$ and sends it to $\Prover$.
+        \item $\Prover$ sends $\sigma^{\CodeB}_{\scsf} \define \wH^{\CodeB}(\rB^{\xB})$ to $\Verifier$.
+        \item $\Prover$ and $\Verifier$ parse $\rB^{\xB} = (\rB^{\xB}_1, \rB^{\xB}_2)$ and run sumcheck to reduce checking the claim
+        \begin{align*}
+            \sum_{\yB = (\yB_1, \yB_2) \in \Bits^{\log k}} \gH(\rB^{\xB}_1, \yB_1) \cdot \gH(\rB^{\xB}_2, \yB_2) \cdot \mH(\yB) = \sigma^{\CodeB}_{\scsf}
+        \end{align*}
+        to checking the following claim at a random points $\rB^{\yB} = (\rB^{\yB}_1, \rB^{\yB}_2)$ sampled by $\Verifier$:
+        \begin{align*}
+            \gH(\rB^{\xB}_1, \rB^{\yB}_1) \cdot \gH(\rB^{\xB}_2, \rB^{\yB}_2) \cdot \mH(\rB^{\yB}) = \sigma^{\CodeB}_{\eval} \enspace.
+        \end{align*}
+        \item $\Prover$ sends $\sigma^{\CodeB}_{\gB,1} \define \gH(\rB^{\xB}_1, \rB^{\yB}_1)$, $\sigma^{\CodeB}_{\gB,2} \define \gH(\rB^{\xB}_2, \rB^{\yB}_2)$ and $\sigma^{\CodeB}_{\mB} \define \mH(\rB^{\yB})$ to $\Verifier$, who checks that
+        \[
+            \sigma^{\CodeB}_{\gB,1} \cdot \sigma^{\CodeB}_{\gB,2} \cdot \sigma^{\CodeB}_{\mB} = \sigma^{\CodeB}_{\eval} \enspace .
+        \]
+        \item $\Prover$ and $\Verifier$ run
+        \begin{itemize}[nolistsep]
+            \item $\SplitClaimIP(\word^{\CodeB}, \eqB(\rB^{\xB}), \sigma^{\CodeB}_{\scsf}, \VectorOracleOf{\oracle^{\CodeB}}{\ell_{\CodeB}})$,
+            \item $\SplitClaimIP(\gB, \eqB(\rB^{\xB}_1, \rB^{\yB}_1), \sigma^{\CodeB}_{\gB,1}, \VectorOracleOf{\word^{\gB}}{\ell_{\gB}})$,
+            \item $\SplitClaimIP(\gB, \eqB(\rB^{\xB}_2, \rB^{\yB}_2), \sigma^{\CodeB}_{\gB,2}, \VectorOracleOf{\word^{\gB}}{\ell_{\gB}})$, and
+            \item $\SplitClaimIP(\msg, \eqB(\rB^{\yB}), \sigma^{\CodeB}_{\mB}, \VectorOracleOf{\word}{\ell_{\msg}})$.
+        \end{itemize}
+        
+        \item[] \item[] \textbf{Checking the repeat step.}
+        \item $\Prover$ defines the repeated vector $\word^{\rep} \in \Field^{n_{\ERA}}$ by repeating $\word^{\CodeB}$  $r$ times.
+        \item Define $([\word^{\rep}_i]_{i \in [\ell_{\ERA}]}, [\oracle^{\rep}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\word^{\rep}, \ell_{\ERA})$.
+        \item $\Verifier$ simulates the oracles $\VectorOracleOf{\oracle^{\rep}}{\ell_{\ERA}}$ by repeating the oracles $\VectorOracleOf{\oracle^{\CodeB}}{\ell_{\CodeB}}$ $r$ times.
+        
+        \item[] \item[] \textbf{Checking the first permute step.} \ttushar{@Anubhav see Blaze pg 29 for overview.}
+        \item $\Prover$ permutes $\word^{\rep}$ with respect to $\pi_1$ to obtain $\word^{\perm}$, and computes $([\word^{\perm}_i]_{i \in [\ell_{\ERA}]}, [\oracle^{\perm}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\word^{\perm}, \ell_{\ERA})$.
+        \item $\Prover$ sends the oracles $\VectorOracleOf{\oracle^{\perm}}{\ell_{\ERA}}$ to $\Verifier$, and an out-of-domain sample is performed:
+        \begin{itemize}[nolistsep]
+            \item $\Verifier$ samples $\zB^{\perm}_{\ood} \sample \Field^{\log n_{\ERA}}$ and sends it to $\Prover$.
+            \item $\Prover$ sends $\sigma^{\perm}_{\ood} \define \wH^{\perm}(\zB^{\perm}_{\ood})$ to $\Verifier$.
+            \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\perm}, \eqB(\zB^{\perm}_{\ood}), \sigma^{\perm}_{\ood}, \VectorOracleOf{\oracle^{\perm}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \item $\Prover$ must now convince $\Verifier$ that $\word^{\perm}$ is indeed the permuted version of $\word^{\rep}$. \cite[Section 3.5]{ChenBBZ23} shows that this can be done as follows:
+        \label{item:codeswitch-claims-permutation-challenge}
+        \begin{itemize}[nolistsep]
+            \item $\Verifier$ samples random challenges $\alpha, \beta \sample \Field$ and sends them to $\Prover$.
+            \item $\Prover$ uses $(\alpha, \beta, \word^{\rep}, \piB_1, \word^{\perm})$ to compute certain `permutation witness' vectors $\aB, \bB \in \Field^{2 \cdot n_{\ERA}}$ in $O(n_{\ERA})$ time.
+            \item $\Prover$ parses $\aB = (\aB_1, \aB_2)$ and $\bB = (\bB_1, \bB_2)$, where $\aB_1, \aB_2, \bB_1, \bB_2 \in \Field^{n_{\ERA}}$.
+            \item For each $s \in [2]$, $\Prover$ computes $([\aB_{s,i}]_{i \in [\ell_{\ERA}]}, [\word^{\aB_s}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\aB_s, \ell_{\ERA})$, and $([\bB_{s,i}]_{i \in [\ell_{\ERA}]}, [\word^{\bB_s}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\bB_s, \ell_{\ERA})$.
+            \item For each $s \in [2]$ and $i \in [\ell_{\ERA}]$, $\Prover$ sends the oracles $\OracleOf{\word^{\aB_{s}}_i}$ and $\OracleOf{\word^{\bB_{s}}_i}$ to $\Verifier$.
+            \item For each $s \in [2]$, the following out-of-domain samples are performed:
+            \begin{itemize}[nolistsep]
+            \item $\Verifier$ samples $\zB^{\aB_{s}}_{\ood}, \zB^{\bB_{s}}_{\ood} \sample \Field^{\log n_{\ERA}}$ and sends them to $\Prover$.
+            \item $\Prover$ sends $\sigma^{\aB_{s}}_{\ood} \define \aH_s(\zB^{\aB_{s}}_{\ood})$ and $\sigma^{\bB_{s}}_{\ood} \define \bH_s(\zB^{\bB_{s}}_{\ood})$ to $\Verifier$.
+            \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\aB_s, \eqB(\zB^{\aB_{s}}_{\ood}), \sigma^{\aB_{s}}_{\ood}, \VectorOracleOf{\word^{\aB_{s}}}{\ell_{\ERA}})$.
+            \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\bB_s, \eqB(\zB^{\bB_{s}}_{\ood}), \sigma^{\bB_{s}}_{\ood}, \VectorOracleOf{\word^{\bB_{s}}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \item $\Prover$ sends $\sigma^{\perm}_{1} \define \aH(0^{\log n_{\ERA} - 2}, 1 , 0) = \bH(0^{\log n_{\ERA} - 2}, 1 , 0)$ to $\Verifier$, and they run:
+        \begin{itemize}[nolistsep]
+            \item $\SplitClaimIP(\aB_1, \eqB(0^{\log n_{\ERA} - 3} , 1 , 0), \sigma^{\perm}_1, \VectorOracleOf{\word^{\aB_{1}}}{\ell_{\ERA}})$, and
+            \item $\SplitClaimIP(\bB_1, \eqB(0^{\log n_{\ERA} - 3} , 1 , 0), \sigma^{\perm}_1, \VectorOracleOf{\word^{\bB_{1}}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \item $\Verifier$ samples a `permutation challenge' $\rB^{\perm} \sample \Field^{\log n_{\ERA}}$ and sends it to $\Prover$.
+        \item $\Prover$ computes and sends the following to $\Verifier$ (recall that $\idB, \piB_1$ are defined in the indexing step):
+        \begin{align*}
+            \sigma^{\perm}_{\aB} &\define \aH_1(\rB^{\perm}), \quad \sigma^{\perm}_{\bB} \define \bH_1(\rB^{\perm}), \sigma^{\perm}_{\idB} \define \idH(\rB^{\perm}) \\
+            \sigma^{\perm}_{\word^{\rep}} &\define \wH^{\rep}(\rB^{\perm}), \sigma^{\perm}_{\word^{\perm}} \define \wH^{\perm}(\rB^{\perm}), \text{ and } \sigma^{\perm}_{\piB_1} \define \piH_1(\rB^{\perm}) \enspace .
+        \end{align*}
+        \item $\Verifier$ checks that $\sigma^{\perm}_{\aB} = \alpha - ( \sigma^{\perm}_{\word^{\rep}} + \beta \cdot \sigma^{\perm}_{\piB_1} )$, and $\sigma^{\perm}_{\bB} = \alpha - ( \sigma^{\perm}_{\word^{\mult}} + \beta \cdot \sigma^{\perm}_{\idB} )$.
+        \item $\Prover$ and $\Verifier$ run:
+        \begin{itemize}[nolistsep]
+            \item $\SplitClaimIP(\aB_{1}, \eqB(\rB^{\perm}), \sigma^{\perm}_{\aB}, \VectorOracleOf{\word^{\aB_{1}}}{\ell_{\ERA}})$,
+            \item $\SplitClaimIP(\bB_{1}, \eqB(\rB^{\perm}), \sigma^{\perm}_{\bB}, \VectorOracleOf{\word^{\bB_{1}}}{\ell_{\ERA}})$,
+            \item $\SplitClaimIP(\wB^{\rep}, \eqB(\rB^{\perm}), \sigma^{\perm}_{\wB^{\rep}}, \VectorOracleOf{\oracle^{\rep}}{\ell_{\ERA}})$,
+            \item $\SplitClaimIP(\wB^{\perm}, \eqB(\rB^{\perm}), \sigma^{\perm}_{\wB^{\perm}}, \VectorOracleOf{\oracle^{\perm}}{\ell_{\ERA}})$,
+            \item $\SplitClaimIP(\idB, \eqB(\rB^{\perm}), \sigma^{\perm}_{\idB}, \VectorOracleOf{\word^{\idB}}{\ell_{\ERA}})$, and
+            \item $\SplitClaimIP(\piB_1, \eqB(\rB^{\perm}), \sigma^{\perm}_{\piB_1}, \VectorOracleOf{\word^{\piB_1}}{\ell_{\ERA}})$,
+        \end{itemize}
+        \item $\Prover$ and $\Verifier$ run sumcheck to reduce checking the claims \ttushar{can be batched}
+        \begin{align*}
+            &\sum_{\xB \in \Bits^{\log n_{\ERA}}} \EqPoly(\xB, \rB^{\perm}) \cdot ( \aH(1,\xB) - \aH(\xB,0) \cdot \aH(\xB,1) ) = 0 \text{, and } \\
+            &\sum_{\xB \in \Bits^{\log n_{\ERA}}} \EqPoly(\xB, \rB^{\perm}) \cdot ( \bH(1,\xB) - \bH(\xB,0) \cdot \bH(\xB,1) ) = 0 \enspace,
+        \end{align*}
+        to checking the following claims at a random points $\rB^{\aB}, \rB^{\bB} \in \Field^{\log n_{\ERA}}$ sampled by $\Verifier$:
+        \begin{align*}
+            &\EqPoly(\rB^{\aB}, \rB^{\perm}) \cdot ( \aH(1,\rB^{\aB}) - \aH(\rB^{\aB},0) \cdot \aH(\rB^{\aB},1) ) = y_{\rB^{\aB}} \text{, and } \\
+            &\EqPoly(\rB^{\bB}, \rB^{\perm}) \cdot ( \bH(1,\rB^{\bB}) - \bH(\rB^{\bB},0) \cdot \bH(\rB^{\bB},1) ) = y_{\rB^{\bB}} \enspace.
+        \end{align*}
+        \item $\Prover$ sends $\sigma_{(1,\rB^{\aB})} \define \aH(1,\rB^{\aB})$ and $\sigma_{(1,\rB^{\bB})} \define \bH(1,\rB^{\bB})$ to $\Verifier$.
+        \item Parse $\rB^{\aB} = (\rB^{\aB}_1, r^{\aB}_{R})$ and $\rB^{\bB} = (\rB^{\bB}_1, r^{\bB}_{R})$, where $\rB^{\aB}_1, \rB^{\bB}_1 \in \Field$ and $r^{\aB}_R, r^{\bB}_R \in \Field^{\log n_{\ERA} - 1}$.
+        \item For each $i \in \{0,1\}$ and $j \in \{0,1\}$, $\Prover$ sends the following to $\Verifier$:
+        \[  
+            \sigma_{(i,\rB^{\aB}_R,j)} \define \aH(i,\rB^{\aB}_R,j), \quad \sigma_{(i,\rB^{\bB}_R,j)} \define \bH(i,\rB^{\bB}_R,j) \enspace .
+        \]
+        \item For each $j \in \{0,1\}$, $\Verifier$ defines:
+        \[
+            \sigma_{(\rB^{\aB},j)} \define (1 - \rB^{\aB}_1) \cdot \sigma_{(0,\rB^{\aB}_R,j)} + \rB^{\aB}_1 \cdot \sigma_{(1,\rB^{\aB}_R,j)} , \quad \sigma_{(\rB^{\bB},j)} \define (1 - \rB^{\bB}_1) \cdot \sigma_{(0,\rB^{\bB}_R,j)} + \rB^{\bB}_1 \cdot \sigma_{(1,\rB^{\bB}_R,j)} \enspace .
+        \]
+        \item $\Verifier$ checks that:
+        \begin{align*}
+            &\EqPoly(\rB^{\aB}, \rB^{\perm}) \cdot ( \sigma_{(1,\rB^{\aB})} - \sigma_{(\rB^{\aB},0)} \cdot \sigma_{(\rB^{\aB},1)} ) = y_{\rB^{\aB}} \text{, and } \\
+            &\EqPoly(\rB^{\bB}, \rB^{\perm}) \cdot ( \bH(1,\rB^{\bB}) - \bH(\rB^{\bB},0) \cdot \bH(\rB^{\bB},1) ) = y_{\rB^{\bB}} \enspace.
+        \end{align*}
+        \item $\Prover$ and $\Verifier$ run:
+        \begin{itemize}[nolistsep]
+            \item $\SplitClaimIP(\aB_{2}, \eqB(\rB^{\aB}), \sigma_{(1,\rB^{\aB})}, \VectorOracleOf{\word^{\aB_{2}}}{\ell_{\ERA}})$, and
+            \item $\SplitClaimIP(\bB_{2}, \eqB(\rB^{\bB}), \sigma_{(1,\rB^{\bB})}, \VectorOracleOf{\word^{\bB_{2}}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \item For each $i \in \{0,1\}$ and $j \in \{0,1\}$, $\Prover$ and $\Verifier$ run:
+        \begin{itemize}[nolistsep]
+            \item $\SplitClaimIP(\aB_{i+1}, \eqB(\rB^{\aB}_R, j), \sigma_{(i,\rB^{\aB}_R,j)}, \VectorOracleOf{\word^{\aB_{i+1}}}{\ell_{\ERA}})$, and
+            \item $\SplitClaimIP(\bB_{i+1}, \eqB(\rB^{\bB}_R, j), \sigma_{(i,\rB^{\bB}_R,j)}, \VectorOracleOf{\word^{\bB_{i+1}}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \end{itemize}
+
+        \item[] \item[] \textbf{Checking the first multiply step.}
+        \item $\Prover$ computes $\word^{\mult} \define \word^{\perm} \HadProd \vB_1$ (where $\vB_1$ is the first multiplication vector of $\ERA$).
+        \item $\Prover$ computes $([\word^{\mult}_i]_{i \in [\ell_{\ERA}]}, [\oracle^{\mult}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\word^{\mult}, \ell_{\ERA})$.
+        \item $\Prover$ sends the oracles $\VectorOracleOf{\oracle^{\mult}}{\ell_{\ERA}}$ to $\Verifier$, and an out-of-domain sample is performed:
+        \begin{itemize}[nolistsep]
+            \item $\Verifier$ samples $\zB^{\mult}_{\ood} \sample \Field^{\log n_{\ERA}}$ and sends it to $\Prover$.
+            \item $\Prover$ sends $\sigma^{\mult}_{\ood} \define \wH^{\mult}(\zB^{\mult}_{\ood})$ to $\Verifier$.
+            \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\mult}, \eqB(\zB^{\mult}_{\ood}), \sigma^{\mult}_{\ood}, \VectorOracleOf{\oracle^{\mult}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \item $\Verifier$ samples a random challenge $r_{\mult} \sample \Field$ and sends it to $\Prover$.
+        \item $\Prover$ sends $\sigma^{\mult} \define \TripleProduct{\word^{\perm}}{\vB_1}{\rB^{\mult}}$, where $\rB^{\mult} \defined (1, r_{\mult}, r_{\mult}^2, \dotsc, r_{\mult}^{n_{\ERA}-1})$, to $\Verifier$.
+        \item $\Prover$ and $\Verifier$ run:
+        \begin{itemize}[nolistsep]
+            \item $\SplitClaimTIP(\word^{\perm}, \vB_1, \rB^{\mult}, \sigma^{\mult}, \VectorOracleOf{\oracle^{\perm}}{\ell_{\ERA}}, \VectorOracleOf{\wB^{\vB_1}}{\ell_{\ERA}})$, and
+            \item $\SplitClaimIP(\word^{\mult}, \rB^{\mult}, \sigma^{\mult}, \VectorOracleOf{\oracle^{\mult}}{\ell_{\ERA}})$.
+        \end{itemize}
+
+        \item [] \item[] \textbf{Checking the first accumulate step.}
+        \item $\Prover$ computes $\word^{\acc} \define A \cdot \word^{\mult}$, where $A \in \Field^{n_{\ERA} \times n_{\ERA}}$ is the accumulate matrix of $\ERA$.
+        \item $\Prover$ computes $([\word^{\acc}_i]_{i \in [\ell_{\ERA}]}, [\oracle^{\acc}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\word^{\acc}, \ell_{\ERA})$.
+        \item $\Prover$ sends the oracles $\VectorOracleOf{\oracle^{\acc}}{\ell_{\ERA}}$ to $\Verifier$, and an out-of-domain sample is performed:
+        \begin{itemize}[nolistsep]
+            \item $\Verifier$ samples $\zB^{\acc}_{\ood} \sample \Field^{\log n_{\ERA}}$ and sends it to $\Prover$.
+            \item $\Prover$ sends $\sigma^{\acc}_{\ood} \define \wH^{\acc}(\zB^{\acc}_{\ood})$ to $\Verifier$.
+            \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\acc}, \eqB(\zB^{\acc}_{\ood}), \sigma^{\acc}_{\ood}, \VectorOracleOf{\oracle^{\acc}}{\ell_{\ERA}})$.
+        \end{itemize}
+        \item $\Verifier$ samples $\rB^{\acc} \sample \Field^{n_{\ERA}}$ and sends it to $\Prover$.
+        \item As described in \cite{BrehmCFRRZ24}, $\Prover$ computes $\AB_{\rB^{\acc}} \define [\AH(\rB^{\acc},\bB)]_{\bB \in \Bits^{n_{\ERA}}}$ in $O(n_{\ERA})$ time (we note that $\Verifier$ can evaluate $\AH_{\rB^{\acc}}(\XB)$ in $O(\log n_{\ERA})$ time).
+        \item $\Prover$ sends $\sigma^\acc \define \wH^{\acc}(\rB^{\acc})$ to $\Verifier$.
+        \item $\Prover$ and $\Verifier$ run
+        \begin{itemize}[nolistsep]
+            \item $\SplitClaimIP(\word^{\mult}, \AB_{\rB^{\acc}}, \sigma^{\acc}, \VectorOracleOf{\oracle^{\mult}}{\ell_{\ERA}})$, and
+            \item $\SplitClaimIP(\word^{\acc}, \rB^{\acc}, \sigma^{\acc}, \VectorOracleOf{\oracle^{\acc}}{\ell_{\ERA}})$.
+        \end{itemize}
+
+        \item [] \item[] \textbf{Checking the second permute, multiply, and accumulate steps.}
+        \item Checking the second permute, multiply, and accumulate steps is analogous to the first permute, multiply, and accumulate steps (with respect to $\vB_2$ and $\pi_2$), ending with the validation of $\word^{\ERA}$ underlying $\VectorOracleOf{\oracle^{\ERA}}{\ell_{\ERA}}$. In the interest of brevity, we omit the details.
+    \end{enumerate}
+\end{tcolorbox}
+\begin{figure}[htbp]
+\caption{The subprotocol $\CodeswitchClaims$.}
+\label{fig:codeswitch-claims}
+\end{figure}
