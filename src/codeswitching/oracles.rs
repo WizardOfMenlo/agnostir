@@ -170,19 +170,21 @@ where
         "generator_vector length must be divisible by k_prime"
     );
 
-    let identity_vector: Vec<F> = (0..input.n_era).map(usize_to_field::<F>).collect();
+    let n_era_u32 = input.n_era as u32;
+
+    let identity_vector: Vec<F> = (0..n_era_u32).map(F::from_u32).collect();
 
     let permutation_1_vector: Vec<F> = input
         .permutation_1
         .iter()
         .copied()
-        .map(usize_to_field::<F>)
+        .map(|value| F::from_u32(value as u32))
         .collect();
     let permutation_2_vector: Vec<F> = input
         .permutation_2
         .iter()
         .copied()
-        .map(usize_to_field::<F>)
+        .map(|value| F::from_u32(value as u32))
         .collect();
 
     let generator = split_and_encode(&input.generator_vector, output_code);
@@ -244,21 +246,6 @@ fn assert_is_permutation(perm: &[usize], n: usize, label: &str) {
         assert!(!seen[value], "{label} contains duplicate value {value}");
         seen[value] = true;
     }
-}
-
-fn usize_to_field<F: FieldElement>(mut value: usize) -> F {
-    let mut acc = F::ZERO;
-    let mut bit_weight = F::ONE;
-
-    while value > 0 {
-        if (value & 1) == 1 {
-            acc += bit_weight;
-        }
-        bit_weight += bit_weight;
-        value >>= 1;
-    }
-
-    acc
 }
 
 #[cfg(test)]
