@@ -77,9 +77,7 @@ impl<F: FieldElement> BasefoldCode<F> {
         let mut table = Vec::with_capacity(log_message_size);
         for i in 0..log_message_size {
             let level_size = rate << i; // rate * 2^i
-            let level: Vec<F> = (0..level_size)
-                .map(|_| F::random(rng))
-                .collect();
+            let level: Vec<F> = (0..level_size).map(|_| F::random(rng)).collect();
             table.push(level);
         }
 

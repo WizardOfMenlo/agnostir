@@ -1,14 +1,14 @@
 use agnostir::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams,
-    EraCode, ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
-    random_permutation, blake3_merkle_commit,
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
+    ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode, blake3_merkle_commit,
+    random_permutation,
 };
-use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
-use std::hint::black_box;
-use ark_secp256k1::Fr as SecpScalar;
 use ark_ff::{BigInteger, PrimeField};
+use ark_secp256k1::Fr as SecpScalar;
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 use rayon::prelude::*;
+use std::hint::black_box;
 
 type BlsScalar = ark_bls12_381::Fr;
 
@@ -18,15 +18,11 @@ const INTERLEAVING_FACTOR: usize = 4;
 const ERA_REPETITION: usize = 6;
 
 fn build_message(rng: &mut impl Rng) -> Vec<SecpScalar> {
-    (0..MESSAGE_SIZE)
-        .map(|_| SecpScalar::random(rng))
-        .collect()
+    (0..MESSAGE_SIZE).map(|_| SecpScalar::random(rng)).collect()
 }
 
 fn build_bls_message(rng: &mut impl Rng) -> Vec<BlsScalar> {
-    (0..MESSAGE_SIZE)
-        .map(|_| BlsScalar::random(rng))
-        .collect()
+    (0..MESSAGE_SIZE).map(|_| BlsScalar::random(rng)).collect()
 }
 
 fn build_era_code(
@@ -38,7 +34,11 @@ fn build_era_code(
     // The tensor code's message_size is k^2 where k is the inner code's
     // message_size.  We need k^2 == segment_msg_size, so k = sqrt(segment_msg_size).
     let k = (segment_msg_size as f64).sqrt() as usize;
-    assert_eq!(k * k, segment_msg_size, "segment message size must be a perfect square");
+    assert_eq!(
+        k * k,
+        segment_msg_size,
+        "segment message size must be a perfect square"
+    );
 
     let inner_brakedown_params = BrakedownParams {
         alpha: 0.085,
@@ -71,12 +71,7 @@ fn build_brakedown_code(
     BrakedownCode::new(message_size, params, rng)
 }
 
-
-fn build_ea_code(
-    rng: &mut impl Rng,
-    message_size: usize,
-    params: EaParams,
-) -> EaCode<SecpScalar> {
+fn build_ea_code(rng: &mut impl Rng, message_size: usize, params: EaParams) -> EaCode<SecpScalar> {
     EaCode::new(message_size, params, rng)
 }
 
@@ -88,17 +83,18 @@ fn build_basefold_code(
     BasefoldCode::new(message_size, params, rng)
 }
 
-
 fn bench_compare_interleaved(c: &mut Criterion) {
     let mut rng = SmallRng::seed_from_u64(2025);
     let sc_msg = build_message(&mut rng);
     let bls_msg = build_bls_message(&mut rng);
 
-    let rs_code =
-        ReedSolomonCode::new(MESSAGE_SIZE >> INTERLEAVING_FACTOR, (MESSAGE_SIZE >> INTERLEAVING_FACTOR) << RS_INV_RATE);
+    let rs_code = ReedSolomonCode::new(
+        MESSAGE_SIZE >> INTERLEAVING_FACTOR,
+        (MESSAGE_SIZE >> INTERLEAVING_FACTOR) << RS_INV_RATE,
+    );
 
-        c.bench_function("reed_solomon_interleaved_inv_rate_2", |b| {
-            b.iter_batched(
+    c.bench_function("reed_solomon_interleaved_inv_rate_2", |b| {
+        b.iter_batched(
             || bls_msg.clone(),
             |input| {
                 let base_msg_size = rs_code.message_size();
@@ -198,7 +194,6 @@ fn bench_compare_interleaved(c: &mut Criterion) {
         );
     });
 }
-
 
 fn bench_field_ops(c: &mut Criterion) {
     let mut rng = SmallRng::seed_from_u64(42);

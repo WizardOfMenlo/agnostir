@@ -1,8 +1,8 @@
 use std::hint::black_box;
 
 use agnostir::{
-    BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement,
-    TensorCode, random_permutation,
+    BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement, TensorCode,
+    random_permutation,
 };
 use ark_secp256k1::Fr as SecpScalar;
 use p3_koala_bear::KoalaBear;
@@ -31,9 +31,7 @@ fn main() {
         },
         &mut rng,
     );
-    let brakedown_msg: Vec<SecpScalar> = (0..big_k)
-        .map(|_| SecpScalar::random(&mut rng))
-        .collect();
+    let brakedown_msg: Vec<SecpScalar> = (0..big_k).map(|_| SecpScalar::random(&mut rng)).collect();
     eprintln!("=== Brakedown base-code profile (k={big_k}) ===");
     black_box(brakedown_big.encode_profiled(&brakedown_msg));
     eprintln!();
@@ -72,7 +70,9 @@ fn main() {
 
     // ── Single-message profiling ──
     eprintln!("=== Single-message ERA profile (gather permutation) ===");
-    eprintln!("msg_size={message_size}, block_length={block_length_segment}, repetition={repetition}");
+    eprintln!(
+        "msg_size={message_size}, block_length={block_length_segment}, repetition={repetition}"
+    );
     eprintln!("Warm-up...");
     black_box(era_code.encode_era(&msg[..message_size]));
     eprintln!("Profiling...");
@@ -81,7 +81,9 @@ fn main() {
     // ── RipShuffle profiling ──
     eprintln!();
     eprintln!("=== Single-message ERA profile (rip_shuffle permutation) ===");
-    eprintln!("msg_size={message_size}, block_length={block_length_segment}, repetition={repetition}");
+    eprintln!(
+        "msg_size={message_size}, block_length={block_length_segment}, repetition={repetition}"
+    );
     eprintln!("Warm-up...");
     black_box(era_code.encode_rip(&msg[..message_size], 42));
     eprintln!("Profiling...");

@@ -243,10 +243,17 @@ where
             ("4c. Prefix sum (round 2)", t_prefix2),
         ] {
             let pct = dur.as_secs_f64() / total.as_secs_f64() * 100.0;
-            eprintln!("│ {label:<24} │ {:>8.3} ms │ {:>5.1} % │", dur.as_secs_f64() * 1e3, pct);
+            eprintln!(
+                "│ {label:<24} │ {:>8.3} ms │ {:>5.1} % │",
+                dur.as_secs_f64() * 1e3,
+                pct
+            );
         }
         eprintln!("├──────────────────────────┼────────────┼─────────┤");
-        eprintln!("│ Total                    │ {:>8.3} ms │ 100.0 % │", total.as_secs_f64() * 1e3);
+        eprintln!(
+            "│ Total                    │ {:>8.3} ms │ 100.0 % │",
+            total.as_secs_f64() * 1e3
+        );
         eprintln!("└──────────────────────────┴────────────┴─────────┘");
 
         w2
@@ -330,10 +337,17 @@ where
             ("4c. Prefix sum (round 2)", t_prefix2),
         ] {
             let pct = dur.as_secs_f64() / total.as_secs_f64() * 100.0;
-            eprintln!("│ {label:<24} │ {:>8.3} ms │ {:>5.1} % │", dur.as_secs_f64() * 1e3, pct);
+            eprintln!(
+                "│ {label:<24} │ {:>8.3} ms │ {:>5.1} % │",
+                dur.as_secs_f64() * 1e3,
+                pct
+            );
         }
         eprintln!("├──────────────────────────┼────────────┼─────────┤");
-        eprintln!("│ Total                    │ {:>8.3} ms │ 100.0 % │", total.as_secs_f64() * 1e3);
+        eprintln!(
+            "│ Total                    │ {:>8.3} ms │ 100.0 % │",
+            total.as_secs_f64() * 1e3
+        );
         eprintln!("└──────────────────────────┴────────────┴─────────┘");
 
         w2
@@ -360,7 +374,7 @@ where
 
         // Column-major scratch: index (row, col) -> col * rows + row
         let total = rows * n;
-        let mut w0  = vec![F::ZERO; total];
+        let mut w0 = vec![F::ZERO; total];
         let mut buf = vec![F::ZERO; total]; // reused for m1/w1/m2/w2 stages
         let mut tmp = vec![F::ZERO; total]; // second scratch for permute target
 
@@ -450,7 +464,7 @@ where
         debug_assert_eq!(msgs.len(), rows * k);
 
         let total_elems = rows * n;
-        let mut w0  = vec![F::ZERO; total_elems];
+        let mut w0 = vec![F::ZERO; total_elems];
         let mut buf = vec![F::ZERO; total_elems];
         let mut tmp = vec![F::ZERO; total_elems];
 
@@ -542,8 +556,14 @@ where
         }
         let t_transpose = t0.elapsed();
 
-        let total = t_base_repeat + t_perm1 + t_mul1 + t_prefix1
-            + t_perm2 + t_mul2 + t_prefix2 + t_transpose;
+        let total = t_base_repeat
+            + t_perm1
+            + t_mul1
+            + t_prefix1
+            + t_perm2
+            + t_mul2
+            + t_prefix2
+            + t_transpose;
 
         eprintln!();
         eprintln!("┌──────────────────────────────┬────────────┬─────────┐");
@@ -560,10 +580,17 @@ where
             ("8.  Transpose to row-maj", t_transpose),
         ] {
             let pct = dur.as_secs_f64() / total.as_secs_f64() * 100.0;
-            eprintln!("│ {label:<28} │ {:>8.3} ms │ {:>5.1} % │", dur.as_secs_f64() * 1e3, pct);
+            eprintln!(
+                "│ {label:<28} │ {:>8.3} ms │ {:>5.1} % │",
+                dur.as_secs_f64() * 1e3,
+                pct
+            );
         }
         eprintln!("├──────────────────────────────┼────────────┼─────────┤");
-        eprintln!("│ Total                        │ {:>8.3} ms │ 100.0 % │", total.as_secs_f64() * 1e3);
+        eprintln!(
+            "│ Total                        │ {:>8.3} ms │ 100.0 % │",
+            total.as_secs_f64() * 1e3
+        );
         eprintln!("└──────────────────────────────┴────────────┴─────────┘");
 
         out

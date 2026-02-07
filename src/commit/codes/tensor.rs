@@ -68,8 +68,9 @@ where
         // assemble row-major.
         let mut col_encoded: Vec<Vec<Self::Alphabet>> = Vec::with_capacity(self.n);
         for col in 0..self.n {
-            let column: Vec<Self::Alphabet> =
-                (0..self.k).map(|row| row_encoded[row][col].clone()).collect();
+            let column: Vec<Self::Alphabet> = (0..self.k)
+                .map(|row| row_encoded[row][col].clone())
+                .collect();
             let col_codeword = self.inner.encode(&column);
             debug_assert_eq!(col_codeword.len(), self.n);
             col_encoded.push(col_codeword);

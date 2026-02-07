@@ -39,7 +39,10 @@ pub struct BrakedownCode<F> {
 }
 
 /// Compute the derived lengths for a given message length and parameters.
-fn brakedown_code_lengths(cur_msg_length: usize, params: &BrakedownParams) -> (usize, usize, usize, usize) {
+fn brakedown_code_lengths(
+    cur_msg_length: usize,
+    params: &BrakedownParams,
+) -> (usize, usize, usize, usize) {
     let cur_codeword_length = (cur_msg_length as f64 * params.inverse_rate) as usize;
     let cur_y_length = (cur_msg_length as f64 * params.alpha) as usize;
     let cur_z_length = if cur_y_length >= 1 {
@@ -48,7 +51,12 @@ fn brakedown_code_lengths(cur_msg_length: usize, params: &BrakedownParams) -> (u
         0
     };
     let cur_v_length = cur_codeword_length - cur_msg_length - cur_z_length;
-    (cur_codeword_length, cur_y_length, cur_z_length, cur_v_length)
+    (
+        cur_codeword_length,
+        cur_y_length,
+        cur_z_length,
+        cur_v_length,
+    )
 }
 
 impl<F: FieldElement> BrakedownCode<F> {
@@ -171,9 +179,15 @@ impl<F: FieldElement> BrakedownCode<F> {
         let result = self.encode_recursive_profiled(msg, 0, &mut stats);
 
         eprintln!();
-        eprintln!("┌───────┬──────────┬──────────┬──────────┬──────────┬────────────┬────────────┐");
-        eprintln!("│ Depth │  msg_len │   y_len  │   z_len  │   v_len  │  E1 spmv   │  E2 spmv   │");
-        eprintln!("├───────┼──────────┼──────────┼──────────┼──────────┼────────────┼────────────┤");
+        eprintln!(
+            "┌───────┬──────────┬──────────┬──────────┬──────────┬────────────┬────────────┐"
+        );
+        eprintln!(
+            "│ Depth │  msg_len │   y_len  │   z_len  │   v_len  │  E1 spmv   │  E2 spmv   │"
+        );
+        eprintln!(
+            "├───────┼──────────┼──────────┼──────────┼──────────┼────────────┼────────────┤"
+        );
         for s in &stats {
             eprintln!(
                 "│ {:>5} │ {:>8} │ {:>8} │ {:>8} │ {:>8} │{:>5}×{:<5} {:>7.3}ms │{:>5}×{:<5} {:>7.3}ms │",
@@ -190,7 +204,9 @@ impl<F: FieldElement> BrakedownCode<F> {
                 s.t_e2.as_secs_f64() * 1e3,
             );
         }
-        eprintln!("└───────┴──────────┴──────────┴──────────┴──────────┴────────────┴────────────┘");
+        eprintln!(
+            "└───────┴──────────┴──────────┴──────────┴──────────┴────────────┴────────────┘"
+        );
 
         let total_e1: Duration = stats.iter().map(|s| s.t_e1).sum();
         let total_e2: Duration = stats.iter().map(|s| s.t_e2).sum();

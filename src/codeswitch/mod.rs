@@ -1,3 +1,6 @@
+use p3_maybe_rayon::prelude::*;
+use rand::{SeedableRng, rngs::SmallRng};
+
 use crate::{
     ErrorCorrectingCode, FieldElement, OptimizedEraCode,
     poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint},
@@ -21,7 +24,7 @@ pub struct CodeswitchInput<F: FieldElement> {
     point: Vec<F>,
 }
 
-pub fn codeswitch<C: ErrorCorrectingCode, F: FieldElement>(
+pub fn codeswitch<F: FieldElement, C: ErrorCorrectingCode<Alphabet = F>>(
     params: &CodeswitchParameters<C, F>,
     input: CodeswitchInput<F>,
     point: MultilinearPoint<F>,
@@ -43,23 +46,38 @@ pub fn codeswitch<C: ErrorCorrectingCode, F: FieldElement>(
 
     // Assume that message is of size params.message_interleaving * (1 << params.log_new_code_message)
 
-    for i in 0..params.message_interleaving {
-        // First, compute the encoding
-        let block = EvaluationsList::new(
-            input.message[i * new_code_message_len..(i + 1) * new_code_message_len].to_vec(),
-        );
+    let blocks: Vec<_> = input
+        .message
+        .par_chunks_exact(new_code_message_len)
+        .map(|chunk| EvaluationsList::new(chunk.to_vec()))
+        .collect();
 
-        // Placeholder for ongoing implementation.
-        let _y_eval_i = block.evaluate(&z_2);
+    debug_assert_eq!(blocks.len(), params.message_interleaving);
 
-        let ood_point = MultilinearPoint(vec![F::ZERO]); // TODO: Sample 
-        let ood_evaluation = block.evaluate(&ood_point);
-    }
+    let y_evals: Vec<F> = blocks
+        .par_iter()
+        .map(|block| block.evaluate(&z_2))
+        .collect();
 
-    let _ = (
-        &params.base_code_interleaving,
-        &params.era_interleaving,
-        &params.era_code,
-    );
-    let _ = &input.point;
+    // Sample one OOD point per block.
+    let mut rng = SmallRng::seed_from_u64(0xC0DE_CAFE_u64);
+    let ood_points: Vec<_> = (0..params.message_interleaving)
+        .map(|_| {
+            MultilinearPoint(
+                (0..z_2.0.len())
+                    .map(|_| F::random(&mut rng))
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .collect();
+
+    let ood_evaluations: Vec<F> = blocks
+        .par_iter()
+        .zip(ood_points.par_iter())
+        .map(|(block, point)| block.evaluate(point))
+        .collect();
+
+    // Verifier checks consistency.
+
+    let _ = (&y_evals, &ood_evaluations);
 }
