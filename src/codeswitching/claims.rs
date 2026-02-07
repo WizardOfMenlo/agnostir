@@ -1,4 +1,5 @@
 use super::oracles::{CodeswitchOraclesOutput, SplitEncoding};
+use crate::FieldElement;
 
 /// Logical namespaces from which a claim can reference an oracle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -186,6 +187,175 @@ pub struct TipClaim<F> {
     pub witness_len: usize,
 }
 
+/// Implement the `SplitClaimIP` shorthand from `codeswitching.tex`.
+///
+/// Given split-committed message chunks referenced by `oracles`, this derives the
+/// per-chunk IP claims, computes each local target `sigma_i`, and enforces that
+/// `sum_i sigma_i == sigma`.
+pub fn split_claim_ip<F: FieldElement>(
+    label_prefix: impl AsRef<str>,
+    msg: &[F],
+    v_b: &[F],
+    sigma: F,
+    oracles: &[OracleRef],
+    k_prime: usize,
+) -> Vec<IpClaim<F>> {
+    assert!(k_prime > 0, "k_prime must be > 0");
+    assert_eq!(
+        msg.len(),
+        v_b.len(),
+        "SplitClaimIP requires msg and v_b to have the same length"
+    );
+    assert_eq!(
+        msg.len() % k_prime,
+        0,
+        "SplitClaimIP requires message length to be divisible by k_prime"
+    );
+
+    let chunk_count = msg.len() / k_prime;
+    assert!(chunk_count > 0, "SplitClaimIP requires at least one chunk");
+    assert_eq!(
+        oracles.len(),
+        chunk_count,
+        "SplitClaimIP oracle count must match split chunk count"
+    );
+
+    let mut claims = Vec::with_capacity(chunk_count);
+    let mut sigma_sum = F::ZERO;
+    let label_prefix = label_prefix.as_ref();
+
+    for (chunk_index, ((msg_chunk, coeff_chunk), oracle)) in msg
+        .chunks_exact(k_prime)
+        .zip(v_b.chunks_exact(k_prime))
+        .zip(oracles.iter().copied())
+        .enumerate()
+    {
+        let sigma_i = inner_product(msg_chunk, coeff_chunk);
+        sigma_sum += sigma_i;
+
+        claims.push(IpClaim {
+            label: split_claim_label(label_prefix, chunk_index),
+            oracle,
+            linear_form: LinearForm::Dense(coeff_chunk.to_vec()),
+            target: sigma_i,
+            witness_len: k_prime,
+        });
+    }
+
+    assert_eq!(
+        sigma_sum, sigma,
+        "SplitClaimIP chunk targets do not sum to the claimed sigma"
+    );
+
+    claims
+}
+
+/// Implement the `SplitClaimTIP` shorthand from `codeswitching.tex`.
+///
+/// Given split-committed witness vectors `msg` and `msg_prime` referenced by
+/// `lhs_oracles` and `rhs_oracles`, this derives per-chunk TIP claims,
+/// computes each local target `sigma_i`, and enforces `sum_i sigma_i == sigma`.
+pub fn split_claim_tip<F: FieldElement>(
+    label_prefix: impl AsRef<str>,
+    msg: &[F],
+    msg_prime: &[F],
+    v_b: &[F],
+    sigma: F,
+    lhs_oracles: &[OracleRef],
+    rhs_oracles: &[OracleRef],
+    k_prime: usize,
+) -> Vec<TipClaim<F>> {
+    assert!(k_prime > 0, "k_prime must be > 0");
+    assert_eq!(
+        msg.len(),
+        msg_prime.len(),
+        "SplitClaimTIP requires msg and msg_prime to have the same length"
+    );
+    assert_eq!(
+        msg.len(),
+        v_b.len(),
+        "SplitClaimTIP requires msg and v_b to have the same length"
+    );
+    assert_eq!(
+        msg.len() % k_prime,
+        0,
+        "SplitClaimTIP requires message length to be divisible by k_prime"
+    );
+
+    let chunk_count = msg.len() / k_prime;
+    assert!(chunk_count > 0, "SplitClaimTIP requires at least one chunk");
+    assert_eq!(
+        lhs_oracles.len(),
+        chunk_count,
+        "SplitClaimTIP lhs oracle count must match split chunk count"
+    );
+    assert_eq!(
+        rhs_oracles.len(),
+        chunk_count,
+        "SplitClaimTIP rhs oracle count must match split chunk count"
+    );
+
+    let mut claims = Vec::with_capacity(chunk_count);
+    let mut sigma_sum = F::ZERO;
+    let label_prefix = label_prefix.as_ref();
+
+    for (chunk_index, (((msg_chunk, msg_prime_chunk), coeff_chunk), (lhs_oracle, rhs_oracle))) in
+        msg.chunks_exact(k_prime)
+            .zip(msg_prime.chunks_exact(k_prime))
+            .zip(v_b.chunks_exact(k_prime))
+            .zip(lhs_oracles.iter().copied().zip(rhs_oracles.iter().copied()))
+            .enumerate()
+    {
+        let sigma_i = triple_product(msg_chunk, msg_prime_chunk, coeff_chunk);
+        sigma_sum += sigma_i;
+
+        claims.push(TipClaim {
+            label: split_claim_label(label_prefix, chunk_index),
+            lhs_oracle,
+            rhs_oracle,
+            linear_form: LinearForm::Dense(coeff_chunk.to_vec()),
+            target: sigma_i,
+            witness_len: k_prime,
+        });
+    }
+
+    assert_eq!(
+        sigma_sum, sigma,
+        "SplitClaimTIP chunk targets do not sum to the claimed sigma"
+    );
+
+    claims
+}
+
+fn split_claim_label(label_prefix: &str, chunk_index: usize) -> String {
+    format!("{label_prefix}[{chunk_index}]")
+}
+
+fn inner_product<F: FieldElement>(lhs: &[F], rhs: &[F]) -> F {
+    assert_eq!(lhs.len(), rhs.len(), "inner-product length mismatch");
+    lhs.iter()
+        .zip(rhs.iter())
+        .fold(F::ZERO, |acc, (&x, &y)| acc + x * y)
+}
+
+fn triple_product<F: FieldElement>(lhs: &[F], rhs: &[F], coeffs: &[F]) -> F {
+    assert_eq!(
+        lhs.len(),
+        rhs.len(),
+        "triple-product lhs/rhs length mismatch"
+    );
+    assert_eq!(
+        lhs.len(),
+        coeffs.len(),
+        "triple-product coeff length mismatch"
+    );
+
+    lhs.iter()
+        .zip(rhs.iter())
+        .zip(coeffs.iter())
+        .fold(F::ZERO, |acc, ((&x, &y), &c)| acc + x * y * c)
+}
+
 /// Auxiliary oracle registered during `CodeswitchClaims` construction.
 #[derive(Debug, Clone)]
 pub struct AuxOracle<F> {
@@ -323,6 +493,77 @@ impl<F> CodeswitchClaimsBuilder<F> {
             target,
             witness_len: self.k_prime,
         });
+    }
+
+    /// Add the `SplitClaimIP` shorthand as chunked `IpClaim`s.
+    ///
+    /// Returns the per-chunk targets `sigma_i` generated for each split claim.
+    pub fn split_claim_ip(
+        &mut self,
+        label_prefix: impl AsRef<str>,
+        msg: &[F],
+        v_b: &[F],
+        sigma: F,
+        oracles: &[OracleRef],
+    ) -> Vec<F>
+    where
+        F: FieldElement,
+    {
+        let claims = crate::codeswitching::claims::split_claim_ip(
+            label_prefix,
+            msg,
+            v_b,
+            sigma,
+            oracles,
+            self.k_prime,
+        );
+
+        let mut chunk_targets = Vec::with_capacity(claims.len());
+        for claim in claims {
+            self.assert_oracle_exists(claim.oracle);
+            chunk_targets.push(claim.target);
+            self.ip_claims.push(claim);
+        }
+
+        chunk_targets
+    }
+
+    /// Add the `SplitClaimTIP` shorthand as chunked `TipClaim`s.
+    ///
+    /// Returns the per-chunk targets `sigma_i` generated for each split claim.
+    pub fn split_claim_tip(
+        &mut self,
+        label_prefix: impl AsRef<str>,
+        msg: &[F],
+        msg_prime: &[F],
+        v_b: &[F],
+        sigma: F,
+        lhs_oracles: &[OracleRef],
+        rhs_oracles: &[OracleRef],
+    ) -> Vec<F>
+    where
+        F: FieldElement,
+    {
+        let claims = crate::codeswitching::claims::split_claim_tip(
+            label_prefix,
+            msg,
+            msg_prime,
+            v_b,
+            sigma,
+            lhs_oracles,
+            rhs_oracles,
+            self.k_prime,
+        );
+
+        let mut chunk_targets = Vec::with_capacity(claims.len());
+        for claim in claims {
+            self.assert_oracle_exists(claim.lhs_oracle);
+            self.assert_oracle_exists(claim.rhs_oracle);
+            chunk_targets.push(claim.target);
+            self.tip_claims.push(claim);
+        }
+
+        chunk_targets
     }
 
     pub fn finish(self) -> CodeswitchClaimsPlan<F> {
@@ -463,6 +704,124 @@ mod tests {
             OracleRef::new(OracleNamespace::Message, 0),
             LinearForm::Dense(vec![f(1), f(2)]),
             f(9),
+        );
+    }
+
+    #[test]
+    fn test_split_claim_ip_scaffolding() {
+        let msg: Vec<KoalaBear> = (1..=8).map(f).collect();
+        let v_b: Vec<KoalaBear> = vec![f(2), f(0), f(1), f(1), f(3), f(1), f(0), f(2)];
+        let sigma = f(46); // 9 + 37
+
+        let claims = split_claim_ip(
+            "split_ip",
+            &msg,
+            &v_b,
+            sigma,
+            &[
+                OracleRef::new(OracleNamespace::Message, 0),
+                OracleRef::new(OracleNamespace::Message, 1),
+            ],
+            4,
+        );
+
+        assert_eq!(claims.len(), 2);
+        assert_eq!(claims[0].label, "split_ip[0]");
+        assert_eq!(claims[1].label, "split_ip[1]");
+        assert_eq!(claims[0].target, f(9));
+        assert_eq!(claims[1].target, f(37));
+    }
+
+    #[test]
+    fn test_split_claim_tip_scaffolding() {
+        let msg: Vec<KoalaBear> = (1..=8).map(f).collect();
+        let msg_prime: Vec<KoalaBear> = vec![f(2), f(2), f(2), f(2), f(3), f(3), f(3), f(3)];
+        let v_b: Vec<KoalaBear> = vec![f(1); 8];
+        let sigma = f(98); // 20 + 78
+
+        let claims = split_claim_tip(
+            "split_tip",
+            &msg,
+            &msg_prime,
+            &v_b,
+            sigma,
+            &[
+                OracleRef::new(OracleNamespace::Message, 0),
+                OracleRef::new(OracleNamespace::Message, 1),
+            ],
+            &[
+                OracleRef::new(OracleNamespace::IndexMultiplier1, 0),
+                OracleRef::new(OracleNamespace::IndexMultiplier1, 1),
+            ],
+            4,
+        );
+
+        assert_eq!(claims.len(), 2);
+        assert_eq!(claims[0].label, "split_tip[0]");
+        assert_eq!(claims[1].label, "split_tip[1]");
+        assert_eq!(claims[0].target, f(20));
+        assert_eq!(claims[1].target, f(78));
+    }
+
+    #[test]
+    fn test_builder_split_claim_helpers_append_claims() {
+        let (context, _output_code) = sample_context();
+        let mut builder = CodeswitchClaimsBuilder::new(4, context);
+
+        let msg: Vec<KoalaBear> = (1..=8).map(f).collect();
+        let v_b_ip: Vec<KoalaBear> = vec![f(2), f(0), f(1), f(1), f(3), f(1), f(0), f(2)];
+        let ip_targets = builder.split_claim_ip(
+            "ip",
+            &msg,
+            &v_b_ip,
+            f(46),
+            &[
+                OracleRef::new(OracleNamespace::Message, 0),
+                OracleRef::new(OracleNamespace::Message, 1),
+            ],
+        );
+        assert_eq!(ip_targets, vec![f(9), f(37)]);
+
+        let msg_prime: Vec<KoalaBear> = vec![f(2), f(2), f(2), f(2), f(3), f(3), f(3), f(3)];
+        let v_b_tip: Vec<KoalaBear> = vec![f(1); 8];
+        let tip_targets = builder.split_claim_tip(
+            "tip",
+            &msg,
+            &msg_prime,
+            &v_b_tip,
+            f(98),
+            &[
+                OracleRef::new(OracleNamespace::Message, 0),
+                OracleRef::new(OracleNamespace::Message, 1),
+            ],
+            &[
+                OracleRef::new(OracleNamespace::IndexMultiplier1, 0),
+                OracleRef::new(OracleNamespace::IndexMultiplier1, 1),
+            ],
+        );
+        assert_eq!(tip_targets, vec![f(20), f(78)]);
+
+        let plan = builder.finish();
+        assert_eq!(plan.num_ip(), 2);
+        assert_eq!(plan.num_tip(), 2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_split_claim_ip_panics_on_sigma_mismatch() {
+        let msg: Vec<KoalaBear> = (1..=8).map(f).collect();
+        let v_b: Vec<KoalaBear> = vec![f(2), f(0), f(1), f(1), f(3), f(1), f(0), f(2)];
+
+        let _ = split_claim_ip(
+            "split_ip_bad_sigma",
+            &msg,
+            &v_b,
+            f(45),
+            &[
+                OracleRef::new(OracleNamespace::Message, 0),
+                OracleRef::new(OracleNamespace::Message, 1),
+            ],
+            4,
         );
     }
 }
