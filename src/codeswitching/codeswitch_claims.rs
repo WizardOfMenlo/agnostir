@@ -4,61 +4,39 @@ use super::claims::{
 };
 use super::oracles::{CodeswitchOraclesInput, build_codeswitch_oracles, split_and_encode};
 use crate::{ErrorCorrectingCode, FieldElement};
+use rand::Rng;
 
-/// Verifier challenges and transcript values needed to scaffold
-/// `CodeswitchClaims`.
-#[derive(Debug, Clone)]
-pub struct CodeswitchClaimsParams<F> {
-    /// Spot-check positions over `[0, n_era)`.
-    pub spotcheck_indices: Vec<usize>,
-    /// Claimed ERA evaluations at `spotcheck_indices`.
-    pub spotcheck_evals: Vec<F>,
-    /// The random combiner used to aggregate spot checks.
-    pub beta_codeswitch: F,
-
-    /// Random combiner for the first multiply check.
-    pub r_mult_round_1: F,
-    /// Random combiner for the second multiply check.
-    pub r_mult_round_2: F,
-
-    /// Random vector for the first accumulate check.
-    pub r_acc_round_1: Vec<F>,
-    /// Random vector for the second accumulate check.
-    pub r_acc_round_2: Vec<F>,
+/// Challenge-sampling parameters for `CodeswitchClaims`.
+///
+/// For now, challenges are sampled from `rng`; later this can be replaced by
+/// Fiat–Shamir-derived sampling with the same interface shape.
+#[derive(Debug)]
+pub struct CodeswitchClaimsParams<R> {
+    pub num_spotchecks: usize,
+    pub rng: R,
 }
 
-impl<F: FieldElement> CodeswitchClaimsParams<F> {
+impl<R> CodeswitchClaimsParams<R> {
     pub fn validate(&self, n_era: usize) {
         assert!(n_era > 0, "CodeswitchClaims requires n_era > 0");
-
-        assert_eq!(
-            self.r_acc_round_1.len(),
-            n_era,
-            "r_acc_round_1 length must equal n_era"
-        );
-        assert_eq!(
-            self.r_acc_round_2.len(),
-            n_era,
-            "r_acc_round_2 length must equal n_era"
-        );
-
-        assert_eq!(
-            self.spotcheck_indices.len(),
-            self.spotcheck_evals.len(),
-            "spotcheck_indices and spotcheck_evals lengths must match"
-        );
         assert!(
-            !self.spotcheck_indices.is_empty(),
-            "at least one spotcheck index is required"
+            self.num_spotchecks > 0,
+            "CodeswitchClaims requires at least one spotcheck"
         );
-
-        for &index in &self.spotcheck_indices {
-            assert!(
-                index < n_era,
-                "spotcheck index {index} is out of range for n_era={n_era}"
-            );
-        }
     }
+}
+
+/// Sampled verifier challenges and derived claimed values used while wiring
+/// `CodeswitchClaims`.
+#[derive(Debug, Clone)]
+pub struct SampledCodeswitchChallenges<F> {
+    pub spotcheck_indices: Vec<usize>,
+    pub spotcheck_evals: Vec<F>,
+    pub beta_codeswitch: F,
+    pub r_mult_round_1: F,
+    pub r_mult_round_2: F,
+    pub r_acc_round_1: Vec<F>,
+    pub r_acc_round_2: Vec<F>,
 }
 
 /// Main witness vectors derived while wiring `CodeswitchClaims`.
@@ -95,6 +73,7 @@ pub struct CodeswitchClaimsArtifacts<F> {
     pub plan: CodeswitchClaimsPlan<F>,
     pub oracles: CodeswitchOracleRefs,
     pub wires: CodeswitchWireVectors<F>,
+    pub challenges: SampledCodeswitchChallenges<F>,
     pub trace: Vec<String>,
 }
 
@@ -116,17 +95,18 @@ impl<F> CodeswitchClaimsArtifacts<F> {
 ///
 /// This function wires the split-claim graph and tracks round structure.
 /// Sumcheck subprotocols are intentionally left as TODO markers for now.
-pub fn generate_codeswitch_claims<F, CBase, COut>(
+pub fn generate_codeswitch_claims<F, CBase, COut, R>(
     msg: &[F],
     base_code: &CBase,
     output_code: &COut,
     index_input: &CodeswitchOraclesInput<F>,
-    params: &CodeswitchClaimsParams<F>,
+    params: &mut CodeswitchClaimsParams<R>,
 ) -> CodeswitchClaimsArtifacts<F>
 where
     F: FieldElement,
     CBase: ErrorCorrectingCode<Alphabet = F>,
     COut: ErrorCorrectingCode<Alphabet = F>,
+    R: Rng,
 {
     let k_prime = output_code.message_size();
     assert!(k_prime > 0, "output code message_size must be > 0");
@@ -146,6 +126,13 @@ where
 
     let n_era = index_input.n_era;
     params.validate(n_era);
+
+    let spotcheck_indices = sample_spotcheck_indices(&mut params.rng, params.num_spotchecks, n_era);
+    let beta_codeswitch = F::random(&mut params.rng);
+    let r_mult_round_1 = F::random(&mut params.rng);
+    let r_mult_round_2 = F::random(&mut params.rng);
+    let r_acc_round_1 = random_vector(&mut params.rng, n_era);
+    let r_acc_round_2 = random_vector(&mut params.rng, n_era);
 
     assert_eq!(
         n_era % k_prime,
@@ -192,18 +179,7 @@ where
     let mult_round_2 = hadamard_product(&perm_round_2, &index_input.multiplier_2);
     let era = prefix_sum(&mult_round_2);
 
-    // Spot-check consistency against the claimed ERA evaluations.
-    for (spotcheck_pos, (&index, &claimed_eval)) in params
-        .spotcheck_indices
-        .iter()
-        .zip(params.spotcheck_evals.iter())
-        .enumerate()
-    {
-        assert_eq!(
-            claimed_eval, era[index],
-            "spotcheck evaluation mismatch at position {spotcheck_pos} (index={index})"
-        );
-    }
+    let spotcheck_evals: Vec<F> = spotcheck_indices.iter().map(|&index| era[index]).collect();
 
     let message_refs = oracle_refs_for_namespace(OracleNamespace::Message, l_msg);
 
@@ -228,12 +204,8 @@ where
 
     // ERA spotcheck aggregation claim.
     trace.push("SplitClaimIP: ERA spotcheck aggregation".to_string());
-    let v_cs = build_codeswitch_vector(n_era, &params.spotcheck_indices, params.beta_codeswitch);
-    let sigma_cs = weighted_spotcheck_sum(
-        params.beta_codeswitch,
-        &params.spotcheck_indices,
-        &params.spotcheck_evals,
-    );
+    let v_cs = build_codeswitch_vector(n_era, &spotcheck_indices, beta_codeswitch);
+    let sigma_cs = weighted_spotcheck_sum(beta_codeswitch, &spotcheck_indices, &spotcheck_evals);
     let _chunk_sigmas =
         builder.split_claim_ip("codeswitch.era_spotcheck", &era, &v_cs, sigma_cs, &era_refs);
 
@@ -245,9 +217,12 @@ where
 
     // Multiply round 1.
     trace.push("SplitClaimTIP/IP: first multiply step".to_string());
-    let r_mult_round_1 = geometric_vector(params.r_mult_round_1, n_era);
-    let sigma_mult_round_1 =
-        triple_product_full(&perm_round_1, &index_input.multiplier_1, &r_mult_round_1);
+    let r_mult_round_1_powers = geometric_vector(r_mult_round_1, n_era);
+    let sigma_mult_round_1 = triple_product_full(
+        &perm_round_1,
+        &index_input.multiplier_1,
+        &r_mult_round_1_powers,
+    );
     let index_multiplier_1_refs =
         oracle_refs_for_namespace(OracleNamespace::IndexMultiplier1, l_era);
 
@@ -255,7 +230,7 @@ where
         "codeswitch.round1.multiply.tip",
         &perm_round_1,
         &index_input.multiplier_1,
-        &r_mult_round_1,
+        &r_mult_round_1_powers,
         sigma_mult_round_1,
         &perm_round_1_refs,
         &index_multiplier_1_refs,
@@ -263,15 +238,15 @@ where
     let _ip_chunk_sigmas_round_1 = builder.split_claim_ip(
         "codeswitch.round1.multiply.ip",
         &mult_round_1,
-        &r_mult_round_1,
+        &r_mult_round_1_powers,
         sigma_mult_round_1,
         &mult_round_1_refs,
     );
 
     // Accumulate round 1 relation: <mult, A_r> == <acc, r>.
     trace.push("SplitClaimIP: first accumulate step".to_string());
-    let a_r_round_1 = suffix_sums(&params.r_acc_round_1);
-    let sigma_acc_round_1 = inner_product_full(&acc_round_1, &params.r_acc_round_1);
+    let a_r_round_1 = suffix_sums(&r_acc_round_1);
+    let sigma_acc_round_1 = inner_product_full(&acc_round_1, &r_acc_round_1);
     let _acc_lhs_chunk_sigmas_round_1 = builder.split_claim_ip(
         "codeswitch.round1.accumulate.lhs",
         &mult_round_1,
@@ -282,7 +257,7 @@ where
     let _acc_rhs_chunk_sigmas_round_1 = builder.split_claim_ip(
         "codeswitch.round1.accumulate.rhs",
         &acc_round_1,
-        &params.r_acc_round_1,
+        &r_acc_round_1,
         sigma_acc_round_1,
         &acc_round_1_refs,
     );
@@ -292,9 +267,12 @@ where
 
     // Multiply round 2.
     trace.push("SplitClaimTIP/IP: second multiply step".to_string());
-    let r_mult_round_2 = geometric_vector(params.r_mult_round_2, n_era);
-    let sigma_mult_round_2 =
-        triple_product_full(&perm_round_2, &index_input.multiplier_2, &r_mult_round_2);
+    let r_mult_round_2_powers = geometric_vector(r_mult_round_2, n_era);
+    let sigma_mult_round_2 = triple_product_full(
+        &perm_round_2,
+        &index_input.multiplier_2,
+        &r_mult_round_2_powers,
+    );
     let index_multiplier_2_refs =
         oracle_refs_for_namespace(OracleNamespace::IndexMultiplier2, l_era);
 
@@ -302,7 +280,7 @@ where
         "codeswitch.round2.multiply.tip",
         &perm_round_2,
         &index_input.multiplier_2,
-        &r_mult_round_2,
+        &r_mult_round_2_powers,
         sigma_mult_round_2,
         &perm_round_2_refs,
         &index_multiplier_2_refs,
@@ -310,15 +288,15 @@ where
     let _ip_chunk_sigmas_round_2 = builder.split_claim_ip(
         "codeswitch.round2.multiply.ip",
         &mult_round_2,
-        &r_mult_round_2,
+        &r_mult_round_2_powers,
         sigma_mult_round_2,
         &mult_round_2_refs,
     );
 
     // Accumulate round 2 relation: <mult, A_r> == <era, r>.
     trace.push("SplitClaimIP: second accumulate step".to_string());
-    let a_r_round_2 = suffix_sums(&params.r_acc_round_2);
-    let sigma_acc_round_2 = inner_product_full(&era, &params.r_acc_round_2);
+    let a_r_round_2 = suffix_sums(&r_acc_round_2);
+    let sigma_acc_round_2 = inner_product_full(&era, &r_acc_round_2);
     let _acc_lhs_chunk_sigmas_round_2 = builder.split_claim_ip(
         "codeswitch.round2.accumulate.lhs",
         &mult_round_2,
@@ -329,7 +307,7 @@ where
     let _acc_rhs_chunk_sigmas_round_2 = builder.split_claim_ip(
         "codeswitch.round2.accumulate.rhs",
         &era,
-        &params.r_acc_round_2,
+        &r_acc_round_2,
         sigma_acc_round_2,
         &era_refs,
     );
@@ -349,6 +327,16 @@ where
         acc_round_2: era_refs,
     };
 
+    let challenges = SampledCodeswitchChallenges {
+        spotcheck_indices,
+        spotcheck_evals,
+        beta_codeswitch,
+        r_mult_round_1,
+        r_mult_round_2,
+        r_acc_round_1,
+        r_acc_round_2,
+    };
+
     let wires = CodeswitchWireVectors {
         base,
         repeat_round_1,
@@ -364,6 +352,7 @@ where
         plan,
         oracles,
         wires,
+        challenges,
         trace,
     }
 }
@@ -372,6 +361,23 @@ fn oracle_refs_for_namespace(namespace: OracleNamespace, count: usize) -> Vec<Or
     (0..count)
         .map(|index| OracleRef::new(namespace, index))
         .collect()
+}
+
+fn sample_spotcheck_indices<R: Rng>(
+    rng: &mut R,
+    num_spotchecks: usize,
+    n_era: usize,
+) -> Vec<usize> {
+    assert!(num_spotchecks > 0, "num_spotchecks must be > 0");
+    assert!(n_era > 0, "n_era must be > 0");
+
+    (0..num_spotchecks)
+        .map(|_| rng.random_range(0..n_era))
+        .collect()
+}
+
+fn random_vector<F: FieldElement, R: Rng>(rng: &mut R, len: usize) -> Vec<F> {
+    (0..len).map(|_| F::random(rng)).collect()
 }
 
 fn repeat_to_length<F: Copy>(base: &[F], target_len: usize) -> Vec<F> {
@@ -526,6 +532,7 @@ fn triple_product_full<F: FieldElement>(lhs: &[F], rhs: &[F], coeffs: &[F]) -> F
 #[cfg(test)]
 mod tests {
     use p3_koala_bear::KoalaBear;
+    use rand::{SeedableRng, rngs::SmallRng};
 
     use super::*;
     use crate::codeswitching::oracles::CodeswitchOraclesInput;
@@ -561,17 +568,9 @@ mod tests {
         let mult_round_2 = hadamard_product(&perm_round_2, &multiplier_2);
         let era = prefix_sum(&mult_round_2);
 
-        let spotcheck_indices = vec![0, 5, 9, 15];
-        let spotcheck_evals = spotcheck_indices.iter().map(|&i| era[i]).collect();
-
-        let params = CodeswitchClaimsParams {
-            spotcheck_indices,
-            spotcheck_evals,
-            beta_codeswitch: f(7),
-            r_mult_round_1: f(13),
-            r_mult_round_2: f(17),
-            r_acc_round_1: (200..200 + n_era as u32).map(f).collect(),
-            r_acc_round_2: (300..300 + n_era as u32).map(f).collect(),
+        let mut params = CodeswitchClaimsParams {
+            num_spotchecks: 4,
+            rng: SmallRng::seed_from_u64(12345),
         };
 
         let index_input = CodeswitchOraclesInput {
@@ -584,12 +583,22 @@ mod tests {
         };
 
         let artifacts =
-            generate_codeswitch_claims(&msg, &base_code, &output_code, &index_input, &params);
+            generate_codeswitch_claims(&msg, &base_code, &output_code, &index_input, &mut params);
 
         let l_era = n_era / output_code.message_size();
 
         assert_eq!(artifacts.wires.era, era);
         assert_eq!(artifacts.oracles.era.len(), l_era);
+        assert_eq!(artifacts.challenges.spotcheck_indices.len(), 4);
+        assert_eq!(artifacts.challenges.spotcheck_evals.len(), 4);
+        for (&index, &eval) in artifacts
+            .challenges
+            .spotcheck_indices
+            .iter()
+            .zip(artifacts.challenges.spotcheck_evals.iter())
+        {
+            assert_eq!(eval, artifacts.wires.era[index]);
+        }
 
         // 1 (spotcheck) + 2 (multiply IPs) + 4 (accumulate IPs) = 7 split-IP invocations.
         assert_eq!(artifacts.num_ip(), 7 * l_era);
@@ -618,7 +627,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_generate_codeswitch_claims_panics_on_bad_spotcheck_eval() {
+    fn test_generate_codeswitch_claims_panics_on_zero_spotchecks() {
         let msg: Vec<KoalaBear> = (1..=8).map(f).collect();
         let base_code = IdentityCode::<KoalaBear>::new(8);
         let output_code = IdentityCode::<KoalaBear>::new(4);
@@ -628,14 +637,9 @@ mod tests {
         let multiplier_1: Vec<KoalaBear> = (10..10 + n_era as u32).map(f).collect();
         let multiplier_2: Vec<KoalaBear> = (100..100 + n_era as u32).map(f).collect();
 
-        let params = CodeswitchClaimsParams {
-            spotcheck_indices: vec![0, 7],
-            spotcheck_evals: vec![f(1), f(2)], // wrong on purpose
-            beta_codeswitch: f(7),
-            r_mult_round_1: f(13),
-            r_mult_round_2: f(17),
-            r_acc_round_1: (200..200 + n_era as u32).map(f).collect(),
-            r_acc_round_2: (300..300 + n_era as u32).map(f).collect(),
+        let mut params = CodeswitchClaimsParams {
+            num_spotchecks: 0,
+            rng: SmallRng::seed_from_u64(98765),
         };
 
         let index_input = CodeswitchOraclesInput {
@@ -647,6 +651,7 @@ mod tests {
             multiplier_2,
         };
 
-        let _ = generate_codeswitch_claims(&msg, &base_code, &output_code, &index_input, &params);
+        let _ =
+            generate_codeswitch_claims(&msg, &base_code, &output_code, &index_input, &mut params);
     }
 }

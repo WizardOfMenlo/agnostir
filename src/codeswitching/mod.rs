@@ -9,7 +9,7 @@ pub use claims::{
 };
 pub use codeswitch_claims::{
     CodeswitchClaimsArtifacts, CodeswitchClaimsParams, CodeswitchOracleRefs, CodeswitchWireVectors,
-    generate_codeswitch_claims,
+    SampledCodeswitchChallenges, generate_codeswitch_claims,
 };
 pub use oracles::{
     CodeswitchOraclesInput, CodeswitchOraclesOutput, SplitEncoding, build_codeswitch_oracles,
