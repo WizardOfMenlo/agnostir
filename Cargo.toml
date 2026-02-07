@@ -92,6 +92,7 @@ ark-std = "0.5"
 criterion = "0.8"
 proptest = { version = "1.0", default-features = true }
 rayon = "1.0"
+blake3 = "1"
 
 [features]
 default = ["parallel", "cli"]

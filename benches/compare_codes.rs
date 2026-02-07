@@ -155,25 +155,25 @@ fn bench_compare_interleaved(c: &mut Criterion) {
         );
     });
 
-    // let ea_params = EaParams {
-    //     inverse_rate: 2,
-    //     prob_multiplier: 18,
-    // };
-    // let ea_code = build_ea_code(&mut rng, segment_size, ea_params);
-    // c.bench_function("ea_interleaved_inv_rate_2", |b| {
-    //     b.iter_batched(
-    //         || sc_msg.clone(),
-    //         |input| {
-    //             let mut out = Vec::with_capacity(ea_code.codeword_length() * segment_count);
-    //             for seg in 0..segment_count {
-    //                 let start = seg * segment_size;
-    //                 out.extend(ea_code.encode(&input[start..start + segment_size]));
-    //             }
-    //             out
-    //         },
-    //         BatchSize::LargeInput,
-    //     );
-    // });
+    let ea_params = EaParams {
+        inverse_rate: 2,
+        prob_multiplier: 18,
+    };
+    let ea_code = build_ea_code(&mut rng, segment_size, ea_params);
+    c.bench_function("ea_interleaved_inv_rate_2", |b| {
+        b.iter_batched(
+            || sc_msg.clone(),
+            |input| {
+                let mut out = Vec::with_capacity(ea_code.codeword_length() * segment_count);
+                for seg in 0..segment_count {
+                    let start = seg * segment_size;
+                    out.extend(ea_code.encode(&input[start..start + segment_size]));
+                }
+                out
+            },
+            BatchSize::LargeInput,
+        );
+    });
 
     let basefold_params = BasefoldParams { log_rate: 2 };
     let basefold_code = build_basefold_code(&mut rng, segment_size, basefold_params);
@@ -194,59 +194,6 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     });
 }
 
-
-// fn bench_compare(c: &mut Criterion) {
-//     let mut rng = SmallRng::seed_from_u64(2025);
-//     let sc_msg = build_message(&mut rng);
-//     let bls_msg = build_bls_message(&mut rng);
-
-//     let rs_code = ReedSolomonCode::new(MESSAGE_SIZE, MESSAGE_SIZE << RS_INV_RATE);
-//     c.bench_function("reed_solomon_rate_half", |b| {
-//         b.iter_batched(
-//             || bls_msg.clone(),
-//             |input| rs_code.encode(&input),
-//             BatchSize::LargeInput,
-//         );
-//     });
-
-//     let era_code = build_era_code(&mut rng, 0);
-//     let mut era_buf = EraBuffers::new(era_code.block_length());
-//     c.bench_function("era_repetition_6", |b| {
-//         b.iter_batched(
-//             || sc_msg.clone(),
-//             |input| era_code.encode(&input, &mut era_buf),
-//             BatchSize::LargeInput,
-//         );
-//     });
-
-//     let brakedown_params = BrakedownParams {
-//         alpha: 0.238,
-//         inverse_rate: 1.72,
-//         cn: 9,
-//         dn: 12,
-//     };
-//     let brakedown_code = build_brakedown_code(&mut rng, MESSAGE_SIZE, brakedown_params);
-//     c.bench_function("brakedown_encoding", |b| {
-//         b.iter_batched(
-//             || sc_msg.clone(),
-//             |input| brakedown_code.encode(&input),
-//             BatchSize::LargeInput,
-//         );
-//     });
-
-//     let ea_params = EaParams {
-//         inverse_rate: 2,
-//         prob_multiplier: 18,
-//     };
-//     let ea_code = build_ea_code(&mut rng, MESSAGE_SIZE, ea_params);
-//     c.bench_function("ea_encoding", |b| {
-//         b.iter_batched(
-//             || sc_msg.clone(),
-//             |input| ea_code.encode(&input),
-//             BatchSize::LargeInput,
-//         );
-//     });
-// }
 
 fn bench_field_ops(c: &mut Criterion) {
     let mut rng = SmallRng::seed_from_u64(42);
@@ -286,4 +233,70 @@ criterion_group! {
     targets = bench_field_ops
 }
 
-criterion_main!(interleaved_encoding);
+// ── Merkle-tree commitment benchmark (Blake3) ─────────────────────────────
+
+use ark_ff::{BigInteger, PrimeField};
+
+const MERKLE_VECTOR_SIZE: usize = 1 << 23;
+
+/// Build a Blake3 Merkle tree over `leaves` (each a 32-byte hash) and return
+/// the root hash.  Internal nodes are computed bottom-up with rayon.
+fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+    let n = leaves.len();
+    assert!(n.is_power_of_two() && n >= 2);
+
+    // Level 0: hash pairs of leaves → n/2 parent hashes
+    let mut level: Vec<[u8; 32]> = leaves
+        .par_chunks_exact(2)
+        .map(|pair| {
+            let mut buf = [0u8; 64];
+            buf[..32].copy_from_slice(&pair[0]);
+            buf[32..].copy_from_slice(&pair[1]);
+            *blake3::hash(&buf).as_bytes()
+        })
+        .collect();
+
+    // Repeatedly halve until a single root remains
+    while level.len() > 1 {
+        level = level
+            .par_chunks_exact(2)
+            .map(|pair| {
+                let mut buf = [0u8; 64];
+                buf[..32].copy_from_slice(&pair[0]);
+                buf[32..].copy_from_slice(&pair[1]);
+                *blake3::hash(&buf).as_bytes()
+            })
+            .collect();
+    }
+
+    level[0]
+}
+
+fn bench_merkle_commit(c: &mut Criterion) {
+    let mut rng = SmallRng::seed_from_u64(2025);
+
+    // Pre-hash 2^23 SecpScalars into 32-byte Blake3 leaf digests
+    let leaves: Vec<[u8; 32]> = (0..MERKLE_VECTOR_SIZE)
+        .map(|_| {
+            let s = SecpScalar::random(&mut rng);
+            let bytes = s.into_bigint().to_bytes_le();
+            *blake3::hash(&bytes).as_bytes()
+        })
+        .collect();
+
+    c.bench_function("merkle_blake3_commit_2_23_secp_scalars", |b| {
+        b.iter_batched(
+            || leaves.clone(),
+            |lvs| black_box(blake3_merkle_root(&lvs)),
+            BatchSize::LargeInput,
+        );
+    });
+}
+
+criterion_group! {
+    name = merkle_commitment;
+    config = Criterion::default().sample_size(10);
+    targets = bench_merkle_commit
+}
+
+criterion_main!(merkle_commitment);
