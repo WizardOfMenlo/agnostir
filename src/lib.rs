@@ -7,8 +7,8 @@ mod optimized_era;
 mod reed_solomon;
 
 pub use codes::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraBuffers,
-    EraCode, IdentityCode, TensorCode,
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
+    IdentityCode, TensorCode,
 };
 pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
 pub use reed_solomon::ReedSolomonCode;
@@ -216,8 +216,7 @@ mod tests {
         assert_eq!(era_code.block_length(), block_length);
 
         let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
-        let mut buf = EraBuffers::new(block_length);
-        let encoded = era_code.encode(&msg, &mut buf);
+        let encoded = era_code.encode_era(&msg);
 
         assert_eq!(encoded.len(), block_length);
     }
@@ -267,9 +266,8 @@ mod tests {
 
         let msg: Vec<KoalaBear> = (1..=message_size as u32).map(KoalaBear::new).collect();
 
-        let mut buf = EraBuffers::new(block_length);
-        let encoded1 = era_code.encode(&msg, &mut buf);
-        let encoded2 = era_code.encode(&msg, &mut buf);
+        let encoded1 = era_code.encode_era(&msg);
+        let encoded2 = era_code.encode_era(&msg);
 
         // Same input should produce same output
         assert_eq!(encoded1, encoded2);
@@ -373,9 +371,8 @@ mod tests {
         let msg1: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
         let msg2: Vec<KoalaBear> = (10..10 + message_size as u32).map(KoalaBear::new).collect();
 
-        let mut buf = EraBuffers::new(block_length);
-        let encoded1 = era_code.encode(&msg1, &mut buf);
-        let encoded2 = era_code.encode(&msg2, &mut buf);
+        let encoded1 = era_code.encode_era(&msg1);
+        let encoded2 = era_code.encode_era(&msg2);
 
         // Different inputs should (with high probability) produce different outputs
         assert_ne!(encoded1, encoded2);
@@ -425,8 +422,7 @@ mod tests {
             let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
 
             let msg: Vec<KoalaBear> = (0..message_size as u32).map(KoalaBear::new).collect();
-            let mut buf = EraBuffers::new(block_length);
-            let encoded = era_code.encode(&msg, &mut buf);
+            let encoded = era_code.encode_era(&msg);
 
             assert_eq!(
                 encoded.len(),
@@ -483,8 +479,7 @@ mod tests {
 
         // All-zero message
         let msg: Vec<KoalaBear> = vec![<KoalaBear as PrimeCharacteristicRing>::ZERO; message_size];
-        let mut buf = EraBuffers::new(block_length);
-        let encoded = era_code.encode(&msg, &mut buf);
+        let encoded = era_code.encode_era(&msg);
 
         // Encoding should complete without panic and have correct length
         assert_eq!(encoded.len(), block_length);

@@ -3,6 +3,8 @@
 //! This module contains only the encoding logic from the Brakedown polynomial
 //! commitment scheme, ported to work over any `p3_field::Field`.
 
+use std::time::Duration;
+
 use rand::Rng;
 
 use crate::{ErrorCorrectingCode, FieldElement, SparseMatEntry, sparse_mat_vec};
@@ -70,7 +72,7 @@ impl<F: FieldElement> BrakedownCode<F> {
             if cur_y_length >= 1 {
                 // E1: maps msg -> y
                 for i in 0..cur_y_length {
-                    let nnz = params.cn * cur_y_length / cur_msg_length + 1;
+                    let nnz = params.cn;
                     for _ in 0..nnz {
                         level_e1.push(SparseMatEntry {
                             row: rng.random_range(0..cur_msg_length),
@@ -82,7 +84,7 @@ impl<F: FieldElement> BrakedownCode<F> {
 
                 // E2: maps z -> v
                 for i in 0..cur_v_length {
-                    let nnz = params.dn * cur_v_length / cur_z_length + 1;
+                    let nnz = params.dn;
                     for _ in 0..nnz {
                         level_e2.push(SparseMatEntry {
                             row: rng.random_range(0..cur_z_length),
@@ -145,12 +147,12 @@ impl<F: FieldElement> BrakedownCode<F> {
         let mut x = msg.to_vec();
 
         if cur_y_length >= 1 {
-            let nnz_e1 = self.params.cn * cur_y_length / cur_msg_length + 1;
+            let nnz_e1 = self.params.cn;
             let y = sparse_mat_vec(msg, &self.e1[depth], cur_y_length, nnz_e1);
 
             let z = self.encode_recursive(&y, depth + 1);
 
-            let nnz_e2 = self.params.dn * cur_v_length / cur_z_length + 1;
+            let nnz_e2 = self.params.dn;
             let v = sparse_mat_vec(&z, &self.e2[depth], cur_v_length, nnz_e2);
 
             x.extend_from_slice(&z);
@@ -161,6 +163,115 @@ impl<F: FieldElement> BrakedownCode<F> {
 
         x
     }
+
+    /// Like [`Self::encode`] but prints per-depth nnz and sparse_mat_vec timings.
+    pub fn encode_profiled(&self, msg: &[F]) -> Vec<F> {
+        assert_eq!(msg.len(), self.message_size);
+        let mut stats = Vec::new();
+        let result = self.encode_recursive_profiled(msg, 0, &mut stats);
+
+        eprintln!();
+        eprintln!("┌───────┬──────────┬──────────┬──────────┬──────────┬────────────┬────────────┐");
+        eprintln!("│ Depth │  msg_len │   y_len  │   z_len  │   v_len  │  E1 spmv   │  E2 spmv   │");
+        eprintln!("├───────┼──────────┼──────────┼──────────┼──────────┼────────────┼────────────┤");
+        for s in &stats {
+            eprintln!(
+                "│ {:>5} │ {:>8} │ {:>8} │ {:>8} │ {:>8} │{:>5}×{:<5} {:>7.3}ms │{:>5}×{:<5} {:>7.3}ms │",
+                s.depth,
+                s.msg_len,
+                s.y_len,
+                s.z_len,
+                s.v_len,
+                s.nnz_e1,
+                s.y_len,
+                s.t_e1.as_secs_f64() * 1e3,
+                s.nnz_e2,
+                s.v_len,
+                s.t_e2.as_secs_f64() * 1e3,
+            );
+        }
+        eprintln!("└───────┴──────────┴──────────┴──────────┴──────────┴────────────┴────────────┘");
+
+        let total_e1: Duration = stats.iter().map(|s| s.t_e1).sum();
+        let total_e2: Duration = stats.iter().map(|s| s.t_e2).sum();
+        eprintln!(
+            "  Totals: E1 spmv = {:.3} ms, E2 spmv = {:.3} ms, combined = {:.3} ms",
+            total_e1.as_secs_f64() * 1e3,
+            total_e2.as_secs_f64() * 1e3,
+            (total_e1 + total_e2).as_secs_f64() * 1e3,
+        );
+
+        result
+    }
+
+    fn encode_recursive_profiled(
+        &self,
+        msg: &[F],
+        depth: usize,
+        stats: &mut Vec<BrakedownDepthStats>,
+    ) -> Vec<F> {
+        let cur_msg_length = msg.len();
+        let (_cw_len, cur_y_length, cur_z_length, cur_v_length) =
+            brakedown_code_lengths(cur_msg_length, &self.params);
+
+        let mut x = msg.to_vec();
+
+        if cur_y_length >= 1 {
+            let nnz_e1 = self.params.cn;
+            let t0 = std::time::Instant::now();
+            let y = sparse_mat_vec(msg, &self.e1[depth], cur_y_length, nnz_e1);
+            let t_e1 = t0.elapsed();
+
+            let z = self.encode_recursive_profiled(&y, depth + 1, stats);
+
+            let nnz_e2 = self.params.dn;
+            let t0 = std::time::Instant::now();
+            let v = sparse_mat_vec(&z, &self.e2[depth], cur_v_length, nnz_e2);
+            let t_e2 = t0.elapsed();
+
+            stats.push(BrakedownDepthStats {
+                depth,
+                msg_len: cur_msg_length,
+                y_len: cur_y_length,
+                z_len: cur_z_length,
+                v_len: cur_v_length,
+                nnz_e1,
+                nnz_e2,
+                t_e1,
+                t_e2,
+            });
+
+            x.extend_from_slice(&z);
+            x.extend_from_slice(&v);
+        } else {
+            stats.push(BrakedownDepthStats {
+                depth,
+                msg_len: cur_msg_length,
+                y_len: 0,
+                z_len: 0,
+                v_len: cur_v_length,
+                nnz_e1: 0,
+                nnz_e2: 0,
+                t_e1: Duration::ZERO,
+                t_e2: Duration::ZERO,
+            });
+            x.extend_from_slice(&self.base_vals);
+        }
+
+        x
+    }
+}
+
+struct BrakedownDepthStats {
+    depth: usize,
+    msg_len: usize,
+    y_len: usize,
+    z_len: usize,
+    v_len: usize,
+    nnz_e1: usize,
+    nnz_e2: usize,
+    t_e1: Duration,
+    t_e2: Duration,
 }
 
 impl<F: FieldElement> ErrorCorrectingCode for BrakedownCode<F> {

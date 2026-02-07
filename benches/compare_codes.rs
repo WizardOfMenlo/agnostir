@@ -1,12 +1,13 @@
 use agnostir::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraBuffers,
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams,
     EraCode, ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
-    encode_interleaved, random_permutation,
+    random_permutation,
 };
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use std::hint::black_box;
 use ark_secp256k1::Fr as SecpScalar;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
+use rayon::prelude::*;
 
 type BlsScalar = ark_bls12_381::Fr;
 
@@ -39,10 +40,10 @@ fn build_era_code(
     assert_eq!(k * k, segment_msg_size, "segment message size must be a perfect square");
 
     let inner_brakedown_params = BrakedownParams {
-        alpha: 0.045,
-        inverse_rate: 1.1,
-        cn: 7,
-        dn: 11,
+        alpha: 0.085,
+        inverse_rate: 1.154,
+        cn: 5,
+        dn: 32,
     };
     let inner_brakedown = BrakedownCode::new(k, inner_brakedown_params, rng);
     let base_code: TensorCode<BrakedownCode<SecpScalar>> = TensorCode::new(inner_brakedown);
@@ -95,28 +96,34 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     let rs_code =
         ReedSolomonCode::new(MESSAGE_SIZE >> INTERLEAVING_FACTOR, (MESSAGE_SIZE >> INTERLEAVING_FACTOR) << RS_INV_RATE);
 
-    c.bench_function("reed_solomon_interleaved_rate_half", |b| {
-        b.iter_batched(
+        c.bench_function("reed_solomon_interleaved_inv_rate_2", |b| {
+            b.iter_batched(
             || bls_msg.clone(),
-            |input| encode_interleaved(&input, &rs_code, INTERLEAVING_FACTOR),
+            |input| {
+                let base_msg_size = rs_code.message_size();
+                input
+                    .par_chunks(base_msg_size)
+                    .flat_map(|chunk| rs_code.encode(chunk))
+                    .collect::<Vec<_>>()
+            },
             BatchSize::LargeInput,
         );
     });
 
     let era_code = build_era_code(&mut rng, INTERLEAVING_FACTOR);
-    let mut era_buf = EraBuffers::new(era_code.block_length());
-    c.bench_function("era_interleaved_repetition_6", |b| {
+    c.bench_function("era_interleaved_inv_rate_8", |b| {
         b.iter_batched(
             || sc_msg.clone(),
             |input| {
                 let segment_msg = era_code.message_size();
                 let seg_count = 1usize << INTERLEAVING_FACTOR;
-                let mut out = Vec::with_capacity(era_code.block_length() * seg_count);
-                for seg in 0..seg_count {
-                    let start = seg * segment_msg;
-                    out.extend(era_code.encode(&input[start..start + segment_msg], &mut era_buf));
-                }
-                out
+                (0..seg_count)
+                    .into_par_iter()
+                    .flat_map(|seg| {
+                        let start = seg * segment_msg;
+                        era_code.encode_era(&input[start..start + segment_msg])
+                    })
+                    .collect::<Vec<_>>()
             },
             BatchSize::LargeInput,
         );
@@ -126,22 +133,23 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     let segment_count = 1usize << INTERLEAVING_FACTOR;
 
     let brakedown_params = BrakedownParams {
-        alpha: 0.238,
-        inverse_rate: 1.72,
-        cn: 9,
-        dn: 12,
+        alpha: 0.54,
+        inverse_rate: 4.0,
+        cn: 5,
+        dn: 47,
     };
     let brakedown_code = build_brakedown_code(&mut rng, segment_size, brakedown_params);
-    c.bench_function("brakedown_interleaved_encoding", |b| {
+    c.bench_function("brakedown_interleaved_inv_rate_4", |b| {
         b.iter_batched(
             || sc_msg.clone(),
             |input| {
-                let mut out = Vec::with_capacity(brakedown_code.codeword_length() * segment_count);
-                for seg in 0..segment_count {
-                    let start = seg * segment_size;
-                    out.extend(brakedown_code.encode(&input[start..start + segment_size]));
-                }
-                out
+                (0..segment_count)
+                    .into_par_iter()
+                    .flat_map(|seg| {
+                        let start = seg * segment_size;
+                        brakedown_code.encode(&input[start..start + segment_size])
+                    })
+                    .collect::<Vec<_>>()
             },
             BatchSize::LargeInput,
         );
@@ -152,7 +160,7 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     //     prob_multiplier: 18,
     // };
     // let ea_code = build_ea_code(&mut rng, segment_size, ea_params);
-    // c.bench_function("ea_interleaved_encoding", |b| {
+    // c.bench_function("ea_interleaved_inv_rate_2", |b| {
     //     b.iter_batched(
     //         || sc_msg.clone(),
     //         |input| {
@@ -169,16 +177,17 @@ fn bench_compare_interleaved(c: &mut Criterion) {
 
     let basefold_params = BasefoldParams { log_rate: 2 };
     let basefold_code = build_basefold_code(&mut rng, segment_size, basefold_params);
-    c.bench_function("basefold_interleaved_encoding", |b| {
+    c.bench_function("basefold_interleaved_inv_rate_4", |b| {
         b.iter_batched(
             || sc_msg.clone(),
             |input| {
-                let mut out = Vec::with_capacity(basefold_code.codeword_length() * segment_count);
-                for seg in 0..segment_count {
-                    let start = seg * segment_size;
-                    out.extend(basefold_code.encode(&input[start..start + segment_size]));
-                }
-                out
+                (0..segment_count)
+                    .into_par_iter()
+                    .flat_map(|seg| {
+                        let start = seg * segment_size;
+                        basefold_code.encode(&input[start..start + segment_size])
+                    })
+                    .collect::<Vec<_>>()
             },
             BatchSize::LargeInput,
         );
