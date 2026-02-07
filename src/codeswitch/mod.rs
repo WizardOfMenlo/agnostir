@@ -1,5 +1,5 @@
 use p3_maybe_rayon::prelude::*;
-use rand::{SeedableRng, rngs::SmallRng};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 
 use crate::{
     ErrorCorrectingCode, FieldElement, OptimizedEraCode,
@@ -12,7 +12,10 @@ pub struct CodeswitchParameters<C, F> {
     base_code_interleaving: usize, // \ell_{n_B} in paper
     era_interleaving: usize,       // \ell_{n_{ERA}} in paper
 
-    log_original_code_message: usize,
+    repetition_parameter: usize, // \nu in the paper
+
+    log_start_code_message: usize,
+    log_start_code_blocklength: usize,
     log_new_code_message: usize,
 
     era_code: OptimizedEraCode<C, F>,
@@ -33,15 +36,15 @@ pub fn codeswitch<F: FieldElement, C: ErrorCorrectingCode<Alphabet = F>>(
         input.message.len(),
         params.message_interleaving * (1 << params.log_new_code_message)
     );
-    assert_eq!(params.log_original_code_message, point.0.len());
+    assert_eq!(params.log_start_code_message, point.0.len());
 
     let new_code_message_len = 1 << params.log_new_code_message;
 
     let _z_1 = MultilinearPoint(
-        point.0[..(params.log_original_code_message - params.log_new_code_message)].to_vec(),
+        point.0[..(params.log_start_code_message - params.log_new_code_message)].to_vec(),
     );
     let z_2 = MultilinearPoint(
-        point.0[(params.log_original_code_message - params.log_new_code_message)..].to_vec(),
+        point.0[(params.log_start_code_message - params.log_new_code_message)..].to_vec(),
     );
 
     // Assume that message is of size params.message_interleaving * (1 << params.log_new_code_message)
@@ -77,7 +80,13 @@ pub fn codeswitch<F: FieldElement, C: ErrorCorrectingCode<Alphabet = F>>(
         .map(|(block, point)| block.evaluate(point))
         .collect();
 
-    // Verifier checks consistency.
+    // TODO: Verifier checks consistency.
+
+    let code_points: Vec<_> = (0..params.repetition_parameter)
+        .map(|_| rng.random_range(0..1 << params.log_start_code_blocklength))
+        .collect();
+
+    // And then here we have all of the batching?
 
     let _ = (&y_evals, &ood_evaluations);
 }
