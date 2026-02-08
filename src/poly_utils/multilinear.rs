@@ -114,12 +114,37 @@ where
         acc
     }
 
-    /// Computes eq(c, p) on the hypercube for all p.
+    /// Computes `eq(c, p)` for all `p` in `{0,1}^n`.
+    ///
+    /// The output is in lexicographic order of `p` (i.e. `0, 1, ..., 2^n - 1`
+    /// under the big-endian bit convention used by `BinaryHypercubePoint`).
+    ///
+    /// This uses an output-linear dynamic program over a binary tree:
+    /// each parent weight `w` expands into
+    /// - left child (`bit = 0`): `w * (1 - c_i)`
+    /// - right child (`bit = 1`): `w * c_i`
+    ///
+    /// for coordinate `c_i`. Total work is `O(2^n)` field multiplications.
     pub fn eq_weights(&self) -> Vec<F> {
-        (0..1 << self.0.len())
-            .map(BinaryHypercubePoint)
-            .map(|point| self.eq_poly(point))
-            .collect()
+        let mut weights = vec![F::ZERO; 1 << self.0.len()];
+        weights[0] = F::ONE;
+
+        let mut active_len = 1;
+        for &coord in &self.0 {
+            let one_minus_coord = F::ONE - coord;
+
+            // Traverse in reverse so each parent is read before its slot can be
+            // overwritten by an expanded child.
+            for idx in (0..active_len).rev() {
+                let parent = weights[idx];
+                weights[2 * idx] = parent * one_minus_coord;
+                weights[2 * idx + 1] = parent * coord;
+            }
+
+            active_len *= 2;
+        }
+
+        weights
     }
 
     pub fn coeff_weights(&self, reversed: bool) -> Vec<F> {
@@ -577,6 +602,39 @@ mod tests {
 
         // eq_poly should evaluate to 1 since both are trivially equal
         assert_eq!(ml_point.eq_poly(binary_point), Field64::ONE);
+    }
+
+    #[test]
+    fn test_eq_weights_two_variables_binary_tree_formula() {
+        let r = Field64::from(3);
+        let s = Field64::from(5);
+        let point = MultilinearPoint(vec![r, s]);
+
+        // Ordering is 00, 01, 10, 11.
+        let expected = vec![
+            (Field64::ONE - r) * (Field64::ONE - s),
+            (Field64::ONE - r) * s,
+            r * (Field64::ONE - s),
+            r * s,
+        ];
+
+        assert_eq!(point.eq_weights(), expected);
+    }
+
+    #[test]
+    fn test_eq_weights_matches_eq_poly_for_all_hypercube_points() {
+        let point = MultilinearPoint(vec![
+            Field64::from(2),
+            Field64::from(7),
+            Field64::from(11),
+            Field64::from(13),
+        ]);
+        let weights = point.eq_weights();
+
+        assert_eq!(weights.len(), 1 << point.num_variables());
+        for (idx, weight) in weights.iter().enumerate() {
+            assert_eq!(*weight, point.eq_poly(BinaryHypercubePoint(idx)));
+        }
     }
 
     #[test]

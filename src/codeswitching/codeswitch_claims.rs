@@ -10,6 +10,8 @@
 //! - Step 13 evaluations at `r^y`:
 //!   `sigma_code_b_g_left_at_r_y`, `sigma_code_b_g_right_at_r_y`,
 //!   `sigma_code_b_msg_at_r_y`.
+//! - Step 14 split IP claims at points `r^x`, `(r^x_1, r^y_1)`,
+//!   `(r^x_2, r^y_2)`, and `r^y`.
 //!
 //! Not implemented yet:
 //! - Remaining checks inside "Checking the base code encoding".
@@ -94,6 +96,19 @@ pub struct CodeswitchClaimsOutput<F> {
     pub sigma_code_b_g_right_at_r_y: F,
     /// Step 13 value `m_hat(r_y)`.
     pub sigma_code_b_msg_at_r_y: F,
+
+    /// Step 14 split-IP claims for
+    /// `SplitClaimIP(word^CodeB, eq(r^x), sigma_code_b_at_r_x, ...)`.
+    pub base_code_word_ip_claims: Vec<SplitIpClaim<F>>,
+    /// Step 14 split-IP claims for
+    /// `SplitClaimIP(g, eq(r_x_left, r_y_left), sigma_code_b_g_left_at_r_y, ...)`.
+    pub base_code_g_left_ip_claims: Vec<SplitIpClaim<F>>,
+    /// Step 14 split-IP claims for
+    /// `SplitClaimIP(g, eq(r_x_right, r_y_right), sigma_code_b_g_right_at_r_y, ...)`.
+    pub base_code_g_right_ip_claims: Vec<SplitIpClaim<F>>,
+    /// Step 14 split-IP claims for
+    /// `SplitClaimIP(msg, eq(r^y), sigma_code_b_msg_at_r_y, ...)`.
+    pub base_code_msg_ip_claims: Vec<SplitIpClaim<F>>,
 
     /// Accumulated protocol artifacts.
     pub aux_oracles: Vec<SplitEncoding<F>>,
@@ -209,7 +224,7 @@ fn build_base_code_sumcheck_tip_tables<F: FieldElement>(
 }
 
 /// Internal helper implementing steps 1-6, base-code encoding, step 10
-/// verifier challenge sampling (`r^x`), and steps 11-13.
+/// verifier challenge sampling (`r^x`), and steps 11-14.
 #[must_use]
 pub fn generate_codeswitch_claims_up_to_base_code_encoding<F, CEra, CBase, COut>(
     input: &CodeswitchClaimsInput<F>,
@@ -297,10 +312,6 @@ where
     );
     let code_b_oracles = split_and_encode(&word_code_b, output_code);
 
-    let mut ip_claims = Vec::with_capacity(ood_ip_claims.len() + codeswitch_ip_claims.len());
-    ip_claims.extend(ood_ip_claims.iter().cloned());
-    ip_claims.extend(codeswitch_ip_claims.iter().cloned());
-
     // Step 10.
     let n_code_b = word_code_b.len();
     assert!(
@@ -349,6 +360,73 @@ where
         "base-code step 13 product check does not match reduced claim"
     );
 
+    // Step 14.
+    assert!(
+        r_x_code_b.len().is_multiple_of(2),
+        "step 14 requires even-sized r_x challenge to parse (r_x_left, r_x_right)"
+    );
+    let (r_x_left_half, r_x_right_half) = r_x_code_b.split_at(r_x_code_b.len() / 2);
+
+    // TIP sumcheck challenges are sampled in compression-round order.
+    // Reverse to multilinear variable order for eq-polynomials.
+    let r_y_code_b: Vec<F> = base_code_sumcheck_output
+        .randomness
+        .iter()
+        .copied()
+        .rev()
+        .collect();
+    assert!(
+        r_y_code_b.len().is_multiple_of(2),
+        "step 14 requires even-sized r_y challenge to parse (r_y_left, r_y_right)"
+    );
+    let (r_y_left_half, r_y_right_half) = r_y_code_b.split_at(r_y_code_b.len() / 2);
+
+    let eq_r_x_code_b = MultilinearPoint(r_x_code_b.clone()).eq_weights();
+
+    let mut r_x_left_r_y_left = Vec::with_capacity(r_x_left_half.len() + r_y_left_half.len());
+    r_x_left_r_y_left.extend_from_slice(r_x_left_half);
+    r_x_left_r_y_left.extend_from_slice(r_y_left_half);
+    let eq_r_x_left_r_y_left = MultilinearPoint(r_x_left_r_y_left).eq_weights();
+
+    let mut r_x_right_r_y_right = Vec::with_capacity(r_x_right_half.len() + r_y_right_half.len());
+    r_x_right_r_y_right.extend_from_slice(r_x_right_half);
+    r_x_right_r_y_right.extend_from_slice(r_y_right_half);
+    let eq_r_x_right_r_y_right = MultilinearPoint(r_x_right_r_y_right).eq_weights();
+
+    let eq_r_y_code_b = MultilinearPoint(r_y_code_b).eq_weights();
+
+    let base_code_word_ip_claims =
+        split_claim_ip(&word_code_b, &eq_r_x_code_b, sigma_code_b_at_r_x, k_prime);
+    let base_code_g_left_ip_claims = split_claim_ip(
+        &input.base_code_prime_generator_matrix,
+        &eq_r_x_left_r_y_left,
+        sigma_code_b_g_left_at_r_y,
+        k_prime,
+    );
+    let base_code_g_right_ip_claims = split_claim_ip(
+        &input.base_code_prime_generator_matrix,
+        &eq_r_x_right_r_y_right,
+        sigma_code_b_g_right_at_r_y,
+        k_prime,
+    );
+    let base_code_msg_ip_claims =
+        split_claim_ip(&input.msg, &eq_r_y_code_b, sigma_code_b_msg_at_r_y, k_prime);
+
+    let mut ip_claims = Vec::with_capacity(
+        ood_ip_claims.len()
+            + codeswitch_ip_claims.len()
+            + base_code_word_ip_claims.len()
+            + base_code_g_left_ip_claims.len()
+            + base_code_g_right_ip_claims.len()
+            + base_code_msg_ip_claims.len(),
+    );
+    ip_claims.extend(ood_ip_claims.iter().cloned());
+    ip_claims.extend(codeswitch_ip_claims.iter().cloned());
+    ip_claims.extend(base_code_word_ip_claims.iter().cloned());
+    ip_claims.extend(base_code_g_left_ip_claims.iter().cloned());
+    ip_claims.extend(base_code_g_right_ip_claims.iter().cloned());
+    ip_claims.extend(base_code_msg_ip_claims.iter().cloned());
+
     CodeswitchClaimsOutput {
         word_era,
         era_oracles: era_oracles.clone(),
@@ -369,6 +447,10 @@ where
         sigma_code_b_g_left_at_r_y,
         sigma_code_b_g_right_at_r_y,
         sigma_code_b_msg_at_r_y,
+        base_code_word_ip_claims,
+        base_code_g_left_ip_claims,
+        base_code_g_right_ip_claims,
+        base_code_msg_ip_claims,
         aux_oracles: vec![era_oracles, code_b_oracles],
         ip_claims,
         tip_claims: Vec::new(),
@@ -377,11 +459,11 @@ where
 
 /// Build all claims/oracles required by the `CodeswitchClaims` subprotocol.
 ///
-/// Currently implemented through step 6, base-code encoding, and steps 10-13
+/// Currently implemented through step 6, base-code encoding, and steps 10-14
 /// inside "Checking the base code encoding".
 ///
 /// # Panics
-/// Always panics with `todo!` after step 13, before the remaining checks in
+/// Always panics with `todo!` after step 14, before the remaining checks in
 /// "Checking the base code encoding".
 #[must_use]
 pub fn generate_codeswitch_claims<F, CEra, CBase, COut>(
@@ -541,9 +623,75 @@ mod tests {
             out.word_code_b.len().ilog2() as usize
         );
 
+        let k_prime = output_code.message_size();
+
+        let eq_r_x_code_b = MultilinearPoint(out.r_x_code_b.clone()).eq_weights();
+        let expected_base_code_word_ip_claims = split_claim_ip(
+            &out.word_code_b,
+            &eq_r_x_code_b,
+            out.sigma_code_b_at_r_x,
+            k_prime,
+        );
+        assert_eq!(
+            out.base_code_word_ip_claims,
+            expected_base_code_word_ip_claims
+        );
+
+        let (r_x_left_half, r_x_right_half) = out.r_x_code_b.split_at(out.r_x_code_b.len() / 2);
+        let (r_y_left_half, r_y_right_half) = r_y_eval_point
+            .0
+            .split_at(r_y_eval_point.num_variables() / 2);
+
+        let mut r_x_left_r_y_left = Vec::new();
+        r_x_left_r_y_left.extend_from_slice(r_x_left_half);
+        r_x_left_r_y_left.extend_from_slice(r_y_left_half);
+        let eq_r_x_left_r_y_left = MultilinearPoint(r_x_left_r_y_left).eq_weights();
+        let expected_base_code_g_left_ip_claims = split_claim_ip(
+            &input.base_code_prime_generator_matrix,
+            &eq_r_x_left_r_y_left,
+            out.sigma_code_b_g_left_at_r_y,
+            k_prime,
+        );
+        assert_eq!(
+            out.base_code_g_left_ip_claims,
+            expected_base_code_g_left_ip_claims
+        );
+
+        let mut r_x_right_r_y_right = Vec::new();
+        r_x_right_r_y_right.extend_from_slice(r_x_right_half);
+        r_x_right_r_y_right.extend_from_slice(r_y_right_half);
+        let eq_r_x_right_r_y_right = MultilinearPoint(r_x_right_r_y_right).eq_weights();
+        let expected_base_code_g_right_ip_claims = split_claim_ip(
+            &input.base_code_prime_generator_matrix,
+            &eq_r_x_right_r_y_right,
+            out.sigma_code_b_g_right_at_r_y,
+            k_prime,
+        );
+        assert_eq!(
+            out.base_code_g_right_ip_claims,
+            expected_base_code_g_right_ip_claims
+        );
+
+        let eq_r_y_code_b = r_y_eval_point.eq_weights();
+        let expected_base_code_msg_ip_claims = split_claim_ip(
+            &input.msg,
+            &eq_r_y_code_b,
+            out.sigma_code_b_msg_at_r_y,
+            k_prime,
+        );
+        assert_eq!(
+            out.base_code_msg_ip_claims,
+            expected_base_code_msg_ip_claims
+        );
+
         assert_eq!(out.ood_ip_claims.len(), 2);
         assert_eq!(out.codeswitch_ip_claims.len(), 2);
-        assert_eq!(out.ip_claims.len(), 4);
+        assert_eq!(out.base_code_word_ip_claims.len(), 2);
+        assert_eq!(out.base_code_g_left_ip_claims.len(), 2);
+        assert_eq!(out.base_code_g_right_ip_claims.len(), 2);
+        assert_eq!(out.base_code_msg_ip_claims.len(), 2);
+
+        assert_eq!(out.ip_claims.len(), 12);
         assert_eq!(out.aux_oracles.len(), 2);
         assert!(out.tip_claims.is_empty());
     }
