@@ -13,7 +13,7 @@ pub use codeswitching as codeswitch;
 
 pub use commit::{
     BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
-    IdentityCode, TensorCode, blake3_merkle_commit,
+    IdentityCode, TensorCode, blake3_merkle_commit, blake3_merkle_commit_interleaved,
 };
 pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
 pub use reed_solomon::ReedSolomonCode;

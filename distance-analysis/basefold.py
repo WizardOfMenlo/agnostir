@@ -31,11 +31,11 @@ def compute_formula(q, c, d, lam):
     # The loop runs for i = 1 to d.
     # It requires n_{i-1} and n_i.
     # We assume the prompt "n_i = 1" sets the base case n_0 = 1.
-    n_prev = 1.0  # This corresponds to n_{0}
+    n_prev = c  # This corresponds to n_{0}
     
     for i in range(1, d + 1):
-        # Calculate n_i based on n_{i+1} = c * n_i (so n_current = c * n_prev)
-        n_curr = c * n_prev
+        # Calculate n_i based on n_{i+1} = 2 * n_i (so n_current = 2 * n_prev)
+        n_curr = 2 * n_prev
         
         # Calculate log(n_{i-1}). We use log2 assuming standard information theoretic context.
         # If n_prev = 1, log2(n_prev) = 0.

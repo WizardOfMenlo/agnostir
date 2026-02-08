@@ -1,8 +1,9 @@
 use std::hint::black_box;
 
 use agnostir::{
-    BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement, TensorCode,
-    random_permutation,
+    BasefoldCode, BasefoldParams,
+    BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement,
+    TensorCode, random_permutation,
 };
 use ark_secp256k1::Fr as SecpScalar;
 use p3_koala_bear::KoalaBear;
@@ -97,4 +98,21 @@ fn main() {
     black_box(era_code.encode_interleaved(&msg, eta));
     eprintln!("Profiling...");
     black_box(era_code.encode_interleaved_profiled(&msg, eta));
+
+    // ── Basefold profiling ──
+    let basefold_msg_size = 1usize << 20;
+    let basefold_code = BasefoldCode::<SecpScalar>::new(
+        basefold_msg_size,
+        BasefoldParams { log_rate: 2 },
+        &mut rng,
+    );
+    let basefold_msg: Vec<SecpScalar> = (0..basefold_msg_size)
+        .map(|_| SecpScalar::random(&mut rng))
+        .collect();
+    eprintln!();
+    eprintln!("=== Basefold profile (msg_size={basefold_msg_size}, log_rate=2) ===");
+    eprintln!("Warm-up...");
+    black_box(basefold_code.encode(&basefold_msg));
+    eprintln!("Profiling...");
+    black_box(basefold_code.encode_profiled(&basefold_msg));
 }

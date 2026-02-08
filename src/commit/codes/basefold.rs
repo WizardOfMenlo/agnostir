@@ -13,6 +13,9 @@
 
 use rand::Rng;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
 use crate::FieldElement;
 
 /// Parameters that control the Basefold code construction.
@@ -127,19 +130,103 @@ impl<F: FieldElement> BasefoldCode<F> {
             debug_assert_eq!(level.len(), chunk_size >> 1);
 
             // Process each chunk independently.
-            for chunk in codeword.chunks_mut(chunk_size) {
+            let butterfly = |chunk: &mut [F]| {
                 let half = chunk_size >> 1;
-                for j in half..chunk_size {
-                    let rhs = chunk[j] * level[j - half];
-                    let lhs = chunk[j - half];
-                    chunk[j] = lhs + rhs;
-                    chunk[j - half] = lhs + rhs + rhs;
+                let (lo, hi) = chunk.split_at_mut(half);
+                #[cfg(feature = "parallel")]
+                {
+                    lo.par_iter_mut()
+                        .zip(hi.par_iter_mut())
+                        .zip(level.par_iter())
+                        .for_each(|((l, h), &t)| {
+                            let rhs = *h * t;
+                            let lhs = *l;
+                            *h = lhs - rhs;
+                            *l = lhs + rhs;
+                        });
                 }
-            }
+                #[cfg(not(feature = "parallel"))]
+                {
+                    for j in 0..half {
+                        let rhs = hi[j] * level[j];
+                        let lhs = lo[j];
+                        hi[j] = lhs - rhs;
+                        lo[j] = lhs + rhs;
+                    }
+                }
+            };
+            #[cfg(feature = "parallel")]
+            codeword.par_chunks_mut(chunk_size).for_each(butterfly);
+            #[cfg(not(feature = "parallel"))]
+            codeword.chunks_mut(chunk_size).for_each(butterfly);
         }
 
         // Step 3: bit-reversal permutation
         reverse_index_bits_in_place(&mut codeword);
+
+        codeword
+    }
+
+    /// Encode with per-iteration profiling: prints chunk size and elapsed time
+    /// for each butterfly round, plus the repetition and bit-reversal steps.
+    pub fn encode_profiled(&self, msg: &[F]) -> Vec<F> {
+        use std::time::Instant;
+
+        assert_eq!(msg.len(), self.message_size);
+
+        // Step 1: repetition base code
+        let t = Instant::now();
+        let mut codeword = Vec::with_capacity(self.codeword_length);
+        for &coeff in msg {
+            for _ in 0..self.rate {
+                codeword.push(coeff);
+            }
+        }
+        println!("  repetition (rate {}):  {:?}", self.rate, t.elapsed());
+
+        // Step 2: butterfly mixing passes
+        let mut chunk_size = self.rate;
+        for i in 0..self.log_message_size {
+            let t = Instant::now();
+            let level = &self.table[i];
+            chunk_size <<= 1;
+
+            let butterfly = |chunk: &mut [F]| {
+                let half = chunk_size >> 1;
+                let (lo, hi) = chunk.split_at_mut(half);
+                #[cfg(feature = "parallel")]
+                {
+                    lo.par_iter_mut()
+                        .zip(hi.par_iter_mut())
+                        .zip(level.par_iter())
+                        .for_each(|((l, h), &t)| {
+                            let rhs = *h * t;
+                            let lhs = *l;
+                            *h = lhs - rhs;
+                            *l = lhs + rhs;
+                        });
+                }
+                #[cfg(not(feature = "parallel"))]
+                {
+                    for j in 0..half {
+                        let rhs = hi[j] * level[j];
+                        let lhs = lo[j];
+                        hi[j] = lhs - rhs;
+                        lo[j] = lhs + rhs;
+                    }
+                }
+            };
+            #[cfg(feature = "parallel")]
+            codeword.par_chunks_mut(chunk_size).for_each(butterfly);
+            #[cfg(not(feature = "parallel"))]
+            codeword.chunks_mut(chunk_size).for_each(butterfly);
+            println!("  butterfly round {:>2}  chunk_size {:>8}:  {:?}", i, chunk_size, t.elapsed());
+        }
+
+        // Step 3: bit-reversal permutation
+        let t = Instant::now();
+        reverse_index_bits_in_place(&mut codeword);
+        println!("  bit-reversal:         {:?}", t.elapsed());
 
         codeword
     }

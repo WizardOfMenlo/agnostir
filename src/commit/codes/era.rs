@@ -1,5 +1,7 @@
 use std::time::Instant;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
 use rand_08::SeedableRng as _;
 use rip_shuffle::RipShuffleSequential;
 
@@ -88,6 +90,11 @@ where
             m1[i] = w0[self.p1_vector[i]];
         }
 
+        #[cfg(feature = "parallel")]
+        m1.par_iter_mut()
+            .zip(self.m1_vector.par_iter())
+            .for_each(|(m, v)| *m = *m * *v);
+        #[cfg(not(feature = "parallel"))]
         for i in 0..n {
             m1[i] = m1[i] * self.m1_vector[i];
         }
@@ -104,6 +111,11 @@ where
             m2[i] = w1[self.p2_vector[i]];
         }
 
+        #[cfg(feature = "parallel")]
+        m2.par_iter_mut()
+            .zip(self.m2_vector.par_iter())
+            .for_each(|(m, v)| *m = *m * *v);
+        #[cfg(not(feature = "parallel"))]
         for i in 0..n {
             m2[i] = m2[i] * self.m2_vector[i];
         }
@@ -283,6 +295,11 @@ where
         let t_perm1 = t0.elapsed();
 
         let t0 = Instant::now();
+        #[cfg(feature = "parallel")]
+        m1.par_iter_mut()
+            .zip(self.m1_vector.par_iter())
+            .for_each(|(m, v)| *m = *m * *v);
+        #[cfg(not(feature = "parallel"))]
         for i in 0..n {
             m1[i] = m1[i] * self.m1_vector[i];
         }
@@ -306,6 +323,11 @@ where
         let t_perm2 = t0.elapsed();
 
         let t0 = Instant::now();
+        #[cfg(feature = "parallel")]
+        m2.par_iter_mut()
+            .zip(self.m2_vector.par_iter())
+            .for_each(|(m, v)| *m = *m * *v);
+        #[cfg(not(feature = "parallel"))]
         for i in 0..n {
             m2[i] = m2[i] * self.m2_vector[i];
         }

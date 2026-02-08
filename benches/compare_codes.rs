@@ -1,7 +1,7 @@
 use agnostir::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
-    ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode, blake3_merkle_commit,
-    random_permutation,
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams,
+    EraCode, ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
+    random_permutation, blake3_merkle_commit, blake3_merkle_commit_interleaved,
 };
 use ark_ff::{BigInteger, PrimeField};
 use ark_secp256k1::Fr as SecpScalar;
@@ -98,11 +98,11 @@ fn bench_compare_interleaved(c: &mut Criterion) {
             || bls_msg.clone(),
             |input| {
                 let base_msg_size = rs_code.message_size();
-                let codeword: Vec<_> = input
+                let segments: Vec<Vec<_>> = input
                     .par_chunks(base_msg_size)
-                    .flat_map(|chunk| rs_code.encode(chunk))
+                    .map(|chunk| rs_code.encode(chunk))
                     .collect();
-                blake3_merkle_commit(&codeword)
+                blake3_merkle_commit_interleaved(&segments)
             },
             BatchSize::LargeInput,
         );
@@ -115,14 +115,14 @@ fn bench_compare_interleaved(c: &mut Criterion) {
             |input| {
                 let segment_msg = era_code.message_size();
                 let seg_count = 1usize << INTERLEAVING_FACTOR;
-                let codeword: Vec<_> = (0..seg_count)
+                let segments: Vec<Vec<_>> = (0..seg_count)
                     .into_par_iter()
-                    .flat_map(|seg| {
+                    .map(|seg| {
                         let start = seg * segment_msg;
                         era_code.encode_era(&input[start..start + segment_msg])
                     })
                     .collect();
-                blake3_merkle_commit(&codeword)
+                blake3_merkle_commit_interleaved(&segments)
             },
             BatchSize::LargeInput,
         );
@@ -132,63 +132,64 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     let segment_count = 1usize << INTERLEAVING_FACTOR;
 
     let brakedown_params = BrakedownParams {
-        alpha: 0.54,
-        inverse_rate: 4.0,
-        cn: 5,
-        dn: 47,
+        alpha: 0.238,
+        inverse_rate: 1.72,
+        cn: 9,
+        dn: 12,
     };
     let brakedown_code = build_brakedown_code(&mut rng, segment_size, brakedown_params);
-    c.bench_function("brakedown_interleaved_inv_rate_4", |b| {
+    c.bench_function("brakedown_interleaved_inv_rate_1_72", |b| {
         b.iter_batched(
             || sc_msg.clone(),
             |input| {
-                let codeword: Vec<_> = (0..segment_count)
+                let segments: Vec<Vec<_>> = (0..segment_count)
                     .into_par_iter()
-                    .flat_map(|seg| {
+                    .map(|seg| {
                         let start = seg * segment_size;
                         brakedown_code.encode(&input[start..start + segment_size])
                     })
                     .collect();
-                blake3_merkle_commit(&codeword)
+                blake3_merkle_commit_interleaved(&segments)
             },
             BatchSize::LargeInput,
         );
     });
 
-    let ea_params = EaParams {
-        inverse_rate: 2,
-        prob_multiplier: 18,
-    };
-    let ea_code = build_ea_code(&mut rng, segment_size, ea_params);
-    c.bench_function("ea_interleaved_inv_rate_2", |b| {
-        b.iter_batched(
-            || sc_msg.clone(),
-            |input| {
-                let mut out = Vec::with_capacity(ea_code.codeword_length() * segment_count);
-                for seg in 0..segment_count {
-                    let start = seg * segment_size;
-                    out.extend(ea_code.encode(&input[start..start + segment_size]));
-                }
-                blake3_merkle_commit(&out)
-            },
-            BatchSize::LargeInput,
-        );
-    });
+    // let ea_params = EaParams {
+    //     inverse_rate: 2,
+    //     prob_multiplier: 18,
+    // };
+    // let ea_code = build_ea_code(&mut rng, segment_size, ea_params);
+    // c.bench_function("ea_interleaved_inv_rate_2", |b| {
+    //     b.iter_batched(
+    //         || sc_msg.clone(),
+    //         |input| {
+    //             let segments: Vec<Vec<_>> = (0..segment_count)
+    //                 .map(|seg| {
+    //                     let start = seg * segment_size;
+    //                     ea_code.encode(&input[start..start + segment_size])
+    //                 })
+    //                 .collect();
+    //             blake3_merkle_commit_interleaved(&segments)
+    //         },
+    //         BatchSize::LargeInput,
+    //     );
+    // });
 
-    let basefold_params = BasefoldParams { log_rate: 2 };
+    let basefold_params = BasefoldParams { log_rate: 1 };
     let basefold_code = build_basefold_code(&mut rng, segment_size, basefold_params);
-    c.bench_function("basefold_interleaved_inv_rate_4", |b| {
+    c.bench_function("basefold_interleaved_inv_rate_2", |b| {
         b.iter_batched(
             || sc_msg.clone(),
             |input| {
-                let codeword: Vec<_> = (0..segment_count)
+                let segments: Vec<Vec<_>> = (0..segment_count)
                     .into_par_iter()
-                    .flat_map(|seg| {
+                    .map(|seg| {
                         let start = seg * segment_size;
                         basefold_code.encode(&input[start..start + segment_size])
                     })
                     .collect();
-                blake3_merkle_commit(&codeword)
+                blake3_merkle_commit_interleaved(&segments)
             },
             BatchSize::LargeInput,
         );
@@ -240,6 +241,32 @@ fn bench_field_ops(c: &mut Criterion) {
     c.bench_function("blake3_compress_two_digests", |b| {
         b.iter(|| black_box(blake3::hash(black_box(&two_hashes))))
     });
+
+    let secp_vec: Vec<u8> = (0..16)
+        .flat_map(|i| {
+            let s = SecpScalar::from(i as u64) + a_secp;
+            s.into_bigint().to_bytes_le()
+        })
+        .collect();
+    let bls_vec: Vec<u8> = (0..16)
+        .flat_map(|i| {
+            let s = BlsScalar::from(i as u64) + a_bls;
+            s.into_bigint().to_bytes_le()
+        })
+        .collect();
+
+    c.bench_function("blake3_hash_16_secp256k1", |b| {
+        b.iter(|| black_box(blake3::hash(black_box(&secp_vec))))
+    });
+
+    c.bench_function("blake3_hash_16_bls12_381", |b| {
+        b.iter(|| black_box(blake3::hash(black_box(&bls_vec))))
+    });
+
+    let raw_512 = [0xABu8; 512];
+    c.bench_function("blake3_hash_512_bytes_raw", |b| {
+        b.iter(|| black_box(blake3::hash(black_box(&raw_512))))
+    });
 }
 
 criterion_group! {
@@ -254,4 +281,4 @@ criterion_group! {
     targets = bench_field_ops
 }
 
-criterion_main!(interleaved_encoding, field_ops);
+criterion_main!(interleaved_encoding);
