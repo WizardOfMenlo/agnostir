@@ -57,8 +57,28 @@ impl<F: FieldElement> IPSumcheck<F> {
     }
 
     pub fn compress_tables(&mut self, challenge: F) {
-        let _ = challenge;
-        todo!()
+        assert_eq!(
+            self.left.len(),
+            self.right.len(),
+            "left and right tables must have the same length"
+        );
+        assert_eq!(
+            self.left.len() % 2,
+            0,
+            "left/right table length must be even"
+        );
+
+        self.left = self
+            .left
+            .chunks_exact(2)
+            .map(|pair| pair[0] + challenge * (pair[1] - pair[0]))
+            .collect();
+
+        self.right = self
+            .right
+            .chunks_exact(2)
+            .map(|pair| pair[0] + challenge * (pair[1] - pair[0]))
+            .collect();
     }
 }
 
@@ -88,5 +108,39 @@ mod tests {
         let sumcheck = IPSumcheck::new(vec![f(1), f(2), f(3)], vec![f(4), f(5), f(6)]);
 
         let _ = sumcheck.compute_sumcheck_poly();
+    }
+
+    #[test]
+    fn test_compress_tables_interpolates_at_challenge() {
+        let mut sumcheck =
+            IPSumcheck::new(vec![f(1), f(3), f(5), f(7)], vec![f(2), f(4), f(6), f(8)]);
+
+        let half = f(2).inverse().expect("2 must be invertible");
+        sumcheck.compress_tables(half);
+
+        assert_eq!(sumcheck.left, vec![f(2), f(6)]);
+        assert_eq!(sumcheck.right, vec![f(3), f(7)]);
+    }
+
+    #[test]
+    fn test_compress_tables_respects_endpoints() {
+        let mut at_zero =
+            IPSumcheck::new(vec![f(1), f(3), f(5), f(7)], vec![f(2), f(4), f(6), f(8)]);
+        at_zero.compress_tables(KoalaBear::ZERO);
+        assert_eq!(at_zero.left, vec![f(1), f(5)]);
+        assert_eq!(at_zero.right, vec![f(2), f(6)]);
+
+        let mut at_one =
+            IPSumcheck::new(vec![f(1), f(3), f(5), f(7)], vec![f(2), f(4), f(6), f(8)]);
+        at_one.compress_tables(KoalaBear::ONE);
+        assert_eq!(at_one.left, vec![f(3), f(7)]);
+        assert_eq!(at_one.right, vec![f(4), f(8)]);
+    }
+
+    #[test]
+    #[should_panic(expected = "left/right table length must be even")]
+    fn test_compress_tables_panics_on_odd_table_length() {
+        let mut sumcheck = IPSumcheck::new(vec![f(1), f(2), f(3)], vec![f(4), f(5), f(6)]);
+        sumcheck.compress_tables(f(9));
     }
 }
