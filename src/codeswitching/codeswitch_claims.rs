@@ -4,6 +4,9 @@
 //! - Steps 1-6 (through the codeswitch IP claim over sampled spotchecks).
 //! - Base-code encoding (`word^CodeB = Enc_CodeB(msg)`) and split/encode.
 //! - Step 10 challenge sampling: `r^x <- F^{log2(n_CodeB)}`.
+//! - Step 11 (`sigma_code_b_at_r_x = w_hat^CodeB(r^x)`).
+//! - Step 12 reduction via `TIPSumcheck` to
+//!   `(base_code_sumcheck_challenges, base_code_sumcheck_reduced_claim)`.
 //!
 //! Not implemented yet:
 //! - Remaining checks inside "Checking the base code encoding".
@@ -13,6 +16,7 @@ use rand::Rng;
 
 use super::claims::{SplitIpClaim, SplitTipClaim, split_claim_ip};
 use super::oracles::{SplitEncoding, split_and_encode};
+use super::sumcheck::TIPSumcheck;
 use crate::poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint};
 use crate::{ErrorCorrectingCode, FieldElement};
 
@@ -32,6 +36,9 @@ pub struct CodeswitchClaimsInput<F> {
     pub msg: Vec<F>,
     /// Spotcheck pairs `(alpha_j, sigma_cs_j)`.
     pub spotchecks: Vec<CodeswitchSpotcheck<F>>,
+    /// Flattened generator matrix of `CodeB'` (row-major), of shape
+    /// `sqrt(n_code_b) × sqrt(k)` as used in the base-code sumcheck.
+    pub base_code_prime_generator_matrix: Vec<F>,
 }
 
 /// Full output contract for `CodeswitchClaims`.
@@ -67,6 +74,16 @@ pub struct CodeswitchClaimsOutput<F> {
 
     /// Step 10 challenge `r^x` sampled by the verifier.
     pub r_x_code_b: Vec<F>,
+    /// Step 11 claimed value `w_hat^CodeB(r^x)`.
+    pub sigma_code_b_at_r_x: F,
+
+    /// Step 12 TIP-sumcheck prover messages `(h(0), h(1/2), h(2))` per round.
+    pub base_code_sumcheck_round_polys: Vec<[F; 3]>,
+    /// Step 12 verifier challenges sampled during sumcheck rounds (`r^y`,
+    /// in round order).
+    pub base_code_sumcheck_challenges: Vec<F>,
+    /// Step 12 reduced claim at `r^y` (named `sigma_eval^CodeB` in the spec).
+    pub base_code_sumcheck_reduced_claim: F,
 
     /// Accumulated protocol artifacts.
     pub aux_oracles: Vec<SplitEncoding<F>>,
@@ -91,8 +108,98 @@ fn pow_field<F: FieldElement>(base: F, exp: usize) -> F {
     result
 }
 
-/// Internal helper implementing steps 1-6, base-code encoding, and step 10
-/// verifier challenge sampling (`r^x`).
+fn evaluate_generator_matrix_rows_at_point<F: FieldElement>(
+    generator_matrix_flat: &[F],
+    row_count: usize,
+    col_count: usize,
+    row_point: &[F],
+) -> Vec<F> {
+    assert_eq!(
+        generator_matrix_flat.len(),
+        row_count * col_count,
+        "base_code_prime_generator_matrix must match row_count * col_count"
+    );
+
+    let row_weights = MultilinearPoint(row_point.to_vec()).eq_weights();
+    assert_eq!(
+        row_weights.len(),
+        row_count,
+        "row challenge dimension does not match generator matrix row dimension"
+    );
+
+    (0..col_count)
+        .map(|col| {
+            (0..row_count).fold(F::ZERO, |acc, row| {
+                acc + row_weights[row] * generator_matrix_flat[row * col_count + col]
+            })
+        })
+        .collect()
+}
+
+fn build_base_code_sumcheck_tip_tables<F: FieldElement>(
+    base_code_prime_generator_matrix: &[F],
+    r_x_code_b: &[F],
+    msg: &[F],
+) -> (Vec<F>, Vec<F>, Vec<F>) {
+    assert!(
+        !r_x_code_b.is_empty(),
+        "base-code sumcheck requires non-empty r_x challenge"
+    );
+    assert!(
+        r_x_code_b.len().is_multiple_of(2),
+        "base-code sumcheck requires an even-sized r_x challenge to parse (r_x_left, r_x_right)"
+    );
+
+    let msg_len = msg.len();
+    assert!(
+        msg_len.is_power_of_two(),
+        "msg length must be a power of two"
+    );
+    let log_k = msg_len.ilog2() as usize;
+    assert!(
+        log_k.is_multiple_of(2),
+        "base-code sumcheck requires even log2(k) to parse y=(y_left,y_right)"
+    );
+
+    let code_b_prime_row_count = 1usize << (r_x_code_b.len() / 2);
+    let code_b_prime_col_count = 1usize << (log_k / 2);
+
+    assert_eq!(
+        base_code_prime_generator_matrix.len(),
+        code_b_prime_row_count * code_b_prime_col_count,
+        "base_code_prime_generator_matrix must have length sqrt(n_code_b) * sqrt(k)"
+    );
+
+    let (r_x_left_half, r_x_right_half) = r_x_code_b.split_at(r_x_code_b.len() / 2);
+
+    let generator_eval_at_r_x_left = evaluate_generator_matrix_rows_at_point(
+        base_code_prime_generator_matrix,
+        code_b_prime_row_count,
+        code_b_prime_col_count,
+        r_x_left_half,
+    );
+    let generator_eval_at_r_x_right = evaluate_generator_matrix_rows_at_point(
+        base_code_prime_generator_matrix,
+        code_b_prime_row_count,
+        code_b_prime_col_count,
+        r_x_right_half,
+    );
+
+    let mut generator_left_table = Vec::with_capacity(msg_len);
+    let mut generator_right_table = Vec::with_capacity(msg_len);
+
+    for left_eval in &generator_eval_at_r_x_left {
+        for right_eval in &generator_eval_at_r_x_right {
+            generator_left_table.push(*left_eval);
+            generator_right_table.push(*right_eval);
+        }
+    }
+
+    (generator_left_table, generator_right_table, msg.to_vec())
+}
+
+/// Internal helper implementing steps 1-6, base-code encoding, step 10
+/// verifier challenge sampling (`r^x`), and steps 11-12.
 #[must_use]
 pub fn generate_codeswitch_claims_up_to_base_code_encoding<F, CEra, CBase, COut>(
     input: &CodeswitchClaimsInput<F>,
@@ -194,6 +301,34 @@ where
     let r_x_dim = n_code_b.ilog2() as usize;
     let r_x_code_b: Vec<F> = (0..r_x_dim).map(|_| F::random(rng)).collect();
 
+    // Step 11.
+    let sigma_code_b_at_r_x =
+        EvaluationsList::new(word_code_b.clone()).evaluate(&MultilinearPoint(r_x_code_b.clone()));
+
+    // Step 12.
+    let (generator_left_table, generator_right_table, message_table) =
+        build_base_code_sumcheck_tip_tables(
+            &input.base_code_prime_generator_matrix,
+            &r_x_code_b,
+            &input.msg,
+        );
+
+    let claimed_sum_over_y = generator_left_table
+        .iter()
+        .zip(generator_right_table.iter())
+        .zip(message_table.iter())
+        .fold(F::ZERO, |acc, ((&left, &right), &message_value)| {
+            acc + left * right * message_value
+        });
+    assert_eq!(
+        claimed_sum_over_y, sigma_code_b_at_r_x,
+        "base-code sumcheck claim does not match sigma_code_b_at_r_x"
+    );
+
+    let mut base_code_sumcheck =
+        TIPSumcheck::new(generator_left_table, generator_right_table, message_table);
+    let base_code_sumcheck_output = base_code_sumcheck.run_sumcheck_protocol(rng);
+
     CodeswitchClaimsOutput {
         word_era,
         era_oracles: era_oracles.clone(),
@@ -207,6 +342,10 @@ where
         word_code_b,
         code_b_oracles: code_b_oracles.clone(),
         r_x_code_b,
+        sigma_code_b_at_r_x,
+        base_code_sumcheck_round_polys: base_code_sumcheck_output.round_polys,
+        base_code_sumcheck_challenges: base_code_sumcheck_output.randomness,
+        base_code_sumcheck_reduced_claim: base_code_sumcheck_output.final_claim,
         aux_oracles: vec![era_oracles, code_b_oracles],
         ip_claims,
         tip_claims: Vec::new(),
@@ -215,12 +354,12 @@ where
 
 /// Build all claims/oracles required by the `CodeswitchClaims` subprotocol.
 ///
-/// Currently implemented through step 6, base-code encoding, and step 10
-/// challenge sampling (`r^x`).
+/// Currently implemented through step 6, base-code encoding, and steps 10-12
+/// inside "Checking the base code encoding".
 ///
 /// # Panics
-/// Always panics with `todo!` after sampling `r^x` (step 10), before the
-/// remaining checks in "Checking the base code encoding".
+/// Always panics with `todo!` after step 12, before the remaining checks in
+/// "Checking the base code encoding".
 #[must_use]
 pub fn generate_codeswitch_claims<F, CEra, CBase, COut>(
     input: CodeswitchClaimsInput<F>,
@@ -277,6 +416,8 @@ mod tests {
                     sigma_cs: f(4),
                 },
             ],
+            // Generator matrix of CodeB' = Identity(2), flattened row-major.
+            base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
         };
 
         let mut rng = SmallRng::seed_from_u64(42);
@@ -304,10 +445,15 @@ mod tests {
             <KoalaBear as FieldElement>::random(&mut replay_rng),
             <KoalaBear as FieldElement>::random(&mut replay_rng),
         ];
+        let expected_r_y = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
 
         assert_eq!(out.z_ood_era, expected_z);
         assert_eq!(out.beta, expected_beta);
         assert_eq!(out.r_x_code_b, expected_r_x);
+        assert_eq!(out.base_code_sumcheck_challenges, expected_r_y);
 
         let sigma_ood_expected = EvaluationsList::new(out.word_era.clone())
             .evaluate(&MultilinearPoint(out.z_ood_era.clone()));
@@ -322,6 +468,50 @@ mod tests {
 
         let sigma_cs_expected = beta_1 * f(2) + beta_3 * f(4);
         assert_eq!(out.sigma_cs, sigma_cs_expected);
+
+        let sigma_code_b_at_r_x_expected = EvaluationsList::new(out.word_code_b.clone())
+            .evaluate(&MultilinearPoint(out.r_x_code_b.clone()));
+        assert_eq!(out.sigma_code_b_at_r_x, sigma_code_b_at_r_x_expected);
+
+        let (generator_left_table, generator_right_table, message_table) =
+            build_base_code_sumcheck_tip_tables(
+                &input.base_code_prime_generator_matrix,
+                &out.r_x_code_b,
+                &input.msg,
+            );
+
+        let claimed_sum_over_y = generator_left_table
+            .iter()
+            .zip(generator_right_table.iter())
+            .zip(message_table.iter())
+            .fold(KoalaBear::ZERO, |acc, ((&left, &right), &message_value)| {
+                acc + left * right * message_value
+            });
+        assert_eq!(claimed_sum_over_y, out.sigma_code_b_at_r_x);
+
+        // TIPSumcheck compresses adjacent pairs each round, so the sampled
+        // randomness is in low-to-high variable order.
+        let r_y_eval_point = MultilinearPoint(
+            out.base_code_sumcheck_challenges
+                .iter()
+                .copied()
+                .rev()
+                .collect(),
+        );
+        let generator_left_eval =
+            EvaluationsList::new(generator_left_table).evaluate(&r_y_eval_point);
+        let generator_right_eval =
+            EvaluationsList::new(generator_right_table).evaluate(&r_y_eval_point);
+        let message_eval = EvaluationsList::new(message_table).evaluate(&r_y_eval_point);
+
+        assert_eq!(
+            out.base_code_sumcheck_reduced_claim,
+            generator_left_eval * generator_right_eval * message_eval
+        );
+        assert_eq!(
+            out.base_code_sumcheck_round_polys.len(),
+            out.word_code_b.len().ilog2() as usize
+        );
 
         assert_eq!(out.ood_ip_claims.len(), 2);
         assert_eq!(out.codeswitch_ip_claims.len(), 2);
@@ -343,9 +533,38 @@ mod tests {
                 alpha: 4, // out of range for n_era = 4
                 sigma_cs: f(9),
             }],
+            base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
         };
 
         let mut rng = SmallRng::seed_from_u64(7);
+        let _ = generate_codeswitch_claims_up_to_base_code_encoding(
+            &input,
+            &era_code,
+            &base_code,
+            &output_code,
+            &mut rng,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "base-code sumcheck claim does not match sigma_code_b_at_r_x")]
+    fn test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_base_code_generator_matrix()
+     {
+        let era_code = IdentityCode::<KoalaBear>::new(4);
+        let base_code = IdentityCode::<KoalaBear>::new(4);
+        let output_code = IdentityCode::<KoalaBear>::new(2);
+
+        let input = CodeswitchClaimsInput {
+            msg: vec![f(1), f(2), f(3), f(4)],
+            spotchecks: vec![CodeswitchSpotcheck {
+                alpha: 1,
+                sigma_cs: f(2),
+            }],
+            // Deliberately incorrect for CodeB' = Identity(2).
+            base_code_prime_generator_matrix: vec![f(1), f(1), f(1), f(1)],
+        };
+
+        let mut rng = SmallRng::seed_from_u64(9);
         let _ = generate_codeswitch_claims_up_to_base_code_encoding(
             &input,
             &era_code,
@@ -368,6 +587,7 @@ mod tests {
                 alpha: 1,
                 sigma_cs: f(2),
             }],
+            base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
         };
 
         let mut rng = SmallRng::seed_from_u64(11);
