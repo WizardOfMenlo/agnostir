@@ -75,16 +75,23 @@ impl<F: FieldElement> TIPSumcheck<F> {
 
         // Evaluation at 2:
         // h(2) = sum_b first(2,b) * second(2,b) * third(2,b)
-        // where each v(2,b) = v(0,b) + 2 * (v(1,b) - v(0,b)).
+        // where each v(2,b) = v(1,b) + (v(1,b) - v(0,b)) = 2*v(1,b) - v(0,b).
+        //
+        // This avoids 3 scalar multiplications-by-2 per table pair.
         let v_two = self
             .first
             .chunks_exact(2)
             .zip(self.second.chunks_exact(2))
             .zip(self.third.chunks_exact(2))
             .fold(F::ZERO, |acc, ((first_pair, second_pair), third_pair)| {
-                let first_two = first_pair[0] + two * (first_pair[1] - first_pair[0]);
-                let second_two = second_pair[0] + two * (second_pair[1] - second_pair[0]);
-                let third_two = third_pair[0] + two * (third_pair[1] - third_pair[0]);
+                let first_delta = first_pair[1] - first_pair[0];
+                let second_delta = second_pair[1] - second_pair[0];
+                let third_delta = third_pair[1] - third_pair[0];
+
+                let first_two = first_pair[1] + first_delta;
+                let second_two = second_pair[1] + second_delta;
+                let third_two = third_pair[1] + third_delta;
+
                 acc + first_two * second_two * third_two
             });
 
