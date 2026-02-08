@@ -1,11 +1,22 @@
-use std::time::Instant;
+use std::{sync::OnceLock, time::Instant};
 
 #[cfg(feature = "parallel")]
-use rayon::prelude::*;
+use rayon::{current_num_threads, prelude::*};
 use rand_08::SeedableRng as _;
 use rip_shuffle::RipShuffleSequential;
 
 use crate::{ErrorCorrectingCode, FieldElement};
+
+const PERMUTE_CHUNK_SIZE: usize = 1 << 12;
+fn chunk_len_override() -> Option<usize> {
+    static OVERRIDE: OnceLock<Option<usize>> = OnceLock::new();
+    *OVERRIDE.get_or_init(|| {
+        std::env::var("AGNOSTIR_CHUNK_LEN")
+            .ok()
+            .and_then(|value| value.parse::<usize>().ok())
+            .filter(|&value| value > 0)
+    })
+}
 
 #[derive(Debug)]
 pub struct EraCode<C, F> {
@@ -23,7 +34,7 @@ pub struct EraCode<C, F> {
 
 impl<C, F> EraCode<C, F>
 where
-    C: ErrorCorrectingCode<Alphabet = F>,
+    C: ErrorCorrectingCode<Alphabet = F> + Sync,
     F: FieldElement,
 {
     pub fn new(
@@ -74,58 +85,109 @@ where
             && self.repetition_parameter * self.base_code.block_length() == self.block_length()
     }
 
+    fn add_const_in_place(slice: &mut [F], offset: F) {
+        #[cfg(feature = "parallel")]
+        slice.par_iter_mut().for_each(|value| *value += offset);
+        #[cfg(not(feature = "parallel"))]
+        for value in slice.iter_mut() {
+            *value += offset;
+        }
+    }
+
+    fn chunk_len(len: usize) -> usize {
+        if len <= 1 {
+            return len;
+        }
+        if let Some(override_len) = chunk_len_override() {
+            return override_len.min(len);
+        }
+        let tuned = 8192usize;
+        if len >= tuned {
+            return tuned;
+        }
+        #[cfg(feature = "parallel")]
+        let threads = current_num_threads().max(1);
+        #[cfg(not(feature = "parallel"))]
+        let threads = 1usize;
+        let mut chunk_len = len / (threads * 4).max(1);
+        if chunk_len < tuned {
+            chunk_len = tuned;
+        }
+        chunk_len.min(len)
+    }
+
+    fn prefix_sum_in_place(values: &mut [F], weights: &[F], chunk_len: usize) {
+        if values.is_empty() {
+            return;
+        }
+        debug_assert_eq!(values.len(), weights.len());
+
+        // Compute local prefix sums in parallel and collect each chunk's total.
+        let mut totals: Vec<F> = values
+            .par_chunks_mut(chunk_len)
+            .zip(weights.par_chunks(chunk_len))
+            .map(|(chunk, weights)| {
+                let mut acc = F::ZERO;
+                for (value, weight) in chunk.iter_mut().zip(weights.iter()) {
+                    acc += *value * *weight;
+                    *value = acc;
+                }
+                acc
+            })
+            .collect();
+
+        // Prefix-sum the chunk totals to get offsets.
+        let mut running = F::ZERO;
+        for total in totals.iter_mut() {
+            let tmp = *total;
+            *total = running;
+            running += tmp;
+        }
+
+        // Add the offsets back into each chunk.
+        values
+            .par_chunks_mut(chunk_len)
+            .zip(totals.into_par_iter())
+            .for_each(|(chunk, offset)| {
+                if !offset.is_zero() {
+                    Self::add_const_in_place(chunk, offset);
+                }
+            });
+    }
+
     pub fn encode_era(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
         let n = self.block_length;
         let base_encoding = self.base_code.encode(msg);
+        let chunk_len = Self::chunk_len(self.block_length);
 
         let mut w0 = vec![F::ZERO; n];
         for i in 0..n {
             w0[i] = base_encoding[i % self.base_code.block_length()];
         }
 
-        let mut m1 = vec![F::ZERO; n];
-        for i in 0..n {
-            m1[i] = w0[self.p1_vector[i]];
-        }
-
-        #[cfg(feature = "parallel")]
-        m1.par_iter_mut()
-            .zip(self.m1_vector.par_iter())
-            .for_each(|(m, v)| *m = *m * *v);
-        #[cfg(not(feature = "parallel"))]
-        for i in 0..n {
-            m1[i] = m1[i] * self.m1_vector[i];
-        }
-
         let mut w1 = vec![F::ZERO; n];
-        let mut acc = F::ZERO;
-        for i in 0..n {
-            acc += m1[i];
-            w1[i] = acc;
-        }
-
-        let mut m2 = vec![F::ZERO; n];
-        for i in 0..n {
-            m2[i] = w1[self.p2_vector[i]];
-        }
-
-        #[cfg(feature = "parallel")]
-        m2.par_iter_mut()
-            .zip(self.m2_vector.par_iter())
-            .for_each(|(m, v)| *m = *m * *v);
-        #[cfg(not(feature = "parallel"))]
-        for i in 0..n {
-            m2[i] = m2[i] * self.m2_vector[i];
-        }
+        w1.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+          .enumerate()
+          .for_each(|(chunk_idx, chunk)| {
+            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            for i in 0..chunk.len() {
+                chunk[i] = w0[self.p1_vector[start + i]];
+            }
+        });
+        Self::prefix_sum_in_place(&mut w1, &self.m1_vector, chunk_len);
 
         let mut w2 = vec![F::ZERO; n];
-        let mut acc = F::ZERO;
-        for i in 0..n {
-            acc += m2[i];
-            w2[i] = acc;
-        }
+        w2.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+          .enumerate()
+          .for_each(|(chunk_idx, chunk)| {
+            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            for i in 0..chunk.len() {
+                chunk[i] = w1[self.p2_vector[start + i]];
+            }
+        });
+        Self::prefix_sum_in_place(&mut w2, &self.m2_vector, chunk_len);
 
         w2
     }
@@ -273,7 +335,10 @@ where
 
     /// Same as [`Self::encode_era`] but prints a table with per-step timings.
     pub fn encode_profiled(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
         let n = self.block_length;
+        let chunk_len = Self::chunk_len(self.block_length);
 
         let t0 = Instant::now();
         let base_encoding = self.base_code.encode(msg);
@@ -286,63 +351,31 @@ where
         }
         let t_repeat = t0.elapsed();
 
-        // Round 1: permutation, then mul, then prefix sum
+        // Round 1: permutation, then fused mul + prefix sum
         let t0 = Instant::now();
-        let mut m1 = vec![F::ZERO; n];
+        let mut w1 = vec![F::ZERO; n];
         for i in 0..n {
-            m1[i] = w0[self.p1_vector[i]];
+            w1[i] = w0[self.p1_vector[i]];
         }
         let t_perm1 = t0.elapsed();
 
         let t0 = Instant::now();
-        #[cfg(feature = "parallel")]
-        m1.par_iter_mut()
-            .zip(self.m1_vector.par_iter())
-            .for_each(|(m, v)| *m = *m * *v);
-        #[cfg(not(feature = "parallel"))]
-        for i in 0..n {
-            m1[i] = m1[i] * self.m1_vector[i];
-        }
-        let t_mul1 = t0.elapsed();
-
-        let t0 = Instant::now();
-        let mut w1 = vec![F::ZERO; n];
-        let mut acc = F::ZERO;
-        for i in 0..n {
-            acc += m1[i];
-            w1[i] = acc;
-        }
+        Self::prefix_sum_in_place(&mut w1, &self.m1_vector, chunk_len);
         let t_prefix1 = t0.elapsed();
 
-        // Round 2: permutation, then mul, then prefix sum
+        // Round 2: permutation, then fused mul + prefix sum
         let t0 = Instant::now();
-        let mut m2 = vec![F::ZERO; n];
+        let mut w2 = vec![F::ZERO; n];
         for i in 0..n {
-            m2[i] = w1[self.p2_vector[i]];
+            w2[i] = w1[self.p2_vector[i]];
         }
         let t_perm2 = t0.elapsed();
 
         let t0 = Instant::now();
-        #[cfg(feature = "parallel")]
-        m2.par_iter_mut()
-            .zip(self.m2_vector.par_iter())
-            .for_each(|(m, v)| *m = *m * *v);
-        #[cfg(not(feature = "parallel"))]
-        for i in 0..n {
-            m2[i] = m2[i] * self.m2_vector[i];
-        }
-        let t_mul2 = t0.elapsed();
-
-        let t0 = Instant::now();
-        let mut w2 = vec![F::ZERO; n];
-        let mut acc = F::ZERO;
-        for i in 0..n {
-            acc += m2[i];
-            w2[i] = acc;
-        }
+        Self::prefix_sum_in_place(&mut w2, &self.m2_vector, chunk_len);
         let t_prefix2 = t0.elapsed();
 
-        let total = t_base + t_repeat + t_perm1 + t_mul1 + t_prefix1 + t_perm2 + t_mul2 + t_prefix2;
+        let total = t_base + t_repeat + t_perm1 + t_prefix1 + t_perm2 + t_prefix2;
 
         eprintln!();
         eprintln!("┌──────────────────────────┬────────────┬─────────┐");
@@ -352,11 +385,9 @@ where
             ("1. Base-code encode", t_base),
             ("2. Repetition", t_repeat),
             ("3a. Perm       (round 1)", t_perm1),
-            ("3b. Mul        (round 1)", t_mul1),
-            ("3c. Prefix sum (round 1)", t_prefix1),
+            ("3b. Prefix sum (round 1)", t_prefix1),
             ("4a. Perm       (round 2)", t_perm2),
-            ("4b. Mul        (round 2)", t_mul2),
-            ("4c. Prefix sum (round 2)", t_prefix2),
+            ("4b. Prefix sum (round 2)", t_prefix2),
         ] {
             let pct = dur.as_secs_f64() / total.as_secs_f64() * 100.0;
             eprintln!(
@@ -621,7 +652,7 @@ where
 
 impl<C, F> ErrorCorrectingCode for EraCode<C, F>
 where
-    C: ErrorCorrectingCode<Alphabet = F>,
+    C: ErrorCorrectingCode<Alphabet = F> + Sync,
     F: FieldElement,
 {
     type Alphabet = C::Alphabet;

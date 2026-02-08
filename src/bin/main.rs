@@ -6,17 +6,16 @@ use agnostir::{
     TensorCode, random_permutation,
 };
 use ark_secp256k1::Fr as SecpScalar;
-use p3_koala_bear::KoalaBear;
-use rand::{Rng, SeedableRng, rngs::SmallRng};
+use rand::{SeedableRng, rngs::SmallRng};
 
 fn main() {
-    let message_size = 1 << 18;
+    let message_size = 1 << 20;
     let repetition = 6;
-    let eta = 4; // 2^4 = 16 interleaved messages, total = 2^18 * 2^4 = 2^22
+    let eta = 4; // 2^4 = 16 interleaved messages, total = 2^20 * 2^4 = 2^24
 
     let mut rng = SmallRng::seed_from_u64(2025);
 
-    // Build ERA code with message_size = 2^18
+    // Build ERA code with message_size = 2^20
     let k = (message_size as f64).sqrt() as usize;
     assert_eq!(k * k, message_size);
 

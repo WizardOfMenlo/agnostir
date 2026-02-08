@@ -149,7 +149,7 @@ impl<F: FieldElement> BrakedownCode<F> {
 
     fn encode_recursive(&self, msg: &[F], depth: usize) -> Vec<F> {
         let cur_msg_length = msg.len();
-        let (_cw_len, cur_y_length, cur_z_length, cur_v_length) =
+        let (_cw_len, cur_y_length, _cur_z_length, cur_v_length) =
             brakedown_code_lengths(cur_msg_length, &self.params);
 
         let mut x = msg.to_vec();

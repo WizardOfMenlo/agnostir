@@ -1,7 +1,7 @@
 use agnostir::{
     BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams,
     EraCode, ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
-    random_permutation, blake3_merkle_commit, blake3_merkle_commit_interleaved,
+    random_permutation, blake3_merkle_commit_interleaved,
 };
 use ark_ff::{BigInteger, PrimeField};
 use ark_secp256k1::Fr as SecpScalar;

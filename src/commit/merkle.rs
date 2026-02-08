@@ -1,4 +1,4 @@
-use ark_ff::{BigInteger, PrimeField};
+use ark_ff::PrimeField;
 
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
