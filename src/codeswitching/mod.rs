@@ -1,6 +1,7 @@
 pub mod claims;
 pub mod codeswitch_claims;
 pub mod oracles;
+pub mod sumcheck;
 
 pub use claims::{SplitIpClaim, SplitTipClaim, split_claim_ip, split_claim_tip};
 pub use codeswitch_claims::{

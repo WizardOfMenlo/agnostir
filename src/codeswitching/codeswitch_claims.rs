@@ -2,7 +2,8 @@
 //!
 //! Implemented so far:
 //! - Steps 1-6 (through the codeswitch IP claim over sampled spotchecks).
-//! - The first base-code step: `word^CodeB = Enc_CodeB(msg)` and split/encode it.
+//! - Base-code encoding (`word^CodeB = Enc_CodeB(msg)`) and split/encode.
+//! - Step 10 challenge sampling: `r^x <- F^{log2(n_CodeB)}`.
 //!
 //! Not implemented yet:
 //! - Remaining checks inside "Checking the base code encoding".
@@ -64,6 +65,9 @@ pub struct CodeswitchClaimsOutput<F> {
     /// Split output-code commitments to `word^CodeB`.
     pub code_b_oracles: SplitEncoding<F>,
 
+    /// Step 10 challenge `r^x` sampled by the verifier.
+    pub r_x_code_b: Vec<F>,
+
     /// Accumulated protocol artifacts.
     pub aux_oracles: Vec<SplitEncoding<F>>,
     pub ip_claims: Vec<SplitIpClaim<F>>,
@@ -87,8 +91,8 @@ fn pow_field<F: FieldElement>(base: F, exp: usize) -> F {
     result
 }
 
-/// Internal helper implementing steps 1-6 and the first base-code step:
-/// compute `word^CodeB = Enc_CodeB(msg)` and split/encode it.
+/// Internal helper implementing steps 1-6, base-code encoding, and step 10
+/// verifier challenge sampling (`r^x`).
 #[must_use]
 pub fn generate_codeswitch_claims_up_to_base_code_encoding<F, CEra, CBase, COut>(
     input: &CodeswitchClaimsInput<F>,
@@ -131,6 +135,7 @@ where
         "step 2 currently assumes n_era is a power of two"
     );
 
+    // All logs in the paper are base-2.
     let ood_dim = n_era.ilog2() as usize;
     let z_ood_era: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
 
@@ -179,6 +184,16 @@ where
     ip_claims.extend(ood_ip_claims.iter().cloned());
     ip_claims.extend(codeswitch_ip_claims.iter().cloned());
 
+    // Step 10.
+    let n_code_b = word_code_b.len();
+    assert!(
+        n_code_b.is_power_of_two(),
+        "step 10 currently assumes n_code_b is a power of two"
+    );
+
+    let r_x_dim = n_code_b.ilog2() as usize;
+    let r_x_code_b: Vec<F> = (0..r_x_dim).map(|_| F::random(rng)).collect();
+
     CodeswitchClaimsOutput {
         word_era,
         era_oracles: era_oracles.clone(),
@@ -191,6 +206,7 @@ where
         codeswitch_ip_claims,
         word_code_b,
         code_b_oracles: code_b_oracles.clone(),
+        r_x_code_b,
         aux_oracles: vec![era_oracles, code_b_oracles],
         ip_claims,
         tip_claims: Vec::new(),
@@ -199,11 +215,12 @@ where
 
 /// Build all claims/oracles required by the `CodeswitchClaims` subprotocol.
 ///
-/// Currently implemented through step 6 and the first base-code encoding step.
+/// Currently implemented through step 6, base-code encoding, and step 10
+/// challenge sampling (`r^x`).
 ///
 /// # Panics
-/// Always panics with `todo!` after base-code encoding, before the remaining
-/// checks in "Checking the base code encoding".
+/// Always panics with `todo!` after sampling `r^x` (step 10), before the
+/// remaining checks in "Checking the base code encoding".
 #[must_use]
 pub fn generate_codeswitch_claims<F, CEra, CBase, COut>(
     input: CodeswitchClaimsInput<F>,
@@ -283,9 +300,14 @@ mod tests {
             <KoalaBear as FieldElement>::random(&mut replay_rng),
         ];
         let expected_beta = <KoalaBear as FieldElement>::random(&mut replay_rng);
+        let expected_r_x = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
 
         assert_eq!(out.z_ood_era, expected_z);
         assert_eq!(out.beta, expected_beta);
+        assert_eq!(out.r_x_code_b, expected_r_x);
 
         let sigma_ood_expected = EvaluationsList::new(out.word_era.clone())
             .evaluate(&MultilinearPoint(out.z_ood_era.clone()));
