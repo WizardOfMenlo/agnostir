@@ -16,6 +16,10 @@ pub struct IPSumcheckOutput<F> {
     pub randomness: Vec<F>,
     /// Final reduced claim `l(randomness) * r(randomness)`.
     pub final_claim: F,
+    /// Multilinear evaluation `l(randomness)`.
+    pub left_value: F,
+    /// Multilinear evaluation `r(randomness)`.
+    pub right_value: F,
 }
 
 impl<F: FieldElement> IPSumcheck<F> {
@@ -125,6 +129,8 @@ impl<F: FieldElement> IPSumcheck<F> {
             round_polys,
             randomness,
             final_claim: self.left[0] * self.right[0],
+            left_value: self.left[0],
+            right_value: self.right[0],
         }
     }
 }
@@ -135,6 +141,7 @@ mod tests {
     use rand::{SeedableRng, rngs::SmallRng};
 
     use super::*;
+    use crate::poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint};
 
     fn f(x: u32) -> KoalaBear {
         <KoalaBear as FieldElement>::from_u32(x)
@@ -232,7 +239,20 @@ mod tests {
 
         assert_eq!(sumcheck.left, vec![final_left]);
         assert_eq!(sumcheck.right, vec![final_right]);
+
+        assert_eq!(output.left_value, final_left);
+        assert_eq!(output.right_value, final_right);
         assert_eq!(output.final_claim, final_left * final_right);
+
+        let eval_point = MultilinearPoint(output.randomness.iter().copied().rev().collect());
+        assert_eq!(
+            output.left_value,
+            EvaluationsList::new(left).evaluate(&eval_point)
+        );
+        assert_eq!(
+            output.right_value,
+            EvaluationsList::new(right).evaluate(&eval_point)
+        );
     }
 
     #[test]

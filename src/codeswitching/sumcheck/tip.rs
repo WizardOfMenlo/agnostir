@@ -17,6 +17,12 @@ pub struct TIPSumcheckOutput<F> {
     pub randomness: Vec<F>,
     /// Final reduced claim `a(randomness) * b(randomness) * c(randomness)`.
     pub final_claim: F,
+    /// Multilinear evaluation `a(randomness)`.
+    pub first_value: F,
+    /// Multilinear evaluation `b(randomness)`.
+    pub second_value: F,
+    /// Multilinear evaluation `c(randomness)`.
+    pub third_value: F,
 }
 
 impl<F: FieldElement> TIPSumcheck<F> {
@@ -168,6 +174,9 @@ impl<F: FieldElement> TIPSumcheck<F> {
             round_polys,
             randomness,
             final_claim: self.first[0] * self.second[0] * self.third[0],
+            first_value: self.first[0],
+            second_value: self.second[0],
+            third_value: self.third[0],
         }
     }
 }
@@ -178,6 +187,7 @@ mod tests {
     use rand::{SeedableRng, rngs::SmallRng};
 
     use super::*;
+    use crate::poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint};
 
     fn f(x: u32) -> KoalaBear {
         <KoalaBear as FieldElement>::from_u32(x)
@@ -321,7 +331,25 @@ mod tests {
         assert_eq!(sumcheck.first, vec![final_first]);
         assert_eq!(sumcheck.second, vec![final_second]);
         assert_eq!(sumcheck.third, vec![final_third]);
+
+        assert_eq!(output.first_value, final_first);
+        assert_eq!(output.second_value, final_second);
+        assert_eq!(output.third_value, final_third);
         assert_eq!(output.final_claim, final_first * final_second * final_third);
+
+        let eval_point = MultilinearPoint(output.randomness.iter().copied().rev().collect());
+        assert_eq!(
+            output.first_value,
+            EvaluationsList::new(first).evaluate(&eval_point)
+        );
+        assert_eq!(
+            output.second_value,
+            EvaluationsList::new(second).evaluate(&eval_point)
+        );
+        assert_eq!(
+            output.third_value,
+            EvaluationsList::new(third).evaluate(&eval_point)
+        );
     }
 
     #[test]

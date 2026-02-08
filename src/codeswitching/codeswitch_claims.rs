@@ -7,6 +7,9 @@
 //! - Step 11 (`sigma_code_b_at_r_x = w_hat^CodeB(r^x)`).
 //! - Step 12 reduction via `TIPSumcheck` to
 //!   `(base_code_sumcheck_challenges, base_code_sumcheck_reduced_claim)`.
+//! - Step 13 evaluations at `r^y`:
+//!   `sigma_code_b_g_left_at_r_y`, `sigma_code_b_g_right_at_r_y`,
+//!   `sigma_code_b_msg_at_r_y`.
 //!
 //! Not implemented yet:
 //! - Remaining checks inside "Checking the base code encoding".
@@ -84,6 +87,13 @@ pub struct CodeswitchClaimsOutput<F> {
     pub base_code_sumcheck_challenges: Vec<F>,
     /// Step 12 reduced claim at `r^y` (named `sigma_eval^CodeB` in the spec).
     pub base_code_sumcheck_reduced_claim: F,
+
+    /// Step 13 value `g_hat(r_x_left, r_y_left)`.
+    pub sigma_code_b_g_left_at_r_y: F,
+    /// Step 13 value `g_hat(r_x_right, r_y_right)`.
+    pub sigma_code_b_g_right_at_r_y: F,
+    /// Step 13 value `m_hat(r_y)`.
+    pub sigma_code_b_msg_at_r_y: F,
 
     /// Accumulated protocol artifacts.
     pub aux_oracles: Vec<SplitEncoding<F>>,
@@ -199,7 +209,7 @@ fn build_base_code_sumcheck_tip_tables<F: FieldElement>(
 }
 
 /// Internal helper implementing steps 1-6, base-code encoding, step 10
-/// verifier challenge sampling (`r^x`), and steps 11-12.
+/// verifier challenge sampling (`r^x`), and steps 11-13.
 #[must_use]
 pub fn generate_codeswitch_claims_up_to_base_code_encoding<F, CEra, CBase, COut>(
     input: &CodeswitchClaimsInput<F>,
@@ -329,6 +339,16 @@ where
         TIPSumcheck::new(generator_left_table, generator_right_table, message_table);
     let base_code_sumcheck_output = base_code_sumcheck.run_sumcheck_protocol(rng);
 
+    // Step 13.
+    let sigma_code_b_g_left_at_r_y = base_code_sumcheck_output.first_value;
+    let sigma_code_b_g_right_at_r_y = base_code_sumcheck_output.second_value;
+    let sigma_code_b_msg_at_r_y = base_code_sumcheck_output.third_value;
+    assert_eq!(
+        sigma_code_b_g_left_at_r_y * sigma_code_b_g_right_at_r_y * sigma_code_b_msg_at_r_y,
+        base_code_sumcheck_output.final_claim,
+        "base-code step 13 product check does not match reduced claim"
+    );
+
     CodeswitchClaimsOutput {
         word_era,
         era_oracles: era_oracles.clone(),
@@ -346,6 +366,9 @@ where
         base_code_sumcheck_round_polys: base_code_sumcheck_output.round_polys,
         base_code_sumcheck_challenges: base_code_sumcheck_output.randomness,
         base_code_sumcheck_reduced_claim: base_code_sumcheck_output.final_claim,
+        sigma_code_b_g_left_at_r_y,
+        sigma_code_b_g_right_at_r_y,
+        sigma_code_b_msg_at_r_y,
         aux_oracles: vec![era_oracles, code_b_oracles],
         ip_claims,
         tip_claims: Vec::new(),
@@ -354,11 +377,11 @@ where
 
 /// Build all claims/oracles required by the `CodeswitchClaims` subprotocol.
 ///
-/// Currently implemented through step 6, base-code encoding, and steps 10-12
+/// Currently implemented through step 6, base-code encoding, and steps 10-13
 /// inside "Checking the base code encoding".
 ///
 /// # Panics
-/// Always panics with `todo!` after step 12, before the remaining checks in
+/// Always panics with `todo!` after step 13, before the remaining checks in
 /// "Checking the base code encoding".
 #[must_use]
 pub fn generate_codeswitch_claims<F, CEra, CBase, COut>(
@@ -504,9 +527,14 @@ mod tests {
             EvaluationsList::new(generator_right_table).evaluate(&r_y_eval_point);
         let message_eval = EvaluationsList::new(message_table).evaluate(&r_y_eval_point);
 
+        assert_eq!(out.sigma_code_b_g_left_at_r_y, generator_left_eval);
+        assert_eq!(out.sigma_code_b_g_right_at_r_y, generator_right_eval);
+        assert_eq!(out.sigma_code_b_msg_at_r_y, message_eval);
         assert_eq!(
             out.base_code_sumcheck_reduced_claim,
-            generator_left_eval * generator_right_eval * message_eval
+            out.sigma_code_b_g_left_at_r_y
+                * out.sigma_code_b_g_right_at_r_y
+                * out.sigma_code_b_msg_at_r_y
         );
         assert_eq!(
             out.base_code_sumcheck_round_polys.len(),
