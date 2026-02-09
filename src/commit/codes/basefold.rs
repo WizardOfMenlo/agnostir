@@ -115,10 +115,20 @@ impl<F: FieldElement> BasefoldCode<F> {
         assert_eq!(msg.len(), self.message_size);
 
         // Step 1: repetition base code
-        let mut codeword = Vec::with_capacity(self.codeword_length);
-        for &coeff in msg {
-            for _ in 0..self.rate {
-                codeword.push(coeff);
+        let mut codeword = vec![F::ZERO; self.codeword_length];
+        let rate = self.rate;
+        #[cfg(feature = "parallel")]
+        codeword.par_chunks_mut(rate).enumerate().for_each(|(i, chunk)| {
+            let coeff = msg[i];
+            for slot in chunk.iter_mut() {
+                *slot = coeff;
+            }
+        });
+        #[cfg(not(feature = "parallel"))]
+        for (i, chunk) in codeword.chunks_mut(rate).enumerate() {
+            let coeff = msg[i];
+            for slot in chunk.iter_mut() {
+                *slot = coeff;
             }
         }
 
@@ -176,13 +186,23 @@ impl<F: FieldElement> BasefoldCode<F> {
 
         // Step 1: repetition base code
         let t = Instant::now();
-        let mut codeword = Vec::with_capacity(self.codeword_length);
-        for &coeff in msg {
-            for _ in 0..self.rate {
-                codeword.push(coeff);
+        let mut codeword = vec![F::ZERO; self.codeword_length];
+        let rate = self.rate;
+        #[cfg(feature = "parallel")]
+        codeword.par_chunks_mut(rate).enumerate().for_each(|(i, chunk)| {
+            let coeff = msg[i];
+            for slot in chunk.iter_mut() {
+                *slot = coeff;
+            }
+        });
+        #[cfg(not(feature = "parallel"))]
+        for (i, chunk) in codeword.chunks_mut(rate).enumerate() {
+            let coeff = msg[i];
+            for slot in chunk.iter_mut() {
+                *slot = coeff;
             }
         }
-        println!("  repetition (rate {}):  {:?}", self.rate, t.elapsed());
+        println!("  repetition (rate {}):  {:?}", rate, t.elapsed());
 
         // Step 2: butterfly mixing passes
         let mut chunk_size = self.rate;

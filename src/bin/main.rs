@@ -9,15 +9,29 @@ use ark_secp256k1::Fr as SecpScalar;
 use rand::{SeedableRng, rngs::SmallRng};
 
 fn main() {
-    let message_size = 1 << 20;
+    let message_size = 1 << 22;
     let repetition = 6;
     let eta = 4; // 2^4 = 16 interleaved messages, total = 2^20 * 2^4 = 2^24
 
     let mut rng = SmallRng::seed_from_u64(2025);
 
-    // Build ERA code with message_size = 2^20
-    let k = (message_size as f64).sqrt() as usize;
-    assert_eq!(k * k, message_size);
+    // Build ERA code with segment_msg_size = message_size >> eta
+    let segment_msg_size = message_size >> eta;
+    let k = (segment_msg_size as f64).sqrt() as usize;
+    assert_eq!(k * k, segment_msg_size);
+
+    let (alpha, inverse_rate, cn, dn) = match k.ilog2() {
+        6 => (0.03, 1.06, 1, 1),
+        7 => (0.035, 1.06, 1, 1),
+        8 => (0.04, 1.06, 3, 1),
+        9 => (0.04, 1.07, 7, 12),
+        10 => (0.04, 1.07, 9, 20),
+        11 => (0.045, 1.08, 8, 26),
+        12 => (0.05, 1.08, 7, 41),
+        13 => (0.05, 1.08, 6, 47),
+        other => panic!("no tuned params for k=2^{other}"),
+    };
+    eprintln!("segment_msg_size={segment_msg_size}, k={k}, alpha={alpha}, inverse_rate={inverse_rate}, cn={cn}, dn={dn}");
 
     // ── Brakedown profiling at k = 2^20 ──
     let big_k = 1usize << 20;
@@ -40,10 +54,10 @@ fn main() {
     let inner_brakedown = BrakedownCode::<SecpScalar>::new(
         k,
         BrakedownParams {
-            alpha: 0.045,
-            inverse_rate: 1.1,
-            cn: 7,
-            dn: 11,
+            alpha,
+            inverse_rate,
+            cn,
+            dn,
         },
         &mut rng,
     );
@@ -63,7 +77,7 @@ fn main() {
     let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
 
     let rows = 1usize << eta;
-    let total_msg_len = message_size * rows;
+    let total_msg_len = rows * segment_msg_size;
     let msg: Vec<SecpScalar> = (0..total_msg_len)
         .map(|_| SecpScalar::random(&mut rng))
         .collect();
@@ -71,23 +85,23 @@ fn main() {
     // ── Single-message profiling ──
     eprintln!("=== Single-message ERA profile (gather permutation) ===");
     eprintln!(
-        "msg_size={message_size}, block_length={block_length_segment}, repetition={repetition}"
+        "msg_size={segment_msg_size}, block_length={block_length_segment}, repetition={repetition}"
     );
     eprintln!("Warm-up...");
-    black_box(era_code.encode_era(&msg[..message_size]));
+    black_box(era_code.encode_era(&msg[..segment_msg_size]));
     eprintln!("Profiling...");
-    black_box(era_code.encode_profiled(&msg[..message_size]));
+    black_box(era_code.encode_profiled(&msg[..segment_msg_size]));
 
     // ── RipShuffle profiling ──
     eprintln!();
     eprintln!("=== Single-message ERA profile (rip_shuffle permutation) ===");
     eprintln!(
-        "msg_size={message_size}, block_length={block_length_segment}, repetition={repetition}"
+        "msg_size={segment_msg_size}, block_length={block_length_segment}, repetition={repetition}"
     );
     eprintln!("Warm-up...");
-    black_box(era_code.encode_rip(&msg[..message_size], 42));
+    black_box(era_code.encode_rip(&msg[..segment_msg_size], 42));
     eprintln!("Profiling...");
-    black_box(era_code.encode_rip_profiled(&msg[..message_size], 42));
+    black_box(era_code.encode_rip_profiled(&msg[..segment_msg_size], 42));
 
     // ── Interleaved profiling ──
     eprintln!();

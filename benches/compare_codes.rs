@@ -12,8 +12,9 @@ use std::hint::black_box;
 
 type BlsScalar = ark_bls12_381::Fr;
 
-const MESSAGE_SIZE: usize = 1 << 20;
-const RS_INV_RATE: usize = 1;
+const MESSAGE_SIZE: usize = 1 << 22;
+const RS_LOG_INV_RATE: usize = 1;
+const BASEFOLD_LOG_INV_RATE: usize = 1;
 const INTERLEAVING_FACTOR: usize = 4;
 const ERA_REPETITION: usize = 6;
 
@@ -40,15 +41,26 @@ fn build_era_code(
         "segment message size must be a perfect square"
     );
 
+    let (alpha, inverse_rate, cn, dn) = match k.ilog2() {
+        6 => (0.03, 1.06, 1, 1),
+        7 => (0.035, 1.06, 1, 1),
+        8 => (0.04, 1.06, 3, 1),
+        9 => (0.04, 1.07, 7, 12),
+        10 => (0.04, 1.07, 9, 20),
+        11 => (0.045, 1.08, 8, 26),
+        12 => (0.05, 1.08, 7, 41),
+        13 => (0.05, 1.08, 6, 47),
+        _ => panic!("no tuned params for k={k}"),
+    };
+
     let inner_brakedown_params = BrakedownParams {
-        alpha: 0.085,
-        inverse_rate: 1.154,
-        cn: 5,
-        dn: 32,
+        alpha,
+        inverse_rate,
+        cn,
+        dn,
     };
     let inner_brakedown = BrakedownCode::new(k, inner_brakedown_params, rng);
     let base_code: TensorCode<BrakedownCode<SecpScalar>> = TensorCode::new(inner_brakedown);
-
     let block_length_segment = base_code.block_length() * ERA_REPETITION;
 
     let p1 = random_permutation(rng, block_length_segment);
@@ -90,7 +102,7 @@ fn bench_compare_interleaved(c: &mut Criterion) {
 
     let rs_code = ReedSolomonCode::new(
         MESSAGE_SIZE >> INTERLEAVING_FACTOR,
-        (MESSAGE_SIZE >> INTERLEAVING_FACTOR) << RS_INV_RATE,
+        (MESSAGE_SIZE >> INTERLEAVING_FACTOR) << RS_LOG_INV_RATE,
     );
 
     c.bench_function("reed_solomon_interleaved_inv_rate_2", |b| {
@@ -176,7 +188,7 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     //     );
     // });
 
-    let basefold_params = BasefoldParams { log_rate: 1 };
+    let basefold_params = BasefoldParams { log_rate: BASEFOLD_LOG_INV_RATE };
     let basefold_code = build_basefold_code(&mut rng, segment_size, basefold_params);
     c.bench_function("basefold_interleaved_inv_rate_2", |b| {
         b.iter_batched(

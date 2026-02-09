@@ -10,6 +10,9 @@
 
 use crate::ErrorCorrectingCode;
 
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
+
 /// A tensor (product) code built from an inner code `C`.
 ///
 /// The inner code `C` must have `message_size() == k` for some `k`; the tensor
@@ -34,8 +37,8 @@ impl<C: ErrorCorrectingCode> TensorCode<C> {
 
 impl<C> ErrorCorrectingCode for TensorCode<C>
 where
-    C: ErrorCorrectingCode,
-    C::Alphabet: Clone,
+    C: ErrorCorrectingCode + Sync,
+    C::Alphabet: Clone + Send + Sync,
 {
     type Alphabet = C::Alphabet;
 
@@ -50,33 +53,46 @@ where
     fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
         assert_eq!(msg.len(), self.k * self.k);
 
-        // Step 1: encode each row (k rows, each of length k -> n).
-        let mut row_encoded: Vec<Vec<Self::Alphabet>> = Vec::with_capacity(self.k);
-        for row in 0..self.k {
-            let start = row * self.k;
-            let row_codeword = self.inner.encode(&msg[start..start + self.k]);
-            debug_assert_eq!(row_codeword.len(), self.n);
-            row_encoded.push(row_codeword);
-        }
+        // Step 1: encode each row in parallel (k rows, each of length k -> n).
+        #[cfg(feature = "parallel")]
+        let row_encoded: Vec<Vec<Self::Alphabet>> = (0..self.k)
+            .into_par_iter()
+            .map(|row| {
+                let start = row * self.k;
+                self.inner.encode(&msg[start..start + self.k])
+            })
+            .collect();
+        #[cfg(not(feature = "parallel"))]
+        let row_encoded: Vec<Vec<Self::Alphabet>> = (0..self.k)
+            .map(|row| {
+                let start = row * self.k;
+                self.inner.encode(&msg[start..start + self.k])
+            })
+            .collect();
 
-        // Step 2: encode each column (n columns, each of length k -> n).
-        // Build the result grid (n rows × n cols) directly.
-        let mut result = Vec::with_capacity(self.n * self.n);
-
-        // Collect each column, encode it, then scatter into result rows.
-        // We build column-by-column and store the encoded columns, then
-        // assemble row-major.
-        let mut col_encoded: Vec<Vec<Self::Alphabet>> = Vec::with_capacity(self.n);
-        for col in 0..self.n {
-            let column: Vec<Self::Alphabet> = (0..self.k)
-                .map(|row| row_encoded[row][col].clone())
-                .collect();
-            let col_codeword = self.inner.encode(&column);
-            debug_assert_eq!(col_codeword.len(), self.n);
-            col_encoded.push(col_codeword);
-        }
+        // Step 2: encode each column in parallel (n columns, each of length k -> n).
+        #[cfg(feature = "parallel")]
+        let col_encoded: Vec<Vec<Self::Alphabet>> = (0..self.n)
+            .into_par_iter()
+            .map(|col| {
+                let column: Vec<Self::Alphabet> = (0..self.k)
+                    .map(|row| row_encoded[row][col].clone())
+                    .collect();
+                self.inner.encode(&column)
+            })
+            .collect();
+        #[cfg(not(feature = "parallel"))]
+        let col_encoded: Vec<Vec<Self::Alphabet>> = (0..self.n)
+            .map(|col| {
+                let column: Vec<Self::Alphabet> = (0..self.k)
+                    .map(|row| row_encoded[row][col].clone())
+                    .collect();
+                self.inner.encode(&column)
+            })
+            .collect();
 
         // Step 3: flatten to row-major order (row i, col j) = col_encoded[j][i].
+        let mut result = Vec::with_capacity(self.n * self.n);
         for row in 0..self.n {
             for col in 0..self.n {
                 result.push(col_encoded[col][row].clone());

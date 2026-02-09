@@ -8,6 +8,38 @@ use rip_shuffle::RipShuffleSequential;
 use crate::{ErrorCorrectingCode, FieldElement};
 
 const PERMUTE_CHUNK_SIZE: usize = 1 << 12;
+
+/// How many iterations ahead to issue prefetch hints during random gathers.
+///
+/// Guideline: `prefetch_distance ≈ memory_latency / cycles_per_iteration`.
+///   • Apple M-series DRAM latency ≈ 100–120 ns ≈ 320–384 cycles @ 3.2 GHz.
+///   • Each gather iteration ≈ 10–20 cycles (index lookup + 32-byte copy).
+///   • → distance ≈ 320/15 ≈ 20; 16 is a good conservative choice.
+/// Too low → prefetch hasn't arrived yet. Too high → data evicted before use
+/// and extra instruction pressure. In practice 8–32 all work; 16 is the sweet
+/// spot on most OoO cores.
+const PREFETCH_AHEAD: usize = 16;
+
+/// Issue a non-blocking read prefetch hint into the L1 cache.
+///
+/// This is purely advisory; the CPU may ignore it. Falls back to a no-op on
+/// unsupported architectures.
+#[inline(always)]
+fn prefetch_read<T>(ptr: *const T) {
+    #[cfg(target_arch = "aarch64")]
+    unsafe {
+        // PRFM PLDL1KEEP — prefetch for load, L1, keep
+        std::arch::asm!("prfm pldl1keep, [{0}]", in(reg) ptr, options(nostack, preserves_flags));
+    }
+    #[cfg(target_arch = "x86_64")]
+    unsafe {
+        std::arch::x86_64::_mm_prefetch(ptr as *const i8, std::arch::x86_64::_MM_HINT_T0);
+    }
+    #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
+    {
+        let _ = ptr;
+    }
+}
 fn chunk_len_override() -> Option<usize> {
     static OVERRIDE: OnceLock<Option<usize>> = OnceLock::new();
     *OVERRIDE.get_or_init(|| {
@@ -160,33 +192,45 @@ where
 
         let n = self.block_length;
         let base_encoding = self.base_code.encode(msg);
+        let base_bl = self.base_code.block_length();
         let chunk_len = Self::chunk_len(self.block_length);
 
-        let mut w0 = vec![F::ZERO; n];
-        for i in 0..n {
-            w0[i] = base_encoding[i % self.base_code.block_length()];
-        }
-
-        let mut w1 = vec![F::ZERO; n];
+        // Round 1: fused repetition + permutation gather, then prefix sum
+        // SAFETY: every element is written by the gather before being read.
+        let mut w1 = Vec::with_capacity(n);
+        unsafe { w1.set_len(n) };
         w1.par_chunks_mut(PERMUTE_CHUNK_SIZE)
           .enumerate()
           .for_each(|(chunk_idx, chunk)| {
             let start = chunk_idx * PERMUTE_CHUNK_SIZE;
-            for i in 0..chunk.len() {
-                chunk[i] = w0[self.p1_vector[start + i]];
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                    prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                }
+                chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
             }
         });
         Self::prefix_sum_in_place(&mut w1, &self.m1_vector, chunk_len);
 
-        let mut w2 = vec![F::ZERO; n];
+        // SAFETY: every element is written by the gather before being read.
+        let mut w2 = Vec::with_capacity(n);
+        unsafe { w2.set_len(n) };
         w2.par_chunks_mut(PERMUTE_CHUNK_SIZE)
           .enumerate()
           .for_each(|(chunk_idx, chunk)| {
             let start = chunk_idx * PERMUTE_CHUNK_SIZE;
-            for i in 0..chunk.len() {
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                    prefetch_read(w1.as_ptr().wrapping_add(idx));
+                }
                 chunk[i] = w1[self.p2_vector[start + i]];
             }
         });
+        drop(w1); // free round-1 buffer early
         Self::prefix_sum_in_place(&mut w2, &self.m2_vector, chunk_len);
 
         w2
@@ -343,20 +387,26 @@ where
         let t0 = Instant::now();
         let base_encoding = self.base_code.encode(msg);
         let t_base = t0.elapsed();
+        let base_bl = self.base_code.block_length();
 
+        // Round 1: fused repetition + permutation gather, then prefix sum
         let t0 = Instant::now();
-        let mut w0 = vec![F::ZERO; n];
-        for i in 0..n {
-            w0[i] = base_encoding[i % self.base_code.block_length()];
-        }
-        let t_repeat = t0.elapsed();
-
-        // Round 1: permutation, then fused mul + prefix sum
-        let t0 = Instant::now();
-        let mut w1 = vec![F::ZERO; n];
-        for i in 0..n {
-            w1[i] = w0[self.p1_vector[i]];
-        }
+        // SAFETY: every element is written by the gather before being read.
+        let mut w1 = Vec::with_capacity(n);
+        unsafe { w1.set_len(n) };
+        w1.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+          .enumerate()
+          .for_each(|(chunk_idx, chunk)| {
+            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                    prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                }
+                chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
+            }
+        });
         let t_perm1 = t0.elapsed();
 
         let t0 = Instant::now();
@@ -365,17 +415,30 @@ where
 
         // Round 2: permutation, then fused mul + prefix sum
         let t0 = Instant::now();
-        let mut w2 = vec![F::ZERO; n];
-        for i in 0..n {
-            w2[i] = w1[self.p2_vector[i]];
-        }
+        // SAFETY: every element is written by the gather before being read.
+        let mut w2 = Vec::with_capacity(n);
+        unsafe { w2.set_len(n) };
+        w2.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+          .enumerate()
+          .for_each(|(chunk_idx, chunk)| {
+            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                    prefetch_read(w1.as_ptr().wrapping_add(idx));
+                }
+                chunk[i] = w1[self.p2_vector[start + i]];
+            }
+        });
+        drop(w1);
         let t_perm2 = t0.elapsed();
 
         let t0 = Instant::now();
         Self::prefix_sum_in_place(&mut w2, &self.m2_vector, chunk_len);
         let t_prefix2 = t0.elapsed();
 
-        let total = t_base + t_repeat + t_perm1 + t_prefix1 + t_perm2 + t_prefix2;
+        let total = t_base + t_perm1 + t_prefix1 + t_perm2 + t_prefix2;
 
         eprintln!();
         eprintln!("┌──────────────────────────┬────────────┬─────────┐");
@@ -383,11 +446,10 @@ where
         eprintln!("├──────────────────────────┼────────────┼─────────┤");
         for (label, dur) in [
             ("1. Base-code encode", t_base),
-            ("2. Repetition", t_repeat),
-            ("3a. Perm       (round 1)", t_perm1),
-            ("3b. Prefix sum (round 1)", t_prefix1),
-            ("4a. Perm       (round 2)", t_perm2),
-            ("4b. Prefix sum (round 2)", t_prefix2),
+            ("2a. Rep+Perm   (round 1)", t_perm1),
+            ("2b. Prefix sum (round 1)", t_prefix1),
+            ("3a. Perm       (round 2)", t_perm2),
+            ("3b. Prefix sum (round 2)", t_prefix2),
         ] {
             let pct = dur.as_secs_f64() / total.as_secs_f64() * 100.0;
             eprintln!(
