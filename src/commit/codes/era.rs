@@ -7,8 +7,6 @@ use rip_shuffle::RipShuffleSequential;
 
 use crate::{ErrorCorrectingCode, FieldElement};
 
-const PERMUTE_CHUNK_SIZE: usize = 1 << 12;
-
 /// How many iterations ahead to issue prefetch hints during random gathers.
 ///
 /// Guideline: `prefetch_distance ≈ memory_latency / cycles_per_iteration`.
@@ -199,10 +197,10 @@ where
         // SAFETY: every element is written by the gather before being read.
         let mut w1 = Vec::with_capacity(n);
         unsafe { w1.set_len(n) };
-        w1.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+        w1.par_chunks_mut(chunk_len)
           .enumerate()
           .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            let start = chunk_idx * chunk_len;
             let len = chunk.len();
             for i in 0..len {
                 if i + PREFETCH_AHEAD < len {
@@ -217,10 +215,10 @@ where
         // SAFETY: every element is written by the gather before being read.
         let mut w2 = Vec::with_capacity(n);
         unsafe { w2.set_len(n) };
-        w2.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+        w2.par_chunks_mut(chunk_len)
           .enumerate()
           .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            let start = chunk_idx * chunk_len;
             let len = chunk.len();
             for i in 0..len {
                 if i + PREFETCH_AHEAD < len {
@@ -394,10 +392,10 @@ where
         // SAFETY: every element is written by the gather before being read.
         let mut w1 = Vec::with_capacity(n);
         unsafe { w1.set_len(n) };
-        w1.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+        w1.par_chunks_mut(chunk_len)
           .enumerate()
           .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            let start = chunk_idx * chunk_len;
             let len = chunk.len();
             for i in 0..len {
                 if i + PREFETCH_AHEAD < len {
@@ -418,10 +416,10 @@ where
         // SAFETY: every element is written by the gather before being read.
         let mut w2 = Vec::with_capacity(n);
         unsafe { w2.set_len(n) };
-        w2.par_chunks_mut(PERMUTE_CHUNK_SIZE)
+        w2.par_chunks_mut(chunk_len)
           .enumerate()
           .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * PERMUTE_CHUNK_SIZE;
+            let start = chunk_idx * chunk_len;
             let len = chunk.len();
             for i in 0..len {
                 if i + PREFETCH_AHEAD < len {

@@ -14,7 +14,7 @@ type BlsScalar = ark_bls12_381::Fr;
 
 const MESSAGE_SIZE: usize = 1 << 22;
 const RS_LOG_INV_RATE: usize = 1;
-const BASEFOLD_LOG_INV_RATE: usize = 1;
+const BASEFOLD_LOG_INV_RATE: usize = 2;
 const INTERLEAVING_FACTOR: usize = 4;
 const ERA_REPETITION: usize = 6;
 
@@ -190,7 +190,7 @@ fn bench_compare_interleaved(c: &mut Criterion) {
 
     let basefold_params = BasefoldParams { log_rate: BASEFOLD_LOG_INV_RATE };
     let basefold_code = build_basefold_code(&mut rng, segment_size, basefold_params);
-    c.bench_function("basefold_interleaved_inv_rate_2", |b| {
+    c.bench_function("basefold_interleaved_inv_rate_4", |b| {
         b.iter_batched(
             || sc_msg.clone(),
             |input| {
