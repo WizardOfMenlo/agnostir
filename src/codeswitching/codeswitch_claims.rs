@@ -18,13 +18,23 @@
 //! - Step 20 first-permutation checks through transition sumcheck reductions
 //!   and related opening/IP claims (currently using placeholder
 //!   prefix-product witnesses for `a_2,b_2`).
+//! - Step 21 first multiply vector `word^mult = word^perm ⊙ v_1`.
+//! - Step 22 first multiply split encoding + OOD opening/IP claim.
+//! - Step 23 first multiply geometric challenge vector `r^mult` and
+//!   triple-product claim `sigma^mult`.
+//! - Step 24 first multiply `SplitClaimTIP(word^perm, v_1, r^mult, sigma^mult)`
+//!   and `SplitClaimIP(word^mult, r^mult, sigma^mult)` reductions.
+//! - Step 25 first accumulate vector `word^acc = A * word^mult` (using the
+//!   standard prefix-sum accumulate map).
+//! - Step 26 first accumulate split encoding + OOD opening/IP claim.
 //!
 //! Not implemented yet:
-//! - First multiply/accumulate checks and the second permute/multiply/accumulate chain.
+//! - Remaining first-accumulate checks (steps 27+) and the second
+//!   permute/multiply/accumulate chain.
 
 use rand::Rng;
 
-use super::claims::{SplitIpClaim, SplitTipClaim, split_claim_ip};
+use super::claims::{SplitIpClaim, SplitTipClaim, split_claim_ip, split_claim_tip};
 use super::oracles::{SplitEncoding, split_and_encode};
 use super::sumcheck::{
     PermutationTransitionSumcheck, TIPSumcheck, build_permutation_transition_tables,
@@ -53,6 +63,8 @@ pub struct CodeswitchClaimsInput<F> {
     pub base_code_prime_generator_matrix: Vec<F>,
     /// First permutation vector over `[0, n_era)` used to define `word^perm`.
     pub permutation_1: Vec<usize>,
+    /// First multiply vector `v_1` of length `n_era`.
+    pub multiplier_1: Vec<F>,
 }
 
 /// Full output contract for `CodeswitchClaims`.
@@ -288,6 +300,45 @@ pub struct CodeswitchClaimsOutput<F> {
     /// stored as `[i][j]`.
     pub permutation_b_r_b_tail_ip_claims: [[Vec<SplitIpClaim<F>>; 2]; 2],
 
+    /// Step 21 first multiplied vector `word^mult = word^perm ⊙ v_1`.
+    pub word_mult: Vec<F>,
+    /// Step 22 split output-code commitments to `word^mult`.
+    pub mult_oracles: SplitEncoding<F>,
+    /// Step 22 sampled verifier out-of-domain point `z_ood^mult`.
+    pub z_ood_mult: Vec<F>,
+    /// Step 22 claimed value `sigma_ood^mult = w_hat^mult(z_ood^mult)`.
+    pub sigma_ood_mult: F,
+    /// Step 22 split-IP claims for
+    /// `SplitClaimIP(word^mult, eq(z_ood^mult), sigma_ood^mult, ...)`.
+    pub mult_ood_ip_claims: Vec<SplitIpClaim<F>>,
+
+    /// Step 23 scalar challenge `r_mult` used to derive the geometric vector.
+    pub r_mult_challenge: F,
+    /// Step 23 geometric vector `(1, r_mult, r_mult^2, ..., r_mult^{n_era-1})`.
+    pub r_mult: Vec<F>,
+    /// Step 23 triple-product value
+    /// `sigma^mult = <word^perm ⊙ v_1, r^mult>`.
+    pub sigma_mult: F,
+
+    /// Step 24 split-TIP claims for
+    /// `SplitClaimTIP(word^perm, v_1, r^mult, sigma^mult, ...)`.
+    pub multiply_tip_claims: Vec<SplitTipClaim<F>>,
+    /// Step 24 split-IP claims for
+    /// `SplitClaimIP(word^mult, r^mult, sigma^mult, ...)`.
+    pub mult_r_ip_claims: Vec<SplitIpClaim<F>>,
+
+    /// Step 25 first accumulated vector `word^acc = A * word^mult`.
+    pub word_acc: Vec<F>,
+    /// Step 26 split output-code commitments to `word^acc`.
+    pub acc_oracles: SplitEncoding<F>,
+    /// Step 26 sampled verifier out-of-domain point `z_ood^acc`.
+    pub z_ood_acc: Vec<F>,
+    /// Step 26 claimed value `sigma_ood^acc = w_hat^acc(z_ood^acc)`.
+    pub sigma_ood_acc: F,
+    /// Step 26 split-IP claims for
+    /// `SplitClaimIP(word^acc, eq(z_ood^acc), sigma_ood^acc, ...)`.
+    pub acc_ood_ip_claims: Vec<SplitIpClaim<F>>,
+
     /// Accumulated protocol artifacts.
     pub aux_oracles: Vec<SplitEncoding<F>>,
     pub ip_claims: Vec<SplitIpClaim<F>>,
@@ -448,6 +499,89 @@ fn apply_permutation<F: Copy>(values: &[F], permutation: &[usize]) -> Vec<F> {
     permutation.iter().map(|&idx| values[idx]).collect()
 }
 
+fn hadamard_product<F: FieldElement>(
+    lhs: &[F],
+    rhs: &[F],
+    lhs_label: &str,
+    rhs_label: &str,
+) -> Vec<F> {
+    assert_eq!(
+        lhs.len(),
+        rhs.len(),
+        "{lhs_label} length must match {rhs_label} length"
+    );
+
+    lhs.iter()
+        .zip(rhs.iter())
+        .map(|(&lhs_value, &rhs_value)| lhs_value * rhs_value)
+        .collect()
+}
+
+fn inner_product<F: FieldElement>(lhs: &[F], rhs: &[F], lhs_label: &str, rhs_label: &str) -> F {
+    assert_eq!(
+        lhs.len(),
+        rhs.len(),
+        "{lhs_label} length must match {rhs_label} length"
+    );
+
+    lhs.iter()
+        .zip(rhs.iter())
+        .fold(F::ZERO, |acc, (&lhs_value, &rhs_value)| {
+            acc + lhs_value * rhs_value
+        })
+}
+
+fn triple_product<F: FieldElement>(
+    first: &[F],
+    second: &[F],
+    third: &[F],
+    first_label: &str,
+    second_label: &str,
+    third_label: &str,
+) -> F {
+    assert_eq!(
+        first.len(),
+        second.len(),
+        "{first_label} length must match {second_label} length"
+    );
+    assert_eq!(
+        first.len(),
+        third.len(),
+        "{first_label} length must match {third_label} length"
+    );
+
+    first.iter().zip(second.iter()).zip(third.iter()).fold(
+        F::ZERO,
+        |acc, ((&first_value, &second_value), &third_value)| {
+            acc + first_value * second_value * third_value
+        },
+    )
+}
+
+fn geometric_power_vector<F: FieldElement>(base: F, len: usize) -> Vec<F> {
+    assert!(len > 0, "geometric vector length must be > 0");
+
+    let mut out = Vec::with_capacity(len);
+    let mut cur = F::ONE;
+    for _ in 0..len {
+        out.push(cur);
+        cur *= base;
+    }
+    out
+}
+
+fn prefix_sums<F: FieldElement>(values: &[F]) -> Vec<F> {
+    assert!(!values.is_empty(), "prefix-sums input must be non-empty");
+
+    let mut out = Vec::with_capacity(values.len());
+    let mut acc = F::ZERO;
+    for &value in values {
+        acc += value;
+        out.push(acc);
+    }
+    out
+}
+
 fn prefix_products<F: FieldElement>(values: &[F]) -> Vec<F> {
     assert!(
         !values.is_empty(),
@@ -544,7 +678,8 @@ fn build_first_permute_fixed_point<F: FieldElement>(dimension: usize) -> Vec<F> 
 }
 
 /// Internal helper implementing steps 1-6, base-code encoding, step 10
-/// verifier challenge sampling (`r^x`), and steps 11-20 (through full step-20 checks).
+/// verifier challenge sampling (`r^x`), and steps 11-26 (through first-accumulate
+/// OOD and claim reductions).
 #[must_use]
 pub fn generate_codeswitch_claims_up_to_base_code_encoding<F, CEra, CBase, COut>(
     input: &CodeswitchClaimsInput<F>,
@@ -1164,6 +1299,64 @@ where
         ],
     ];
 
+    // Step 21.
+    let word_mult = hadamard_product(&word_perm, &input.multiplier_1, "word_perm", "multiplier_1");
+
+    // Step 22.
+    let mult_oracles = split_and_encode(&word_mult, output_code);
+    let z_ood_mult: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
+    let sigma_ood_mult = evaluate_multilinear_table(&word_mult, &z_ood_mult);
+    let mult_ood_ip_claims = split_claim_ip(
+        &word_mult,
+        &MultilinearPoint(z_ood_mult.clone()).eq_weights(),
+        sigma_ood_mult,
+        k_prime,
+    );
+
+    // Step 23.
+    let r_mult_challenge = F::random(rng);
+    let r_mult = geometric_power_vector(r_mult_challenge, n_era);
+    let sigma_mult = triple_product(
+        &word_perm,
+        &input.multiplier_1,
+        &r_mult,
+        "word_perm",
+        "multiplier_1",
+        "r_mult",
+    );
+
+    let sigma_mult_from_word_mult = inner_product(&word_mult, &r_mult, "word_mult", "r_mult");
+    assert_eq!(
+        sigma_mult, sigma_mult_from_word_mult,
+        "step 23 triple-product claim does not match word^mult inner-product claim"
+    );
+
+    // Step 24.
+    let multiply_tip_claims = split_claim_tip(
+        &word_perm,
+        &input.multiplier_1,
+        &r_mult,
+        sigma_mult,
+        k_prime,
+    );
+    let mult_r_ip_claims = split_claim_ip(&word_mult, &r_mult, sigma_mult, k_prime);
+
+    // Step 25.
+    // The current ERA implementation uses the standard accumulate map where
+    // A is the lower-triangular all-ones matrix (prefix sums).
+    let word_acc = prefix_sums(&word_mult);
+
+    // Step 26.
+    let acc_oracles = split_and_encode(&word_acc, output_code);
+    let z_ood_acc: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
+    let sigma_ood_acc = evaluate_multilinear_table(&word_acc, &z_ood_acc);
+    let acc_ood_ip_claims = split_claim_ip(
+        &word_acc,
+        &MultilinearPoint(z_ood_acc.clone()).eq_weights(),
+        sigma_ood_acc,
+        k_prime,
+    );
+
     let mut ip_claims = Vec::with_capacity(
         ood_ip_claims.len()
             + codeswitch_ip_claims.len()
@@ -1173,6 +1366,9 @@ where
             + base_code_msg_ip_claims.len()
             + repeat_ip_claims.len()
             + perm_ood_ip_claims.len()
+            + mult_ood_ip_claims.len()
+            + mult_r_ip_claims.len()
+            + acc_ood_ip_claims.len()
             + permutation_a_1_ood_ip_claims.len()
             + permutation_a_2_ood_ip_claims.len()
             + permutation_b_1_ood_ip_claims.len()
@@ -1226,6 +1422,12 @@ where
     ip_claims.extend(permutation_b_r_b_tail_ip_claims[0][1].iter().cloned());
     ip_claims.extend(permutation_b_r_b_tail_ip_claims[1][0].iter().cloned());
     ip_claims.extend(permutation_b_r_b_tail_ip_claims[1][1].iter().cloned());
+    ip_claims.extend(mult_ood_ip_claims.iter().cloned());
+    ip_claims.extend(mult_r_ip_claims.iter().cloned());
+    ip_claims.extend(acc_ood_ip_claims.iter().cloned());
+
+    let mut tip_claims = Vec::with_capacity(multiply_tip_claims.len());
+    tip_claims.extend(multiply_tip_claims.iter().cloned());
 
     CodeswitchClaimsOutput {
         word_era,
@@ -1327,25 +1529,42 @@ where
         permutation_b_sigma_r_b_1,
         permutation_b_2_r_b_ip_claims,
         permutation_b_r_b_tail_ip_claims,
+        word_mult,
+        mult_oracles: mult_oracles.clone(),
+        z_ood_mult,
+        sigma_ood_mult,
+        mult_ood_ip_claims,
+        r_mult_challenge,
+        r_mult,
+        sigma_mult,
+        multiply_tip_claims,
+        mult_r_ip_claims,
+        word_acc,
+        acc_oracles: acc_oracles.clone(),
+        z_ood_acc,
+        sigma_ood_acc,
+        acc_ood_ip_claims,
         aux_oracles: vec![
             era_oracles,
             code_b_oracles,
             rep_oracles,
             perm_oracles,
+            mult_oracles,
+            acc_oracles,
             permutation_a_1_oracles,
             permutation_a_2_oracles,
             permutation_b_1_oracles,
             permutation_b_2_oracles,
         ],
         ip_claims,
-        tip_claims: Vec::new(),
+        tip_claims,
     }
 }
 
 /// Build claims/oracles for the implemented `CodeswitchClaims` steps.
 ///
-/// Currently implemented through the full first-permutation step (step 20),
-/// with placeholder prefix-product witnesses for `a_2,b_2`.
+/// Currently implemented through step 26 (first accumulate OOD + claim
+/// reductions), with placeholder prefix-product witnesses for `a_2,b_2`.
 #[must_use]
 pub fn generate_codeswitch_claims<F, CEra, CBase, COut>(
     input: CodeswitchClaimsInput<F>,
@@ -1441,6 +1660,7 @@ mod tests {
             // Generator matrix of CodeB' = Identity(2), flattened row-major.
             base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
             permutation_1: vec![1, 0, 3, 2],
+            multiplier_1: vec![f(5), f(6), f(7), f(8)],
         };
 
         let mut rng = SmallRng::seed_from_u64(42);
@@ -1473,6 +1693,17 @@ mod tests {
             &out.perm_oracles.codewords,
             &expected_perm_oracles.codewords
         );
+
+        let expected_word_mult = hadamard_product(
+            &out.word_perm,
+            &input.multiplier_1,
+            "word_perm",
+            "multiplier_1",
+        );
+        assert_eq!(out.word_mult, expected_word_mult);
+
+        let expected_word_acc = prefix_sums(&out.word_mult);
+        assert_eq!(out.word_acc, expected_word_acc);
 
         // Replay verifier randomness.
         let mut replay_rng = SmallRng::seed_from_u64(42);
@@ -1523,6 +1754,15 @@ mod tests {
             <KoalaBear as FieldElement>::random(&mut replay_rng),
             <KoalaBear as FieldElement>::random(&mut replay_rng),
         ];
+        let expected_z_ood_mult = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let expected_r_mult_challenge = <KoalaBear as FieldElement>::random(&mut replay_rng);
+        let expected_z_ood_acc = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
 
         assert_eq!(out.z_ood_era, expected_z);
         assert_eq!(out.beta, expected_beta);
@@ -1544,6 +1784,9 @@ mod tests {
             out.permutation_b_transition_sumcheck_challenges,
             expected_permutation_b_transition_sumcheck_challenges
         );
+        assert_eq!(out.z_ood_mult, expected_z_ood_mult);
+        assert_eq!(out.r_mult_challenge, expected_r_mult_challenge);
+        assert_eq!(out.z_ood_acc, expected_z_ood_acc);
 
         let sigma_ood_expected = EvaluationsList::new(out.word_era.clone())
             .evaluate(&MultilinearPoint(out.z_ood_era.clone()));
@@ -2132,6 +2375,75 @@ mod tests {
             )
         );
 
+        let expected_mult_oracles = split_and_encode(&out.word_mult, &output_code);
+        assert_eq!(&out.mult_oracles.chunks, &expected_mult_oracles.chunks);
+        assert_eq!(
+            &out.mult_oracles.codewords,
+            &expected_mult_oracles.codewords
+        );
+
+        let expected_sigma_ood_mult = EvaluationsList::new(out.word_mult.clone())
+            .evaluate(&MultilinearPoint(out.z_ood_mult.clone()));
+        assert_eq!(out.sigma_ood_mult, expected_sigma_ood_mult);
+        assert_eq!(
+            out.mult_ood_ip_claims,
+            split_claim_ip(
+                &out.word_mult,
+                &MultilinearPoint(out.z_ood_mult.clone()).eq_weights(),
+                out.sigma_ood_mult,
+                k_prime,
+            )
+        );
+
+        let expected_r_mult = geometric_power_vector(out.r_mult_challenge, out.word_mult.len());
+        assert_eq!(out.r_mult, expected_r_mult);
+
+        let expected_sigma_mult = triple_product(
+            &out.word_perm,
+            &input.multiplier_1,
+            &out.r_mult,
+            "word_perm",
+            "multiplier_1",
+            "r_mult",
+        );
+        assert_eq!(out.sigma_mult, expected_sigma_mult);
+        assert_eq!(
+            out.sigma_mult,
+            inner_product(&out.word_mult, &out.r_mult, "word_mult", "r_mult")
+        );
+
+        assert_eq!(
+            out.multiply_tip_claims,
+            split_claim_tip(
+                &out.word_perm,
+                &input.multiplier_1,
+                &out.r_mult,
+                out.sigma_mult,
+                k_prime,
+            )
+        );
+        assert_eq!(
+            out.mult_r_ip_claims,
+            split_claim_ip(&out.word_mult, &out.r_mult, out.sigma_mult, k_prime)
+        );
+
+        let expected_acc_oracles = split_and_encode(&out.word_acc, &output_code);
+        assert_eq!(&out.acc_oracles.chunks, &expected_acc_oracles.chunks);
+        assert_eq!(&out.acc_oracles.codewords, &expected_acc_oracles.codewords);
+
+        let expected_sigma_ood_acc = EvaluationsList::new(out.word_acc.clone())
+            .evaluate(&MultilinearPoint(out.z_ood_acc.clone()));
+        assert_eq!(out.sigma_ood_acc, expected_sigma_ood_acc);
+        assert_eq!(
+            out.acc_ood_ip_claims,
+            split_claim_ip(
+                &out.word_acc,
+                &MultilinearPoint(out.z_ood_acc.clone()).eq_weights(),
+                out.sigma_ood_acc,
+                k_prime,
+            )
+        );
+
         assert_eq!(out.ood_ip_claims.len(), 2);
         assert_eq!(out.codeswitch_ip_claims.len(), 2);
         assert_eq!(out.base_code_word_ip_claims.len(), 2);
@@ -2140,6 +2452,9 @@ mod tests {
         assert_eq!(out.base_code_msg_ip_claims.len(), 2);
         assert_eq!(out.repeat_ip_claims.len(), 2);
         assert_eq!(out.perm_ood_ip_claims.len(), 2);
+        assert_eq!(out.mult_ood_ip_claims.len(), 2);
+        assert_eq!(out.mult_r_ip_claims.len(), 2);
+        assert_eq!(out.acc_ood_ip_claims.len(), 2);
         assert_eq!(out.permutation_a_1_ood_ip_claims.len(), 2);
         assert_eq!(out.permutation_a_2_ood_ip_claims.len(), 2);
         assert_eq!(out.permutation_b_1_ood_ip_claims.len(), 2);
@@ -2163,9 +2478,9 @@ mod tests {
         assert_eq!(out.permutation_b_r_b_tail_ip_claims[1][0].len(), 2);
         assert_eq!(out.permutation_b_r_b_tail_ip_claims[1][1].len(), 2);
 
-        assert_eq!(out.ip_claims.len(), 60);
-        assert_eq!(out.aux_oracles.len(), 8);
-        assert!(out.tip_claims.is_empty());
+        assert_eq!(out.ip_claims.len(), 66);
+        assert_eq!(out.aux_oracles.len(), 10);
+        assert_eq!(out.tip_claims.len(), 2);
     }
 
     #[test]
@@ -2182,6 +2497,7 @@ mod tests {
             }],
             base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
             permutation_1: vec![4, 5, 6, 7, 0, 1, 2, 3],
+            multiplier_1: vec![f(10), f(11), f(12), f(13), f(14), f(15), f(16), f(17)],
         };
 
         let mut rng = SmallRng::seed_from_u64(123);
@@ -2208,6 +2524,17 @@ mod tests {
             &out.perm_oracles.codewords,
             &expected_perm_oracles.codewords
         );
+
+        let expected_word_mult = hadamard_product(
+            &out.word_perm,
+            &input.multiplier_1,
+            "word_perm",
+            "multiplier_1",
+        );
+        assert_eq!(out.word_mult, expected_word_mult);
+
+        let expected_word_acc = prefix_sums(&out.word_mult);
+        assert_eq!(out.word_acc, expected_word_acc);
 
         let expected_sigma_ood_perm = EvaluationsList::new(out.word_perm.clone())
             .evaluate(&MultilinearPoint(out.z_ood_perm.clone()));
@@ -2322,10 +2649,87 @@ mod tests {
             out.permutation_r_perm.len()
         );
 
+        let expected_mult_oracles = split_and_encode(&out.word_mult, &output_code);
+        assert_eq!(&out.mult_oracles.chunks, &expected_mult_oracles.chunks);
+        assert_eq!(
+            &out.mult_oracles.codewords,
+            &expected_mult_oracles.codewords
+        );
+
+        let expected_sigma_ood_mult = EvaluationsList::new(out.word_mult.clone())
+            .evaluate(&MultilinearPoint(out.z_ood_mult.clone()));
+        assert_eq!(out.sigma_ood_mult, expected_sigma_ood_mult);
+        assert_eq!(
+            out.mult_ood_ip_claims,
+            split_claim_ip(
+                &out.word_mult,
+                &MultilinearPoint(out.z_ood_mult.clone()).eq_weights(),
+                out.sigma_ood_mult,
+                output_code.message_size(),
+            )
+        );
+
+        let expected_r_mult = geometric_power_vector(out.r_mult_challenge, out.word_mult.len());
+        assert_eq!(out.r_mult, expected_r_mult);
+
+        let expected_sigma_mult = triple_product(
+            &out.word_perm,
+            &input.multiplier_1,
+            &out.r_mult,
+            "word_perm",
+            "multiplier_1",
+            "r_mult",
+        );
+        assert_eq!(out.sigma_mult, expected_sigma_mult);
+        assert_eq!(
+            out.sigma_mult,
+            inner_product(&out.word_mult, &out.r_mult, "word_mult", "r_mult")
+        );
+
+        assert_eq!(
+            out.multiply_tip_claims,
+            split_claim_tip(
+                &out.word_perm,
+                &input.multiplier_1,
+                &out.r_mult,
+                out.sigma_mult,
+                output_code.message_size(),
+            )
+        );
+        assert_eq!(
+            out.mult_r_ip_claims,
+            split_claim_ip(
+                &out.word_mult,
+                &out.r_mult,
+                out.sigma_mult,
+                output_code.message_size(),
+            )
+        );
+
+        let expected_acc_oracles = split_and_encode(&out.word_acc, &output_code);
+        assert_eq!(&out.acc_oracles.chunks, &expected_acc_oracles.chunks);
+        assert_eq!(&out.acc_oracles.codewords, &expected_acc_oracles.codewords);
+
+        let expected_sigma_ood_acc = EvaluationsList::new(out.word_acc.clone())
+            .evaluate(&MultilinearPoint(out.z_ood_acc.clone()));
+        assert_eq!(out.sigma_ood_acc, expected_sigma_ood_acc);
+        assert_eq!(
+            out.acc_ood_ip_claims,
+            split_claim_ip(
+                &out.word_acc,
+                &MultilinearPoint(out.z_ood_acc.clone()).eq_weights(),
+                out.sigma_ood_acc,
+                output_code.message_size(),
+            )
+        );
+
         assert_eq!(out.rep_oracles.chunk_count(), 4);
         assert_eq!(out.perm_oracles.chunk_count(), 4);
         assert_eq!(out.repeat_ip_claims.len(), 4);
         assert_eq!(out.perm_ood_ip_claims.len(), 4);
+        assert_eq!(out.mult_ood_ip_claims.len(), 4);
+        assert_eq!(out.mult_r_ip_claims.len(), 4);
+        assert_eq!(out.acc_ood_ip_claims.len(), 4);
         assert_eq!(out.permutation_a_1_ood_ip_claims.len(), 4);
         assert_eq!(out.permutation_a_2_ood_ip_claims.len(), 4);
         assert_eq!(out.permutation_b_1_ood_ip_claims.len(), 4);
@@ -2348,8 +2752,9 @@ mod tests {
         assert_eq!(out.permutation_b_r_b_tail_ip_claims[0][1].len(), 4);
         assert_eq!(out.permutation_b_r_b_tail_ip_claims[1][0].len(), 4);
         assert_eq!(out.permutation_b_r_b_tail_ip_claims[1][1].len(), 4);
-        assert_eq!(out.ip_claims.len(), 112);
-        assert_eq!(out.aux_oracles.len(), 8);
+        assert_eq!(out.ip_claims.len(), 124);
+        assert_eq!(out.aux_oracles.len(), 10);
+        assert_eq!(out.tip_claims.len(), 4);
     }
 
     #[test]
@@ -2367,6 +2772,7 @@ mod tests {
             }],
             base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
             permutation_1: vec![0, 1, 2, 3],
+            multiplier_1: vec![f(1), f(1), f(1), f(1)],
         };
 
         let mut rng = SmallRng::seed_from_u64(7);
@@ -2394,9 +2800,39 @@ mod tests {
             }],
             base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
             permutation_1: vec![0, 1, 2, 4], // out-of-range 4 for n_era = 4
+            multiplier_1: vec![f(1), f(1), f(1), f(1)],
         };
 
         let mut rng = SmallRng::seed_from_u64(8);
+        let _ = generate_codeswitch_claims_up_to_base_code_encoding(
+            &input,
+            &era_code,
+            &base_code,
+            &output_code,
+            &mut rng,
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "word_perm length must match multiplier_1 length")]
+    fn test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_multiplier_1_length()
+    {
+        let era_code = IdentityCode::<KoalaBear>::new(4);
+        let base_code = IdentityCode::<KoalaBear>::new(4);
+        let output_code = IdentityCode::<KoalaBear>::new(2);
+
+        let input = CodeswitchClaimsInput {
+            msg: vec![f(1), f(2), f(3), f(4)],
+            spotchecks: vec![CodeswitchSpotcheck {
+                alpha: 1,
+                sigma_cs: f(2),
+            }],
+            base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
+            permutation_1: vec![0, 1, 2, 3],
+            multiplier_1: vec![f(1), f(1), f(1)],
+        };
+
+        let mut rng = SmallRng::seed_from_u64(12);
         let _ = generate_codeswitch_claims_up_to_base_code_encoding(
             &input,
             &era_code,
@@ -2423,6 +2859,7 @@ mod tests {
             // Deliberately incorrect for CodeB' = Identity(2).
             base_code_prime_generator_matrix: vec![f(1), f(1), f(1), f(1)],
             permutation_1: vec![0, 1, 2, 3],
+            multiplier_1: vec![f(1), f(1), f(1), f(1)],
         };
 
         let mut rng = SmallRng::seed_from_u64(9);
@@ -2436,7 +2873,7 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_codeswitch_claims_matches_step_20_helper() {
+    fn test_generate_codeswitch_claims_matches_step_26_helper() {
         let era_code = IdentityCode::<KoalaBear>::new(4);
         let base_code = IdentityCode::<KoalaBear>::new(4);
         let output_code = IdentityCode::<KoalaBear>::new(2);
@@ -2449,6 +2886,7 @@ mod tests {
             }],
             base_code_prime_generator_matrix: vec![f(1), f(0), f(0), f(1)],
             permutation_1: vec![0, 1, 2, 3],
+            multiplier_1: vec![f(3), f(4), f(5), f(6)],
         };
 
         let mut full_rng = SmallRng::seed_from_u64(11);
@@ -2471,6 +2909,12 @@ mod tests {
 
         assert_eq!(out_full.word_era, out_helper.word_era);
         assert_eq!(out_full.word_perm, out_helper.word_perm);
+        assert_eq!(out_full.word_mult, out_helper.word_mult);
+        assert_eq!(out_full.word_acc, out_helper.word_acc);
+        assert_eq!(out_full.z_ood_mult, out_helper.z_ood_mult);
+        assert_eq!(out_full.z_ood_acc, out_helper.z_ood_acc);
+        assert_eq!(out_full.r_mult, out_helper.r_mult);
+        assert_eq!(out_full.sigma_mult, out_helper.sigma_mult);
         assert_eq!(out_full.permutation_r_perm, out_helper.permutation_r_perm);
         assert_eq!(
             out_full.permutation_a_transition_reduced_claim,
@@ -2481,7 +2925,7 @@ mod tests {
             out_helper.permutation_b_transition_reduced_claim
         );
         assert_eq!(out_full.ip_claims, out_helper.ip_claims);
+        assert_eq!(out_full.tip_claims, out_helper.tip_claims);
         assert_eq!(out_full.aux_oracles.len(), out_helper.aux_oracles.len());
-        assert!(out_full.tip_claims.is_empty());
     }
 }
