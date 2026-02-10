@@ -104,3 +104,7 @@ cli = ["dep:clap", "dep:tracing-subscriber", "dep:tracing-forest", "dep:bincode"
 [[bench]]
 name = "compare_codes"
 harness = false
+
+[[bench]]
+name = "iopp_bench"
+harness = false
