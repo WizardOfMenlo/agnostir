@@ -14,8 +14,8 @@ use rand::{Rng, SeedableRng, rngs::SmallRng};
 use rayon::prelude::*;
 use std::sync::Arc;
 
-const MESSAGE_SIZE: usize = 1 << 22;
-const ETA: usize = 8;
+const MESSAGE_SIZE: usize = 1 << 20;
+const ETA: usize = 5;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // IOPP protocol helpers
@@ -90,30 +90,24 @@ fn prover_second_round(
     ProverSecondMessage { columns }
 }
 
-fn verify_via_segments(
+fn verify(
     z: &[SecpScalar],
     eta: usize,
     k: usize,
     first_msg: &ProverFirstMessage,
     challenge: &VerifierChallenge,
     second_msg: &ProverSecondMessage,
-    segments: &[Vec<SecpScalar>],
+    encode_fn: &dyn Fn(&[SecpScalar]) -> Vec<SecpScalar>,
 ) -> bool {
     let rows = 1usize << eta;
     let seg_msg_size = 1usize << (k - eta);
-    let block_length = segments[0].len();
+
+    // Verifier encodes the folded message to obtain the folded codeword.
+    let folded_cw = encode_fn(&first_msg.folded_msg);
 
     let z_1 = &z[..eta];
     let z1_point = MultilinearPoint(z_1.to_vec());
     let eq_weights = z1_point.eq_weights();
-
-    let mut folded_cw = vec![SecpScalar::ZERO; block_length];
-    for (r, &w) in eq_weights.iter().enumerate() {
-        let seg = &segments[r];
-        for j in 0..block_length {
-            folded_cw[j] += w * seg[j];
-        }
-    }
 
     for (col, &cw_idx) in second_msg
         .columns
@@ -194,13 +188,11 @@ fn bench_iopp(c: &mut Criterion) {
             &mut SmallRng::seed_from_u64(0),
         );
 
-        let k_inner = (seg_msg_size as f64).sqrt() as usize;
-        let (a, ir, cn, dn) = era_inner_params(k_inner.ilog2());
-        let inner_tmp = BrakedownCode::<SecpScalar>::new(
-            k_inner, BrakedownParams { alpha: a, inverse_rate: ir, cn, dn },
+        let (a, ir, cn, dn) = era_inner_params(seg_msg_size.ilog2());
+        let base_tmp = BrakedownCode::<SecpScalar>::new(
+            seg_msg_size, BrakedownParams { alpha: a, inverse_rate: ir, cn, dn },
             &mut SmallRng::seed_from_u64(0),
         );
-        let base_tmp: TensorCode<BrakedownCode<SecpScalar>> = TensorCode::new(inner_tmp);
         let bl_seg_tmp = base_tmp.block_length() * ERA_REPETITION;
         let p1 = random_permutation(&mut SmallRng::seed_from_u64(0), bl_seg_tmp);
         let p2 = random_permutation(&mut SmallRng::seed_from_u64(1), bl_seg_tmp);
@@ -210,7 +202,7 @@ fn bench_iopp(c: &mut Criterion) {
 
         let bd_delta = BRAKEDOWN_DELTA;
         let ea_delta = EA_DELTA;
-        let bf_delta = basefold_delta(log_seg_msg);
+        let bf_delta = basefold_4_delta(log_seg_msg);
         let er_delta = era_delta(log_seg_msg);
 
         eprintln!("  Proof sizes (k={k}, eta={eta}, seg_msg=2^{log_seg_msg}):");
@@ -269,33 +261,31 @@ fn bench_iopp(c: &mut Criterion) {
             .collect(),
     );
 
-    c.bench_function("brakedown_eval_prover", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&brakedown_segments);
-        let z = z.clone();
-        b.iter(|| {
-            let first_msg = prover_first_round(&msg, &z, eta, k);
-            let mut rng = SmallRng::seed_from_u64(999);
-            let challenge = verifier_challenge(brakedown_bl, num_queries, &mut rng);
-            let _second_msg = prover_second_round(&segments, &challenge, eta);
-            first_msg
-        });
-    });
-
-    c.bench_function("brakedown_verify", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&brakedown_segments);
-        let z = z.clone();
-        let first_msg = prover_first_round(&msg, &z, eta, k);
+    {
         let mut ch_rng = SmallRng::seed_from_u64(999);
-        let challenge = verifier_challenge(brakedown_bl, num_queries, &mut ch_rng);
-        let second_msg = prover_second_round(&segments, &challenge, eta);
-        b.iter(|| {
-            let mut rng = SmallRng::seed_from_u64(888);
-            let _vc = verifier_challenge(brakedown_bl, num_queries, &mut rng);
-            assert!(verify_via_segments(&z, eta, k, &first_msg, &challenge, &second_msg, &segments));
+        let brakedown_challenge = verifier_challenge(brakedown_bl, num_queries, &mut ch_rng);
+
+        c.bench_function("brakedown_eval_prover", |b| {
+            let msg = Arc::clone(&msg);
+            let segments = Arc::clone(&brakedown_segments);
+            let z = z.clone();
+            b.iter(|| {
+                let first_msg = prover_first_round(&msg, &z, eta, k);
+                let _second_msg = prover_second_round(&segments, &brakedown_challenge, eta);
+                first_msg
+            });
         });
-    });
+
+        let first_msg = prover_first_round(&msg, &z, eta, k);
+        let second_msg = prover_second_round(&brakedown_segments, &brakedown_challenge, eta);
+
+        c.bench_function("brakedown_verify", |b| {
+            let z = z.clone();
+            b.iter(|| {
+                assert!(verify(&z, eta, k, &first_msg, &brakedown_challenge, &second_msg, &|m| brakedown_code.encode(m)));
+            });
+        });
+    }
 
     // ── EA ──
     let ea_code = EaCode::<SecpScalar>::new(
@@ -336,33 +326,31 @@ fn bench_iopp(c: &mut Criterion) {
             .collect(),
     );
 
-    c.bench_function("ea_eval_prover", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&ea_segments);
-        let z = z.clone();
-        b.iter(|| {
-            let first_msg = prover_first_round(&msg, &z, eta, k);
-            let mut rng = SmallRng::seed_from_u64(999);
-            let challenge = verifier_challenge(ea_bl, num_queries, &mut rng);
-            let _second_msg = prover_second_round(&segments, &challenge, eta);
-            first_msg
-        });
-    });
-
-    c.bench_function("ea_verify", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&ea_segments);
-        let z = z.clone();
-        let first_msg = prover_first_round(&msg, &z, eta, k);
+    {
         let mut ch_rng = SmallRng::seed_from_u64(999);
-        let challenge = verifier_challenge(ea_bl, num_queries, &mut ch_rng);
-        let second_msg = prover_second_round(&segments, &challenge, eta);
-        b.iter(|| {
-            let mut rng = SmallRng::seed_from_u64(888);
-            let _vc = verifier_challenge(ea_bl, num_queries, &mut rng);
-            assert!(verify_via_segments(&z, eta, k, &first_msg, &challenge, &second_msg, &segments));
+        let ea_challenge = verifier_challenge(ea_bl, num_queries, &mut ch_rng);
+
+        c.bench_function("ea_eval_prover", |b| {
+            let msg = Arc::clone(&msg);
+            let segments = Arc::clone(&ea_segments);
+            let z = z.clone();
+            b.iter(|| {
+                let first_msg = prover_first_round(&msg, &z, eta, k);
+                let _second_msg = prover_second_round(&segments, &ea_challenge, eta);
+                first_msg
+            });
         });
-    });
+
+        let first_msg = prover_first_round(&msg, &z, eta, k);
+        let second_msg = prover_second_round(&ea_segments, &ea_challenge, eta);
+
+        c.bench_function("ea_verify", |b| {
+            let z = z.clone();
+            b.iter(|| {
+                assert!(verify(&z, eta, k, &first_msg, &ea_challenge, &second_msg, &|m| ea_code.encode(m)));
+            });
+        });
+    }
 
     // ── Basefold ──
     let basefold_code = BasefoldCode::<SecpScalar>::new(
@@ -402,40 +390,36 @@ fn bench_iopp(c: &mut Criterion) {
             .collect(),
     );
 
-    c.bench_function("basefold_eval_prover", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&basefold_segments);
-        let z = z.clone();
-        b.iter(|| {
-            let first_msg = prover_first_round(&msg, &z, eta, k);
-            let mut rng = SmallRng::seed_from_u64(999);
-            let challenge = verifier_challenge(basefold_bl, num_queries, &mut rng);
-            let _second_msg = prover_second_round(&segments, &challenge, eta);
-            first_msg
-        });
-    });
-
-    c.bench_function("basefold_verify", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&basefold_segments);
-        let z = z.clone();
-        let first_msg = prover_first_round(&msg, &z, eta, k);
+    {
         let mut ch_rng = SmallRng::seed_from_u64(999);
-        let challenge = verifier_challenge(basefold_bl, num_queries, &mut ch_rng);
-        let second_msg = prover_second_round(&segments, &challenge, eta);
-        b.iter(|| {
-            let mut rng = SmallRng::seed_from_u64(888);
-            let _vc = verifier_challenge(basefold_bl, num_queries, &mut rng);
-            assert!(verify_via_segments(&z, eta, k, &first_msg, &challenge, &second_msg, &segments));
+        let basefold_challenge = verifier_challenge(basefold_bl, num_queries, &mut ch_rng);
+
+        c.bench_function("basefold_eval_prover", |b| {
+            let msg = Arc::clone(&msg);
+            let segments = Arc::clone(&basefold_segments);
+            let z = z.clone();
+            b.iter(|| {
+                let first_msg = prover_first_round(&msg, &z, eta, k);
+                let _second_msg = prover_second_round(&segments, &basefold_challenge, eta);
+                first_msg
+            });
         });
-    });
+
+        let first_msg = prover_first_round(&msg, &z, eta, k);
+        let second_msg = prover_second_round(&basefold_segments, &basefold_challenge, eta);
+
+        c.bench_function("basefold_verify", |b| {
+            let z = z.clone();
+            b.iter(|| {
+                assert!(verify(&z, eta, k, &first_msg, &basefold_challenge, &second_msg, &|m| basefold_code.encode(m)));
+            });
+        });
+    }
 
     // ── ERA ──
-    let k_inner = (seg_msg_size as f64).sqrt() as usize;
-    assert_eq!(k_inner * k_inner, seg_msg_size);
-    let (alpha, inverse_rate, cn, dn) = era_inner_params(k_inner.ilog2());
-    let inner = BrakedownCode::<SecpScalar>::new(
-        k_inner,
+    let (alpha, inverse_rate, cn, dn) = era_inner_params(seg_msg_size.ilog2());
+    let base_code = BrakedownCode::<SecpScalar>::new(
+        seg_msg_size,
         BrakedownParams {
             alpha,
             inverse_rate,
@@ -444,7 +428,6 @@ fn bench_iopp(c: &mut Criterion) {
         },
         &mut rng,
     );
-    let base_code: TensorCode<BrakedownCode<SecpScalar>> = TensorCode::new(inner);
     let bl_seg = base_code.block_length() * ERA_REPETITION;
     let p1 = random_permutation(&mut rng, bl_seg);
     let p2 = random_permutation(&mut rng, bl_seg);
@@ -483,38 +466,36 @@ fn bench_iopp(c: &mut Criterion) {
             .collect(),
     );
 
-    c.bench_function("era_eval_prover", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&era_segments);
-        let z = z.clone();
-        b.iter(|| {
-            let first_msg = prover_first_round(&msg, &z, eta, k);
-            let mut rng = SmallRng::seed_from_u64(999);
-            let challenge = verifier_challenge(era_bl, num_queries, &mut rng);
-            let _second_msg = prover_second_round(&segments, &challenge, eta);
-            first_msg
-        });
-    });
-
-    c.bench_function("era_verify", |b| {
-        let msg = Arc::clone(&msg);
-        let segments = Arc::clone(&era_segments);
-        let z = z.clone();
-        let first_msg = prover_first_round(&msg, &z, eta, k);
+    {
         let mut ch_rng = SmallRng::seed_from_u64(999);
-        let challenge = verifier_challenge(era_bl, num_queries, &mut ch_rng);
-        let second_msg = prover_second_round(&segments, &challenge, eta);
-        b.iter(|| {
-            let mut rng = SmallRng::seed_from_u64(888);
-            let _vc = verifier_challenge(era_bl, num_queries, &mut rng);
-            assert!(verify_via_segments(&z, eta, k, &first_msg, &challenge, &second_msg, &segments));
+        let era_challenge = verifier_challenge(era_bl, num_queries, &mut ch_rng);
+
+        c.bench_function("era_eval_prover", |b| {
+            let msg = Arc::clone(&msg);
+            let segments = Arc::clone(&era_segments);
+            let z = z.clone();
+            b.iter(|| {
+                let first_msg = prover_first_round(&msg, &z, eta, k);
+                let _second_msg = prover_second_round(&segments, &era_challenge, eta);
+                first_msg
+            });
         });
-    });
+
+        let first_msg = prover_first_round(&msg, &z, eta, k);
+        let second_msg = prover_second_round(&era_segments, &era_challenge, eta);
+
+        c.bench_function("era_verify", |b| {
+            let z = z.clone();
+            b.iter(|| {
+                assert!(verify(&z, eta, k, &first_msg, &era_challenge, &second_msg, &|m| era_code.encode_era(m)));
+            });
+        });
+    }
 }
 
 criterion_group! {
     name = iopp;
-    config = Criterion::default().sample_size(10);
+    config = Criterion::default().sample_size(10).without_plots();
     targets = bench_iopp
 }
 

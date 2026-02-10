@@ -4,35 +4,63 @@
 // Brakedown
 // ═══════════════════════════════════════════════════════════════════════════
 
-pub const BRAKEDOWN_ALPHA: f64 = 0.238;
-pub const BRAKEDOWN_INV_RATE: f64 = 1.72;
-pub const BRAKEDOWN_CN: usize = 9;
-pub const BRAKEDOWN_DN: usize = 12;
-pub const BRAKEDOWN_DELTA: f64 = 0.07;
+pub(crate) const BRAKEDOWN_ALPHA: f64 = 0.3;
+pub(crate) const BRAKEDOWN_INV_RATE: f64 = 2.0;
+pub(crate) const BRAKEDOWN_CN: usize = 11;
+pub(crate) const BRAKEDOWN_DN: usize = 22;
+pub(crate) const BRAKEDOWN_DELTA: f64 = 0.1;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // EA
 // ═══════════════════════════════════════════════════════════════════════════
 
-pub const EA_INV_RATE: usize = 2;
-pub const EA_PROB_MUL: usize = 18;
-pub const EA_DELTA: f64 = 0.1;
+pub(crate) const EA_INV_RATE: usize = 2;
+pub(crate) const EA_PROB_MUL: usize = 18;
+pub(crate) const EA_DELTA: f64 = 0.1;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Basefold
 // ═══════════════════════════════════════════════════════════════════════════
 
-pub const BASEFOLD_LOG_RATE: usize = 2;
+pub(crate) const BASEFOLD_LOG_RATE: usize = 2;
 
-/// Basefold distance as a function of log2(segment message size).
-pub fn basefold_delta(log_seg_msg_size: usize) -> f64 {
+/// Basefold distance (rate 1/2) as a function of log2(segment message size).
+pub(crate) fn basefold_2_delta(log_seg_msg_size: usize) -> f64 {
     match log_seg_msg_size {
-        12 => 0.6,
+        10 => 0.246,
+        11 => 0.240,
+        12 => 0.235,
+        13 => 0.230,
+        14 => 0.224,
+        15 => 0.219,
+        16 => 0.213,
+        17 => 0.208,
+        18 => 0.203,
+        19 => 0.197,
+        20 => 0.192,
+        21 => 0.186,
+        22 => 0.181,
+        other => panic!("no basefold (rate 1/2) delta for segment message size 2^{other}"),
+    }
+}
+
+/// Basefold distance (rate 1/4) as a function of log2(segment message size).
+pub(crate) fn basefold_4_delta(log_seg_msg_size: usize) -> f64 {
+    match log_seg_msg_size {
+        10 => 0.608,
+        11 => 0.605,
+        12 => 0.601,
+        13 => 0.597,
         14 => 0.593,
+        15 => 0.589,
         16 => 0.585,
+        17 => 0.581,
         18 => 0.577,
+        19 => 0.573,
         20 => 0.569,
-        other => panic!("no basefold delta for segment message size 2^{other}"),
+        21 => 0.565,
+        22 => 0.561,
+        other => panic!("no basefold (rate 1/4) delta for segment message size 2^{other}"),
     }
 }
 
@@ -40,28 +68,28 @@ pub fn basefold_delta(log_seg_msg_size: usize) -> f64 {
 // ERA (Tensor-Brakedown base code)
 // ═══════════════════════════════════════════════════════════════════════════
 
-pub const ERA_REPETITION: usize = 6;
+pub(crate) const ERA_REPETITION: usize = 6;
 
-/// ERA inner-Brakedown parameters indexed by log2(k_inner).
-pub fn era_inner_params(k_inner_log: u32) -> (f64, f64, usize, usize) {
-    match k_inner_log {
-        6 => (0.03, 1.08, 1, 1),
-        7 => (0.03, 1.08, 1, 1),
-        8 => (0.03, 1.08, 3, 6),
-        9 => (0.04, 1.08, 7, 12),
-        10 => (0.04, 1.08, 9, 16),
-        11 => (0.045, 1.08, 8, 26),
-        12 => (0.05, 1.08, 7, 41),
-        13 => (0.05, 1.08, 6, 47),
-        _ => panic!("no tuned ERA params for k_inner=2^{k_inner_log}"),
+/// ERA inner-Brakedown parameters indexed by log2(k)
+pub(crate) fn era_inner_params(k_log: u32) -> (f64, f64, usize, usize) {
+    match k_log {
+        10 => (0.04, 1.1, 9, 16),
+        11 => (0.045, 1.1, 9, 26),
+        12 => (0.05, 1.1, 7, 37),
+        _ if k_log >= 13 => (0.05, 1.1, 6, 40),
+        other => panic!("no tuned ERA params for segment message size 2^{other}"),
     }
 }
 
 /// ERA distance as a function of log2(segment message size).
-pub fn era_delta(log_seg_msg_size: usize) -> f64 {
+pub(crate) fn era_delta(log_seg_msg_size: usize) -> f64 {
     match log_seg_msg_size {
+        10 => 0.248,
+        11 => 0.335,
         12 => 0.368,
+        13 => 0.382,
         14 => 0.389,
+        15 => 0.393,
         _ if log_seg_msg_size >= 16 => 0.395,
         other => panic!("no ERA delta for segment message size 2^{other}"),
     }
@@ -71,20 +99,20 @@ pub fn era_delta(log_seg_msg_size: usize) -> f64 {
 // Proof size estimation
 // ═══════════════════════════════════════════════════════════════════════════
 
-pub const SECPARAM: f64 = 100.0;
-pub const LOG_FIELD_SIZE: f64 = 256.0; // bits per field element (secp256k1)
-pub const LOG_HASH_SIZE: f64 = 256.0;  // bits per hash digest (blake3)
+pub(crate) const SECPARAM: f64 = 100.0;
+pub(crate) const LOG_FIELD_SIZE: f64 = 256.0; // bits per field element (secp256k1)
+pub(crate) const LOG_HASH_SIZE: f64 = 256.0;  // bits per hash digest (blake3)
 
 /// Number of queries for `secparam`-bit security given proximity parameter
 /// `delta`:  eps = 1 - (1 - delta)^{1/3},  q = ceil(-secparam / log2(1 - eps)).
-pub fn num_queries_from_delta(secparam: f64, delta: f64) -> usize {
+pub(crate) fn num_queries_from_delta(secparam: f64, delta: f64) -> usize {
     let eps = 1.0 - (1.0 - delta).cbrt();
     let denom = (1.0 - eps).log2();
     (-secparam / denom).ceil() as usize
 }
 
 /// Merkle-tree proof size in bits.
-pub fn merkle_tree_size_bits(queries: usize, log_block_length: f64, interleaving_factor: usize) -> f64 {
+pub(crate) fn merkle_tree_size_bits(queries: usize, log_block_length: f64, interleaving_factor: usize) -> f64 {
     let q = queries as f64;
     let n = log_block_length;
 
@@ -98,7 +126,7 @@ pub fn merkle_tree_size_bits(queries: usize, log_block_length: f64, interleaving
 
 /// Total proof size in KiB, including the folded message (2^{k-eta} field
 /// elements) and the evaluation y (1 field element).
-pub fn proof_size_kib(block_length: usize, k: usize, eta: usize, delta: f64) -> f64 {
+pub(crate) fn proof_size_kib(block_length: usize, k: usize, eta: usize, delta: f64) -> f64 {
     let q = num_queries_from_delta(SECPARAM, delta);
     let log_bl = (block_length as f64).log2();
     let interleaving = 1usize << eta;
