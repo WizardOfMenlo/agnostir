@@ -29,9 +29,13 @@
 //! - Step 26 first accumulate split encoding + OOD opening/IP claim.
 //! - Steps 27-31 first-accumulate random-point reduction and paired
 //!   `SplitClaimIP` checks against `word^mult`/`word^acc`.
-//! - Step 33 second permute/multiply/accumulate chain (using `permutation_2`
-//!   and `multiplier_2`) ending with validation that the second accumulate
-//!   output reconstructs `word^ERA`.
+//! - Step 33 second permute commitment (`word^perm_2`, `oracle^{perm_2}`)
+//!   and out-of-domain check.
+//! - Step 34 second-permutation consistency checks (analogue of step 20)
+//!   through transition sumcheck reductions and related opening/IP claims
+//!   (currently using placeholder prefix-product witnesses for `a_2,b_2`).
+//! - Step 35 second multiply/accumulate chain (using `multiplier_2`) ending
+//!   with validation that the second accumulate output reconstructs `word^ERA`.
 
 use rand::Rng;
 
@@ -369,52 +373,52 @@ pub struct CodeswitchClaimsOutput<F> {
     /// `SplitClaimIP(word^{perm_2}, eq(z_ood^{perm_2}), sigma_ood^{perm_2}, ...)`.
     pub perm_2_ood_ip_claims: Vec<SplitIpClaim<F>>,
 
-    /// Step 33 second multiplied vector `word^mult_2 = word^{perm_2} ⊙ v_2`.
+    /// Step 35 second multiplied vector `word^mult_2 = word^{perm_2} ⊙ v_2`.
     pub word_mult_2: Vec<F>,
-    /// Step 33 split output-code commitments to `word^mult_2`.
+    /// Step 35 split output-code commitments to `word^mult_2`.
     pub mult_2_oracles: SplitEncoding<F>,
-    /// Step 33 sampled verifier out-of-domain point `z_ood^{mult_2}`.
+    /// Step 35 sampled verifier out-of-domain point `z_ood^{mult_2}`.
     pub z_ood_mult_2: Vec<F>,
-    /// Step 33 claimed value `sigma_ood^{mult_2} = w_hat^{mult_2}(z_ood^{mult_2})`.
+    /// Step 35 claimed value `sigma_ood^{mult_2} = w_hat^{mult_2}(z_ood^{mult_2})`.
     pub sigma_ood_mult_2: F,
-    /// Step 33 split-IP claims for
+    /// Step 35 split-IP claims for
     /// `SplitClaimIP(word^{mult_2}, eq(z_ood^{mult_2}), sigma_ood^{mult_2}, ...)`.
     pub mult_2_ood_ip_claims: Vec<SplitIpClaim<F>>,
-    /// Step 33 scalar challenge `r_mult_2`.
+    /// Step 35 scalar challenge `r_mult_2`.
     pub r_mult_challenge_2: F,
-    /// Step 33 geometric vector `(1, r_mult_2, r_mult_2^2, ..., r_mult_2^{n_era-1})`.
+    /// Step 35 geometric vector `(1, r_mult_2, r_mult_2^2, ..., r_mult_2^{n_era-1})`.
     pub r_mult_2: Vec<F>,
-    /// Step 33 triple-product value
+    /// Step 35 triple-product value
     /// `sigma^{mult_2} = <word^{perm_2} ⊙ v_2, r^{mult_2}>`.
     pub sigma_mult_2: F,
-    /// Step 33 split-TIP claims for
+    /// Step 35 split-TIP claims for
     /// `SplitClaimTIP(word^{perm_2}, v_2, r^{mult_2}, sigma^{mult_2}, ...)`.
     pub multiply_tip_claims_2: Vec<SplitTipClaim<F>>,
-    /// Step 33 split-IP claims for
+    /// Step 35 split-IP claims for
     /// `SplitClaimIP(word^{mult_2}, r^{mult_2}, sigma^{mult_2}, ...)`.
     pub mult_2_r_ip_claims: Vec<SplitIpClaim<F>>,
 
-    /// Step 33 second accumulated vector `word^acc_2 = A * word^mult_2`.
+    /// Step 35 second accumulated vector `word^acc_2 = A * word^mult_2`.
     pub word_acc_2: Vec<F>,
-    /// Step 33 split output-code commitments to `word^acc_2`.
+    /// Step 35 split output-code commitments to `word^acc_2`.
     pub acc_2_oracles: SplitEncoding<F>,
-    /// Step 33 sampled verifier out-of-domain point `z_ood^{acc_2}`.
+    /// Step 35 sampled verifier out-of-domain point `z_ood^{acc_2}`.
     pub z_ood_acc_2: Vec<F>,
-    /// Step 33 claimed value `sigma_ood^{acc_2} = w_hat^{acc_2}(z_ood^{acc_2})`.
+    /// Step 35 claimed value `sigma_ood^{acc_2} = w_hat^{acc_2}(z_ood^{acc_2})`.
     pub sigma_ood_acc_2: F,
-    /// Step 33 split-IP claims for
+    /// Step 35 split-IP claims for
     /// `SplitClaimIP(word^{acc_2}, eq(z_ood^{acc_2}), sigma_ood^{acc_2}, ...)`.
     pub acc_2_ood_ip_claims: Vec<SplitIpClaim<F>>,
-    /// Step 33 verifier challenge point `r^{acc_2}`.
+    /// Step 35 verifier challenge point `r^{acc_2}`.
     pub r_acc_2: Vec<F>,
-    /// Step 33 accumulate-map row `A_{r^{acc_2}}` for the prefix-sum map.
+    /// Step 35 accumulate-map row `A_{r^{acc_2}}` for the prefix-sum map.
     pub acc_map_row_at_r_acc_2: Vec<F>,
-    /// Step 33 claimed value `sigma^{acc_2} = w_hat^{acc_2}(r^{acc_2})`.
+    /// Step 35 claimed value `sigma^{acc_2} = w_hat^{acc_2}(r^{acc_2})`.
     pub sigma_acc_2: F,
-    /// Step 33 split-IP claims for
+    /// Step 35 split-IP claims for
     /// `SplitClaimIP(word^{mult_2}, A_{r^{acc_2}}, sigma^{acc_2}, ...)`.
     pub acc_mult_2_ip_claims: Vec<SplitIpClaim<F>>,
-    /// Step 33 split-IP claims for
+    /// Step 35 split-IP claims for
     /// `SplitClaimIP(word^{acc_2}, eq(r^{acc_2}), sigma^{acc_2}, ...)`.
     pub acc_2_r_ip_claims: Vec<SplitIpClaim<F>>,
 
@@ -774,9 +778,9 @@ fn build_first_permute_fixed_point<F: FieldElement>(dimension: usize) -> Vec<F> 
 }
 
 /// Internal helper implementing steps 1-6, base-code encoding, step 10
-/// verifier challenge sampling (`r^x`), and steps 11-33 (including first
-/// accumulate random-point checks and the second permute/multiply/accumulate
-/// chain).
+/// verifier challenge sampling (`r^x`), and steps 11-35 (including first
+/// accumulate random-point checks, second-permutation consistency checks,
+/// and the second multiply/accumulate chain).
 #[must_use]
 pub fn generate_codeswitch_claims_up_to_base_code_encoding<F, CEra, CBase, COut>(
     input: &CodeswitchClaimsInput<F>,
@@ -1480,7 +1484,7 @@ where
     let eq_r_acc = MultilinearPoint(r_acc.clone()).eq_weights();
     let acc_r_ip_claims = split_claim_ip(&word_acc, &eq_r_acc, sigma_acc, k_prime);
 
-    // Step 33: second permute/multiply/accumulate chain.
+    // Steps 33-35: second permute, permutation checks, and multiply/accumulate chain.
     assert_is_permutation(&input.permutation_2, n_era, "permutation_2");
 
     let word_perm_2 = apply_permutation(&word_acc, &input.permutation_2);
@@ -1495,6 +1499,375 @@ where
         k_prime,
     );
 
+    // Step 34: second permutation consistency checks.
+    let permutation_alpha_2 = F::random(rng);
+    let permutation_beta_2 = F::random(rng);
+
+    let (
+        permutation_identity_vector_2,
+        permutation_pi_2_vector,
+        permutation_2_a_1,
+        permutation_2_a_2,
+        permutation_2_b_1,
+        permutation_2_b_2,
+    ) = build_first_permute_witness_vectors(
+        &word_acc,
+        &word_perm_2,
+        &input.permutation_2,
+        permutation_alpha_2,
+        permutation_beta_2,
+    );
+    assert_eq!(
+        permutation_identity_vector_2, permutation_identity_vector,
+        "step 34 identity vector mismatch between permutation checks"
+    );
+
+    let permutation_2_a_1_oracles = split_and_encode(&permutation_2_a_1, output_code);
+    let permutation_2_a_2_oracles = split_and_encode(&permutation_2_a_2, output_code);
+    let permutation_2_b_1_oracles = split_and_encode(&permutation_2_b_1, output_code);
+    let permutation_2_b_2_oracles = split_and_encode(&permutation_2_b_2, output_code);
+
+    let permutation_2_a_1_z_ood: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
+    let permutation_2_a_2_z_ood: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
+    let permutation_2_b_1_z_ood: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
+    let permutation_2_b_2_z_ood: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
+
+    let permutation_2_a_1_sigma_ood =
+        evaluate_multilinear_table(&permutation_2_a_1, &permutation_2_a_1_z_ood);
+    let permutation_2_a_2_sigma_ood =
+        evaluate_multilinear_table(&permutation_2_a_2, &permutation_2_a_2_z_ood);
+    let permutation_2_b_1_sigma_ood =
+        evaluate_multilinear_table(&permutation_2_b_1, &permutation_2_b_1_z_ood);
+    let permutation_2_b_2_sigma_ood =
+        evaluate_multilinear_table(&permutation_2_b_2, &permutation_2_b_2_z_ood);
+
+    let permutation_2_a_1_ood_ip_claims = split_claim_ip(
+        &permutation_2_a_1,
+        &MultilinearPoint(permutation_2_a_1_z_ood.clone()).eq_weights(),
+        permutation_2_a_1_sigma_ood,
+        k_prime,
+    );
+    let permutation_2_a_2_ood_ip_claims = split_claim_ip(
+        &permutation_2_a_2,
+        &MultilinearPoint(permutation_2_a_2_z_ood.clone()).eq_weights(),
+        permutation_2_a_2_sigma_ood,
+        k_prime,
+    );
+    let permutation_2_b_1_ood_ip_claims = split_claim_ip(
+        &permutation_2_b_1,
+        &MultilinearPoint(permutation_2_b_1_z_ood.clone()).eq_weights(),
+        permutation_2_b_1_sigma_ood,
+        k_prime,
+    );
+    let permutation_2_b_2_ood_ip_claims = split_claim_ip(
+        &permutation_2_b_2,
+        &MultilinearPoint(permutation_2_b_2_z_ood.clone()).eq_weights(),
+        permutation_2_b_2_sigma_ood,
+        k_prime,
+    );
+
+    let permutation_2_fixed_point = build_first_permute_fixed_point::<F>(ood_dim);
+    let permutation_2_a_1_sigma_fixed =
+        evaluate_multilinear_table(&permutation_2_a_1, &permutation_2_fixed_point);
+    let permutation_2_b_1_sigma_fixed =
+        evaluate_multilinear_table(&permutation_2_b_1, &permutation_2_fixed_point);
+
+    let eq_permutation_2_fixed_point =
+        MultilinearPoint(permutation_2_fixed_point.clone()).eq_weights();
+    let permutation_2_a_1_fixed_ip_claims = split_claim_ip(
+        &permutation_2_a_1,
+        &eq_permutation_2_fixed_point,
+        permutation_2_a_1_sigma_fixed,
+        k_prime,
+    );
+    let permutation_2_b_1_fixed_ip_claims = split_claim_ip(
+        &permutation_2_b_1,
+        &eq_permutation_2_fixed_point,
+        permutation_2_b_1_sigma_fixed,
+        k_prime,
+    );
+
+    let permutation_2_r_perm: Vec<F> = (0..ood_dim).map(|_| F::random(rng)).collect();
+    let permutation_2_sigma_a_at_r_perm =
+        evaluate_multilinear_table(&permutation_2_a_1, &permutation_2_r_perm);
+    let permutation_2_sigma_b_at_r_perm =
+        evaluate_multilinear_table(&permutation_2_b_1, &permutation_2_r_perm);
+    let permutation_2_sigma_id_at_r_perm =
+        evaluate_multilinear_table(&permutation_identity_vector, &permutation_2_r_perm);
+    let permutation_2_sigma_word_acc_at_r_perm =
+        evaluate_multilinear_table(&word_acc, &permutation_2_r_perm);
+    let permutation_2_sigma_word_perm_at_r_perm =
+        evaluate_multilinear_table(&word_perm_2, &permutation_2_r_perm);
+    let permutation_2_sigma_pi_2_at_r_perm =
+        evaluate_multilinear_table(&permutation_pi_2_vector, &permutation_2_r_perm);
+
+    assert_eq!(
+        permutation_2_sigma_a_at_r_perm,
+        permutation_alpha_2
+            - (permutation_2_sigma_word_acc_at_r_perm
+                + permutation_beta_2 * permutation_2_sigma_pi_2_at_r_perm),
+        "step 34 a_1 consistency check failed at r^perm_2"
+    );
+    assert_eq!(
+        permutation_2_sigma_b_at_r_perm,
+        permutation_alpha_2
+            - (permutation_2_sigma_word_perm_at_r_perm
+                + permutation_beta_2 * permutation_2_sigma_id_at_r_perm),
+        "step 34 b_1 consistency check failed at r^perm_2"
+    );
+
+    let eq_r_perm_2 = MultilinearPoint(permutation_2_r_perm.clone()).eq_weights();
+    let permutation_2_a_1_r_perm_ip_claims = split_claim_ip(
+        &permutation_2_a_1,
+        &eq_r_perm_2,
+        permutation_2_sigma_a_at_r_perm,
+        k_prime,
+    );
+    let permutation_2_b_1_r_perm_ip_claims = split_claim_ip(
+        &permutation_2_b_1,
+        &eq_r_perm_2,
+        permutation_2_sigma_b_at_r_perm,
+        k_prime,
+    );
+    let permutation_2_word_acc_r_perm_ip_claims = split_claim_ip(
+        &word_acc,
+        &eq_r_perm_2,
+        permutation_2_sigma_word_acc_at_r_perm,
+        k_prime,
+    );
+    let permutation_2_word_perm_r_perm_ip_claims = split_claim_ip(
+        &word_perm_2,
+        &eq_r_perm_2,
+        permutation_2_sigma_word_perm_at_r_perm,
+        k_prime,
+    );
+    let permutation_2_identity_r_perm_ip_claims = split_claim_ip(
+        &permutation_identity_vector,
+        &eq_r_perm_2,
+        permutation_2_sigma_id_at_r_perm,
+        k_prime,
+    );
+    let permutation_2_pi_2_r_perm_ip_claims = split_claim_ip(
+        &permutation_pi_2_vector,
+        &eq_r_perm_2,
+        permutation_2_sigma_pi_2_at_r_perm,
+        k_prime,
+    );
+
+    let mut permutation_2_a_transition_sumcheck = PermutationTransitionSumcheck::new(
+        build_permutation_transition_tables(&permutation_2_a_1, &permutation_2_a_2),
+        eq_r_perm_2.clone(),
+    );
+    let permutation_2_a_transition_sumcheck =
+        permutation_2_a_transition_sumcheck.run_sumcheck_protocol(rng);
+
+    let mut permutation_2_b_transition_sumcheck = PermutationTransitionSumcheck::new(
+        build_permutation_transition_tables(&permutation_2_b_1, &permutation_2_b_2),
+        eq_r_perm_2.clone(),
+    );
+    let permutation_2_b_transition_sumcheck =
+        permutation_2_b_transition_sumcheck.run_sumcheck_protocol(rng);
+
+    let permutation_2_r_a: Vec<F> = permutation_2_a_transition_sumcheck
+        .randomness
+        .iter()
+        .copied()
+        .rev()
+        .collect();
+    let permutation_2_r_b: Vec<F> = permutation_2_b_transition_sumcheck
+        .randomness
+        .iter()
+        .copied()
+        .rev()
+        .collect();
+
+    let (&permutation_2_r_a_1, permutation_2_r_a_tail) = permutation_2_r_a
+        .split_first()
+        .expect("step 34 requires non-empty r^a_2 challenge");
+    let (&permutation_2_r_b_1, permutation_2_r_b_tail) = permutation_2_r_b
+        .split_first()
+        .expect("step 34 requires non-empty r^b_2 challenge");
+
+    let permutation_2_r_a_tail_0 = append_coord(permutation_2_r_a_tail, F::ZERO);
+    let permutation_2_r_a_tail_1 = append_coord(permutation_2_r_a_tail, F::ONE);
+    let permutation_2_r_b_tail_0 = append_coord(permutation_2_r_b_tail, F::ZERO);
+    let permutation_2_r_b_tail_1 = append_coord(permutation_2_r_b_tail, F::ONE);
+
+    let permutation_2_a_sigma_one_at_r_a =
+        evaluate_multilinear_table(&permutation_2_a_2, &permutation_2_r_a);
+    let permutation_2_b_sigma_one_at_r_b =
+        evaluate_multilinear_table(&permutation_2_b_2, &permutation_2_r_b);
+
+    let permutation_2_a_sigma_i_r_a_tail_j = [
+        [
+            evaluate_multilinear_table(&permutation_2_a_1, &permutation_2_r_a_tail_0),
+            evaluate_multilinear_table(&permutation_2_a_1, &permutation_2_r_a_tail_1),
+        ],
+        [
+            evaluate_multilinear_table(&permutation_2_a_2, &permutation_2_r_a_tail_0),
+            evaluate_multilinear_table(&permutation_2_a_2, &permutation_2_r_a_tail_1),
+        ],
+    ];
+    let permutation_2_b_sigma_i_r_b_tail_j = [
+        [
+            evaluate_multilinear_table(&permutation_2_b_1, &permutation_2_r_b_tail_0),
+            evaluate_multilinear_table(&permutation_2_b_1, &permutation_2_r_b_tail_1),
+        ],
+        [
+            evaluate_multilinear_table(&permutation_2_b_2, &permutation_2_r_b_tail_0),
+            evaluate_multilinear_table(&permutation_2_b_2, &permutation_2_r_b_tail_1),
+        ],
+    ];
+
+    let permutation_2_a_sigma_r_a_0 = (F::ONE - permutation_2_r_a_1)
+        * permutation_2_a_sigma_i_r_a_tail_j[0][0]
+        + permutation_2_r_a_1 * permutation_2_a_sigma_i_r_a_tail_j[1][0];
+    let permutation_2_a_sigma_r_a_1 = (F::ONE - permutation_2_r_a_1)
+        * permutation_2_a_sigma_i_r_a_tail_j[0][1]
+        + permutation_2_r_a_1 * permutation_2_a_sigma_i_r_a_tail_j[1][1];
+    let permutation_2_b_sigma_r_b_0 = (F::ONE - permutation_2_r_b_1)
+        * permutation_2_b_sigma_i_r_b_tail_j[0][0]
+        + permutation_2_r_b_1 * permutation_2_b_sigma_i_r_b_tail_j[1][0];
+    let permutation_2_b_sigma_r_b_1 = (F::ONE - permutation_2_r_b_1)
+        * permutation_2_b_sigma_i_r_b_tail_j[0][1]
+        + permutation_2_r_b_1 * permutation_2_b_sigma_i_r_b_tail_j[1][1];
+
+    let permutation_2_eq_r_a_r_perm = MultilinearPoint(permutation_2_r_a.clone())
+        .eq_poly_outside(&MultilinearPoint(permutation_2_r_perm.clone()));
+    let permutation_2_eq_r_b_r_perm = MultilinearPoint(permutation_2_r_b.clone())
+        .eq_poly_outside(&MultilinearPoint(permutation_2_r_perm.clone()));
+
+    assert_eq!(
+        permutation_2_a_transition_sumcheck.eq_value, permutation_2_eq_r_a_r_perm,
+        "step 34 a-transition eq-value mismatch"
+    );
+    assert_eq!(
+        permutation_2_b_transition_sumcheck.eq_value, permutation_2_eq_r_b_r_perm,
+        "step 34 b-transition eq-value mismatch"
+    );
+    assert_eq!(
+        permutation_2_a_transition_sumcheck.upper_value, permutation_2_a_sigma_one_at_r_a,
+        "step 34 a-transition upper opening mismatch"
+    );
+    assert_eq!(
+        permutation_2_b_transition_sumcheck.upper_value, permutation_2_b_sigma_one_at_r_b,
+        "step 34 b-transition upper opening mismatch"
+    );
+    assert_eq!(
+        permutation_2_a_transition_sumcheck.lower_left_value, permutation_2_a_sigma_r_a_0,
+        "step 34 a-transition lower-left opening mismatch"
+    );
+    assert_eq!(
+        permutation_2_a_transition_sumcheck.lower_right_value, permutation_2_a_sigma_r_a_1,
+        "step 34 a-transition lower-right opening mismatch"
+    );
+    assert_eq!(
+        permutation_2_b_transition_sumcheck.lower_left_value, permutation_2_b_sigma_r_b_0,
+        "step 34 b-transition lower-left opening mismatch"
+    );
+    assert_eq!(
+        permutation_2_b_transition_sumcheck.lower_right_value, permutation_2_b_sigma_r_b_1,
+        "step 34 b-transition lower-right opening mismatch"
+    );
+
+    assert_eq!(
+        permutation_2_a_transition_sumcheck.final_claim,
+        permutation_2_eq_r_a_r_perm
+            * (permutation_2_a_sigma_one_at_r_a
+                - permutation_2_a_sigma_r_a_0 * permutation_2_a_sigma_r_a_1),
+        "step 34 a-transition reduced claim mismatch"
+    );
+    assert_eq!(
+        permutation_2_b_transition_sumcheck.final_claim,
+        permutation_2_eq_r_b_r_perm
+            * (permutation_2_b_sigma_one_at_r_b
+                - permutation_2_b_sigma_r_b_0 * permutation_2_b_sigma_r_b_1),
+        "step 34 b-transition reduced claim mismatch"
+    );
+
+    let eq_r_a_2 = MultilinearPoint(permutation_2_r_a.clone()).eq_weights();
+    let eq_r_b_2 = MultilinearPoint(permutation_2_r_b.clone()).eq_weights();
+
+    let permutation_2_a_2_r_a_ip_claims = split_claim_ip(
+        &permutation_2_a_2,
+        &eq_r_a_2,
+        permutation_2_a_sigma_one_at_r_a,
+        k_prime,
+    );
+    let permutation_2_b_2_r_b_ip_claims = split_claim_ip(
+        &permutation_2_b_2,
+        &eq_r_b_2,
+        permutation_2_b_sigma_one_at_r_b,
+        k_prime,
+    );
+
+    let eq_r_a_2_tail_0 = MultilinearPoint(permutation_2_r_a_tail_0.clone()).eq_weights();
+    let eq_r_a_2_tail_1 = MultilinearPoint(permutation_2_r_a_tail_1.clone()).eq_weights();
+    let eq_r_b_2_tail_0 = MultilinearPoint(permutation_2_r_b_tail_0.clone()).eq_weights();
+    let eq_r_b_2_tail_1 = MultilinearPoint(permutation_2_r_b_tail_1.clone()).eq_weights();
+
+    let permutation_2_a_r_a_tail_ip_claims = [
+        [
+            split_claim_ip(
+                &permutation_2_a_1,
+                &eq_r_a_2_tail_0,
+                permutation_2_a_sigma_i_r_a_tail_j[0][0],
+                k_prime,
+            ),
+            split_claim_ip(
+                &permutation_2_a_1,
+                &eq_r_a_2_tail_1,
+                permutation_2_a_sigma_i_r_a_tail_j[0][1],
+                k_prime,
+            ),
+        ],
+        [
+            split_claim_ip(
+                &permutation_2_a_2,
+                &eq_r_a_2_tail_0,
+                permutation_2_a_sigma_i_r_a_tail_j[1][0],
+                k_prime,
+            ),
+            split_claim_ip(
+                &permutation_2_a_2,
+                &eq_r_a_2_tail_1,
+                permutation_2_a_sigma_i_r_a_tail_j[1][1],
+                k_prime,
+            ),
+        ],
+    ];
+    let permutation_2_b_r_b_tail_ip_claims = [
+        [
+            split_claim_ip(
+                &permutation_2_b_1,
+                &eq_r_b_2_tail_0,
+                permutation_2_b_sigma_i_r_b_tail_j[0][0],
+                k_prime,
+            ),
+            split_claim_ip(
+                &permutation_2_b_1,
+                &eq_r_b_2_tail_1,
+                permutation_2_b_sigma_i_r_b_tail_j[0][1],
+                k_prime,
+            ),
+        ],
+        [
+            split_claim_ip(
+                &permutation_2_b_2,
+                &eq_r_b_2_tail_0,
+                permutation_2_b_sigma_i_r_b_tail_j[1][0],
+                k_prime,
+            ),
+            split_claim_ip(
+                &permutation_2_b_2,
+                &eq_r_b_2_tail_1,
+                permutation_2_b_sigma_i_r_b_tail_j[1][1],
+                k_prime,
+            ),
+        ],
+    ];
+
+    // Step 35: second multiply/accumulate checks.
     let word_mult_2 = hadamard_product(
         &word_perm_2,
         &input.multiplier_2,
@@ -1527,7 +1900,7 @@ where
         inner_product(&word_mult_2, &r_mult_2, "word_mult_2", "r_mult_2");
     assert_eq!(
         sigma_mult_2, sigma_mult_2_from_word_mult_2,
-        "step 33 second-multiply triple-product claim does not match word^mult_2 inner-product claim"
+        "step 35 second-multiply triple-product claim does not match word^mult_2 inner-product claim"
     );
 
     let multiply_tip_claims_2 = split_claim_tip(
@@ -1562,7 +1935,7 @@ where
     );
     assert_eq!(
         sigma_acc_2, sigma_acc_2_from_word_mult_2,
-        "step 33 second-accumulate reduction does not match sigma_acc_2"
+        "step 35 second-accumulate reduction does not match sigma_acc_2"
     );
 
     let acc_mult_2_ip_claims =
@@ -1576,7 +1949,7 @@ where
 
     assert_eq!(
         word_acc_2, word_era,
-        "step 33 second accumulate output must reconstruct word^ERA"
+        "step 35 second accumulate output must reconstruct word^ERA"
     );
 
     let mut ip_claims = Vec::with_capacity(
@@ -1619,6 +1992,28 @@ where
             + acc_mult_ip_claims.len()
             + acc_r_ip_claims.len()
             + perm_2_ood_ip_claims.len()
+            + permutation_2_a_1_ood_ip_claims.len()
+            + permutation_2_a_2_ood_ip_claims.len()
+            + permutation_2_b_1_ood_ip_claims.len()
+            + permutation_2_b_2_ood_ip_claims.len()
+            + permutation_2_a_1_fixed_ip_claims.len()
+            + permutation_2_b_1_fixed_ip_claims.len()
+            + permutation_2_a_1_r_perm_ip_claims.len()
+            + permutation_2_b_1_r_perm_ip_claims.len()
+            + permutation_2_word_acc_r_perm_ip_claims.len()
+            + permutation_2_word_perm_r_perm_ip_claims.len()
+            + permutation_2_identity_r_perm_ip_claims.len()
+            + permutation_2_pi_2_r_perm_ip_claims.len()
+            + permutation_2_a_2_r_a_ip_claims.len()
+            + permutation_2_b_2_r_b_ip_claims.len()
+            + permutation_2_a_r_a_tail_ip_claims[0][0].len()
+            + permutation_2_a_r_a_tail_ip_claims[0][1].len()
+            + permutation_2_a_r_a_tail_ip_claims[1][0].len()
+            + permutation_2_a_r_a_tail_ip_claims[1][1].len()
+            + permutation_2_b_r_b_tail_ip_claims[0][0].len()
+            + permutation_2_b_r_b_tail_ip_claims[0][1].len()
+            + permutation_2_b_r_b_tail_ip_claims[1][0].len()
+            + permutation_2_b_r_b_tail_ip_claims[1][1].len()
             + mult_2_ood_ip_claims.len()
             + mult_2_r_ip_claims.len()
             + acc_2_ood_ip_claims.len()
@@ -1661,6 +2056,28 @@ where
     ip_claims.extend(acc_mult_ip_claims.iter().cloned());
     ip_claims.extend(acc_r_ip_claims.iter().cloned());
     ip_claims.extend(perm_2_ood_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_a_1_ood_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_a_2_ood_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_b_1_ood_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_b_2_ood_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_a_1_fixed_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_b_1_fixed_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_a_1_r_perm_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_b_1_r_perm_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_word_acc_r_perm_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_word_perm_r_perm_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_identity_r_perm_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_pi_2_r_perm_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_a_2_r_a_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_b_2_r_b_ip_claims.iter().cloned());
+    ip_claims.extend(permutation_2_a_r_a_tail_ip_claims[0][0].iter().cloned());
+    ip_claims.extend(permutation_2_a_r_a_tail_ip_claims[0][1].iter().cloned());
+    ip_claims.extend(permutation_2_a_r_a_tail_ip_claims[1][0].iter().cloned());
+    ip_claims.extend(permutation_2_a_r_a_tail_ip_claims[1][1].iter().cloned());
+    ip_claims.extend(permutation_2_b_r_b_tail_ip_claims[0][0].iter().cloned());
+    ip_claims.extend(permutation_2_b_r_b_tail_ip_claims[0][1].iter().cloned());
+    ip_claims.extend(permutation_2_b_r_b_tail_ip_claims[1][0].iter().cloned());
+    ip_claims.extend(permutation_2_b_r_b_tail_ip_claims[1][1].iter().cloned());
     ip_claims.extend(mult_2_ood_ip_claims.iter().cloned());
     ip_claims.extend(mult_2_r_ip_claims.iter().cloned());
     ip_claims.extend(acc_2_ood_ip_claims.iter().cloned());
@@ -1825,6 +2242,10 @@ where
             mult_oracles,
             acc_oracles,
             perm_2_oracles,
+            permutation_2_a_1_oracles,
+            permutation_2_a_2_oracles,
+            permutation_2_b_1_oracles,
+            permutation_2_b_2_oracles,
             mult_2_oracles,
             acc_2_oracles,
             permutation_a_1_oracles,
@@ -1839,8 +2260,9 @@ where
 
 /// Build claims/oracles for the implemented `CodeswitchClaims` steps.
 ///
-/// Implemented through step 33 (including second permute/multiply/accumulate),
-/// with placeholder prefix-product witnesses for `a_2,b_2`.
+/// Implemented through step 35 (including second-permutation checks and
+/// second multiply/accumulate), with placeholder prefix-product witnesses
+/// for `a_2,b_2`.
 #[must_use]
 pub fn generate_codeswitch_claims<F, CEra, CBase, COut>(
     input: CodeswitchClaimsInput<F>,
@@ -2051,6 +2473,36 @@ mod tests {
             <KoalaBear as FieldElement>::random(&mut replay_rng),
         ];
         let expected_z_ood_perm_2 = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let _expected_permutation_alpha_2 = <KoalaBear as FieldElement>::random(&mut replay_rng);
+        let _expected_permutation_beta_2 = <KoalaBear as FieldElement>::random(&mut replay_rng);
+        let _expected_permutation_2_a_1_z_ood = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let _expected_permutation_2_a_2_z_ood = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let _expected_permutation_2_b_1_z_ood = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let _expected_permutation_2_b_2_z_ood = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let _expected_permutation_2_r_perm = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let _expected_permutation_2_a_transition_sumcheck_challenges = vec![
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+            <KoalaBear as FieldElement>::random(&mut replay_rng),
+        ];
+        let _expected_permutation_2_b_transition_sumcheck_challenges = vec![
             <KoalaBear as FieldElement>::random(&mut replay_rng),
             <KoalaBear as FieldElement>::random(&mut replay_rng),
         ];
@@ -2957,8 +3409,8 @@ mod tests {
         assert_eq!(out.acc_mult_2_ip_claims.len(), 2);
         assert_eq!(out.acc_2_r_ip_claims.len(), 2);
 
-        assert_eq!(out.ip_claims.len(), 82);
-        assert_eq!(out.aux_oracles.len(), 13);
+        assert_eq!(out.ip_claims.len(), 126);
+        assert_eq!(out.aux_oracles.len(), 17);
         assert_eq!(out.tip_claims.len(), 4);
     }
 
@@ -3354,8 +3806,8 @@ mod tests {
         assert_eq!(out.acc_2_ood_ip_claims.len(), 4);
         assert_eq!(out.acc_mult_2_ip_claims.len(), 4);
         assert_eq!(out.acc_2_r_ip_claims.len(), 4);
-        assert_eq!(out.ip_claims.len(), 156);
-        assert_eq!(out.aux_oracles.len(), 13);
+        assert_eq!(out.ip_claims.len(), 244);
+        assert_eq!(out.aux_oracles.len(), 17);
         assert_eq!(out.tip_claims.len(), 8);
     }
 
@@ -3483,7 +3935,7 @@ mod tests {
     }
 
     #[test]
-    fn test_generate_codeswitch_claims_matches_step_33_helper() {
+    fn test_generate_codeswitch_claims_matches_full_helper() {
         let era_code = IdentityCode::<KoalaBear>::new(4);
         let base_code = IdentityCode::<KoalaBear>::new(4);
         let output_code = IdentityCode::<KoalaBear>::new(2);
