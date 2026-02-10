@@ -1,7 +1,7 @@
 use agnostir::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams,
-    EraCode, ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
-    random_permutation, blake3_merkle_commit_interleaved,
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
+    ErrorCorrectingCode, FieldElement, ReedSolomonCode, TensorCode,
+    blake3_merkle_commit_interleaved, random_permutation,
 };
 use ark_ff::{BigInteger, PrimeField};
 use ark_secp256k1::Fr as SecpScalar;
@@ -188,7 +188,9 @@ fn bench_compare_interleaved(c: &mut Criterion) {
     //     );
     // });
 
-    let basefold_params = BasefoldParams { log_rate: BASEFOLD_LOG_INV_RATE };
+    let basefold_params = BasefoldParams {
+        log_rate: BASEFOLD_LOG_INV_RATE,
+    };
     let basefold_code = build_basefold_code(&mut rng, segment_size, basefold_params);
     c.bench_function("basefold_interleaved_inv_rate_4", |b| {
         b.iter_batched(

@@ -2,9 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use agnostir::{
-    BasefoldCode, BasefoldParams,
-    BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement,
-    TensorCode, random_permutation,
+    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode,
+    FieldElement, TensorCode, random_permutation,
 };
 use ark_secp256k1::Fr as SecpScalar;
 use rand::{SeedableRng, rngs::SmallRng};
@@ -33,7 +32,9 @@ fn main() {
         13 => (0.05, 1.08, 6, 47),
         other => panic!("no tuned params for k=2^{other}"),
     };
-    eprintln!("segment_msg_size={segment_msg_size}, k={k}, alpha={alpha}, inverse_rate={inverse_rate}, cn={cn}, dn={dn}");
+    eprintln!(
+        "segment_msg_size={segment_msg_size}, k={k}, alpha={alpha}, inverse_rate={inverse_rate}, cn={cn}, dn={dn}"
+    );
 
     // ── Brakedown profiling at k = 2^20 ──
     let big_k = 1usize << 20;
@@ -134,7 +135,9 @@ fn main() {
     // ── Prefix-sum profiling ──
     let prefix_len = 1usize << 22;
     eprintln!();
-    eprintln!("=== prefix_sum_in_place step-by-step profile (len=2^22 = {prefix_len}, chunk_len=8192) ===");
+    eprintln!(
+        "=== prefix_sum_in_place step-by-step profile (len=2^22 = {prefix_len}, chunk_len=8192) ==="
+    );
     let mut values: Vec<SecpScalar> = (0..prefix_len)
         .map(|_| SecpScalar::random(&mut rng))
         .collect();
@@ -198,10 +201,25 @@ fn main() {
     let total_muladd = t_local_muladd + t_scan + t_correct;
     eprintln!("  chunks={num_chunks}");
     eprintln!("  === With mul + add ===");
-    eprintln!("  1. Local prefix sums (par):  {:>8.3} ms  ({:>5.1}%)", t_local_muladd.as_secs_f64() * 1e3, t_local_muladd.as_secs_f64() / total_muladd.as_secs_f64() * 100.0);
-    eprintln!("  2. Scan chunk totals (seq):  {:>8.3} ms  ({:>5.1}%)", t_scan.as_secs_f64() * 1e3, t_scan.as_secs_f64() / total_muladd.as_secs_f64() * 100.0);
-    eprintln!("  3. Offset correction (par):  {:>8.3} ms  ({:>5.1}%)", t_correct.as_secs_f64() * 1e3, t_correct.as_secs_f64() / total_muladd.as_secs_f64() * 100.0);
-    eprintln!("  Total:                       {:>8.3} ms", total_muladd.as_secs_f64() * 1e3);
+    eprintln!(
+        "  1. Local prefix sums (par):  {:>8.3} ms  ({:>5.1}%)",
+        t_local_muladd.as_secs_f64() * 1e3,
+        t_local_muladd.as_secs_f64() / total_muladd.as_secs_f64() * 100.0
+    );
+    eprintln!(
+        "  2. Scan chunk totals (seq):  {:>8.3} ms  ({:>5.1}%)",
+        t_scan.as_secs_f64() * 1e3,
+        t_scan.as_secs_f64() / total_muladd.as_secs_f64() * 100.0
+    );
+    eprintln!(
+        "  3. Offset correction (par):  {:>8.3} ms  ({:>5.1}%)",
+        t_correct.as_secs_f64() * 1e3,
+        t_correct.as_secs_f64() / total_muladd.as_secs_f64() * 100.0
+    );
+    eprintln!(
+        "  Total:                       {:>8.3} ms",
+        total_muladd.as_secs_f64() * 1e3
+    );
 
     // Now repeat without multiplication (pure add prefix sum)
     // Reset
@@ -268,12 +286,28 @@ fn main() {
     let total_add = t_local_add + t_scan2 + t_correct2;
     eprintln!();
     eprintln!("  === Without mul (add only) ===");
-    eprintln!("  1. Local prefix sums (par):  {:>8.3} ms  ({:>5.1}%)", t_local_add.as_secs_f64() * 1e3, t_local_add.as_secs_f64() / total_add.as_secs_f64() * 100.0);
-    eprintln!("  2. Scan chunk totals (seq):  {:>8.3} ms  ({:>5.1}%)", t_scan2.as_secs_f64() * 1e3, t_scan2.as_secs_f64() / total_add.as_secs_f64() * 100.0);
-    eprintln!("  3. Offset correction (par):  {:>8.3} ms  ({:>5.1}%)", t_correct2.as_secs_f64() * 1e3, t_correct2.as_secs_f64() / total_add.as_secs_f64() * 100.0);
-    eprintln!("  Total:                       {:>8.3} ms", total_add.as_secs_f64() * 1e3);
+    eprintln!(
+        "  1. Local prefix sums (par):  {:>8.3} ms  ({:>5.1}%)",
+        t_local_add.as_secs_f64() * 1e3,
+        t_local_add.as_secs_f64() / total_add.as_secs_f64() * 100.0
+    );
+    eprintln!(
+        "  2. Scan chunk totals (seq):  {:>8.3} ms  ({:>5.1}%)",
+        t_scan2.as_secs_f64() * 1e3,
+        t_scan2.as_secs_f64() / total_add.as_secs_f64() * 100.0
+    );
+    eprintln!(
+        "  3. Offset correction (par):  {:>8.3} ms  ({:>5.1}%)",
+        t_correct2.as_secs_f64() * 1e3,
+        t_correct2.as_secs_f64() / total_add.as_secs_f64() * 100.0
+    );
+    eprintln!(
+        "  Total:                       {:>8.3} ms",
+        total_add.as_secs_f64() * 1e3
+    );
     eprintln!();
-    eprintln!("  Mul cost = {:.3} ms ({:.1}% of muladd local)",
+    eprintln!(
+        "  Mul cost = {:.3} ms ({:.1}% of muladd local)",
         (t_local_muladd - t_local_add).as_secs_f64() * 1e3,
         (t_local_muladd - t_local_add).as_secs_f64() / t_local_muladd.as_secs_f64() * 100.0,
     );

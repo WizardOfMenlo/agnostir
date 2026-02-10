@@ -2,9 +2,10 @@ mod iopp_params;
 
 use agnostir::{
     BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
-    ErrorCorrectingCode, FieldElement, TensorCode,
-    blake3_merkle_commit_interleaved,
-    poly_utils::multilinear::MultilinearPoint,
+    ErrorCorrectingCode, FieldElement, blake3_merkle_commit_interleaved,
+    blake3_merkle_interleaved_leaves, blake3_merkle_precompute_levels,
+    blake3_merkle_root_from_levels,
+    interleaved_iopp::{prover_first_round, prover_second_round, verifier_challenge, verify},
     random_permutation,
 };
 use ark_secp256k1::Fr as SecpScalar;
@@ -16,131 +17,6 @@ use std::sync::Arc;
 
 const MESSAGE_SIZE: usize = 1 << 20;
 const ETA: usize = 5;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// IOPP protocol helpers
-// ═══════════════════════════════════════════════════════════════════════════
-
-struct ProverFirstMessage {
-    folded_msg: Vec<SecpScalar>,
-    y: SecpScalar,
-}
-
-struct VerifierChallenge {
-    query_indices: Vec<usize>,
-}
-
-struct ProverSecondMessage {
-    columns: Vec<Vec<SecpScalar>>,
-}
-
-fn prover_first_round(
-    message: &[SecpScalar],
-    z: &[SecpScalar],
-    eta: usize,
-    k: usize,
-) -> ProverFirstMessage {
-    let seg_msg_size = 1usize << (k - eta);
-
-    let z_1 = &z[..eta];
-    let z1_point = MultilinearPoint(z_1.to_vec());
-    let eq_weights = z1_point.eq_weights();
-
-    let mut folded_msg = vec![SecpScalar::ZERO; seg_msg_size];
-    for (r, &w) in eq_weights.iter().enumerate() {
-        let row_start = r * seg_msg_size;
-        for i in 0..seg_msg_size {
-            folded_msg[i] += w * message[row_start + i];
-        }
-    }
-
-    let z_2 = &z[eta..];
-    let z2_point = MultilinearPoint(z_2.to_vec());
-    let eq2_weights = z2_point.eq_weights();
-    let y = folded_msg
-        .iter()
-        .zip(eq2_weights.iter())
-        .fold(SecpScalar::ZERO, |acc, (&fm, &e)| acc + fm * e);
-
-    ProverFirstMessage { folded_msg, y }
-}
-
-fn verifier_challenge(
-    block_length: usize,
-    num_queries: usize,
-    rng: &mut impl Rng,
-) -> VerifierChallenge {
-    let query_indices: Vec<usize> = (0..num_queries)
-        .map(|_| rng.random_range(0..block_length))
-        .collect();
-    VerifierChallenge { query_indices }
-}
-
-fn prover_second_round(
-    segments: &[Vec<SecpScalar>],
-    challenge: &VerifierChallenge,
-    eta: usize,
-) -> ProverSecondMessage {
-    let rows = 1usize << eta;
-    let columns: Vec<Vec<SecpScalar>> = challenge
-        .query_indices
-        .iter()
-        .map(|&cw_idx| (0..rows).map(|r| segments[r][cw_idx]).collect())
-        .collect();
-    ProverSecondMessage { columns }
-}
-
-fn verify(
-    z: &[SecpScalar],
-    eta: usize,
-    k: usize,
-    first_msg: &ProverFirstMessage,
-    challenge: &VerifierChallenge,
-    second_msg: &ProverSecondMessage,
-    encode_fn: &dyn Fn(&[SecpScalar]) -> Vec<SecpScalar>,
-) -> bool {
-    let rows = 1usize << eta;
-    let seg_msg_size = 1usize << (k - eta);
-
-    // Verifier encodes the folded message to obtain the folded codeword.
-    let folded_cw = encode_fn(&first_msg.folded_msg);
-
-    let z_1 = &z[..eta];
-    let z1_point = MultilinearPoint(z_1.to_vec());
-    let eq_weights = z1_point.eq_weights();
-
-    for (col, &cw_idx) in second_msg
-        .columns
-        .iter()
-        .zip(challenge.query_indices.iter())
-    {
-        if col.len() != rows {
-            return false;
-        }
-
-        let folded_val: SecpScalar = col
-            .iter()
-            .zip(eq_weights.iter())
-            .fold(SecpScalar::ZERO, |acc, (&c, &w)| acc + c * w);
-
-        if folded_val != folded_cw[cw_idx] {
-            return false;
-        }
-    }
-
-    let z_2 = &z[eta..];
-    let z2_point = MultilinearPoint(z_2.to_vec());
-    let eq2_weights = z2_point.eq_weights();
-    assert_eq!(eq2_weights.len(), seg_msg_size);
-
-    let eval: SecpScalar = first_msg
-        .folded_msg
-        .iter()
-        .zip(eq2_weights.iter())
-        .fold(SecpScalar::ZERO, |acc, (&fm, &e)| acc + fm * e);
-
-    eval == first_msg.y
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Benchmark
@@ -184,20 +60,32 @@ fn bench_iopp(c: &mut Criterion) {
         );
         let bf_code = BasefoldCode::<SecpScalar>::new(
             seg_msg_size,
-            BasefoldParams { log_rate: BASEFOLD_LOG_RATE },
+            BasefoldParams {
+                log_rate: BASEFOLD_LOG_RATE,
+            },
             &mut SmallRng::seed_from_u64(0),
         );
 
         let (a, ir, cn, dn) = era_inner_params(seg_msg_size.ilog2());
         let base_tmp = BrakedownCode::<SecpScalar>::new(
-            seg_msg_size, BrakedownParams { alpha: a, inverse_rate: ir, cn, dn },
+            seg_msg_size,
+            BrakedownParams {
+                alpha: a,
+                inverse_rate: ir,
+                cn,
+                dn,
+            },
             &mut SmallRng::seed_from_u64(0),
         );
         let bl_seg_tmp = base_tmp.block_length() * ERA_REPETITION;
         let p1 = random_permutation(&mut SmallRng::seed_from_u64(0), bl_seg_tmp);
         let p2 = random_permutation(&mut SmallRng::seed_from_u64(1), bl_seg_tmp);
-        let m1: Vec<SecpScalar> = (0..bl_seg_tmp).map(|_| SecpScalar::random(&mut SmallRng::seed_from_u64(2))).collect();
-        let m2: Vec<SecpScalar> = (0..bl_seg_tmp).map(|_| SecpScalar::random(&mut SmallRng::seed_from_u64(3))).collect();
+        let m1: Vec<SecpScalar> = (0..bl_seg_tmp)
+            .map(|_| SecpScalar::random(&mut SmallRng::seed_from_u64(2)))
+            .collect();
+        let m2: Vec<SecpScalar> = (0..bl_seg_tmp)
+            .map(|_| SecpScalar::random(&mut SmallRng::seed_from_u64(3)))
+            .collect();
         let era_tmp = EraCode::new(base_tmp, ERA_REPETITION, p1, p2, m1, m2);
 
         let bd_delta = BRAKEDOWN_DELTA;
@@ -206,18 +94,26 @@ fn bench_iopp(c: &mut Criterion) {
         let er_delta = era_delta(log_seg_msg);
 
         eprintln!("  Proof sizes (k={k}, eta={eta}, seg_msg=2^{log_seg_msg}):");
-        eprintln!("    Brakedown  delta={bd_delta:.3}  q={}  proof={:.1} KiB",
+        eprintln!(
+            "    Brakedown  delta={bd_delta:.3}  q={}  proof={:.1} KiB",
             num_queries_from_delta(SECPARAM, bd_delta),
-            proof_size_kib(bd_code.block_length(), k, eta, bd_delta));
-        eprintln!("    EA         delta={ea_delta:.3}  q={}  proof={:.1} KiB",
+            proof_size_kib(bd_code.block_length(), k, eta, bd_delta)
+        );
+        eprintln!(
+            "    EA         delta={ea_delta:.3}  q={}  proof={:.1} KiB",
             num_queries_from_delta(SECPARAM, ea_delta),
-            proof_size_kib(ea_code_tmp.codeword_length(), k, eta, ea_delta));
-        eprintln!("    Basefold   delta={bf_delta:.3}  q={}  proof={:.1} KiB",
+            proof_size_kib(ea_code_tmp.codeword_length(), k, eta, ea_delta)
+        );
+        eprintln!(
+            "    Basefold   delta={bf_delta:.3}  q={}  proof={:.1} KiB",
             num_queries_from_delta(SECPARAM, bf_delta),
-            proof_size_kib(bf_code.codeword_length(), k, eta, bf_delta));
-        eprintln!("    ERA        delta={er_delta:.3}  q={}  proof={:.1} KiB",
+            proof_size_kib(bf_code.codeword_length(), k, eta, bf_delta)
+        );
+        eprintln!(
+            "    ERA        delta={er_delta:.3}  q={}  proof={:.1} KiB",
             num_queries_from_delta(SECPARAM, er_delta),
-            proof_size_kib(era_tmp.block_length(), k, eta, er_delta));
+            proof_size_kib(era_tmp.block_length(), k, eta, er_delta)
+        );
     }
 
     // ── Brakedown ──
@@ -260,6 +156,9 @@ fn bench_iopp(c: &mut Criterion) {
             })
             .collect(),
     );
+    let brakedown_leaves = blake3_merkle_interleaved_leaves(&brakedown_segments);
+    let brakedown_levels = blake3_merkle_precompute_levels(&brakedown_leaves);
+    let brakedown_root = blake3_merkle_root_from_levels(&brakedown_levels);
 
     {
         let mut ch_rng = SmallRng::seed_from_u64(999);
@@ -271,18 +170,39 @@ fn bench_iopp(c: &mut Criterion) {
             let z = z.clone();
             b.iter(|| {
                 let first_msg = prover_first_round(&msg, &z, eta, k);
-                let _second_msg = prover_second_round(&segments, &brakedown_challenge, eta);
+                let _second_msg = prover_second_round(
+                    &segments,
+                    &brakedown_leaves,
+                    &brakedown_levels,
+                    &brakedown_challenge,
+                    eta,
+                );
                 first_msg
             });
         });
 
         let first_msg = prover_first_round(&msg, &z, eta, k);
-        let second_msg = prover_second_round(&brakedown_segments, &brakedown_challenge, eta);
+        let second_msg = prover_second_round(
+            &brakedown_segments,
+            &brakedown_leaves,
+            &brakedown_levels,
+            &brakedown_challenge,
+            eta,
+        );
 
         c.bench_function("brakedown_verify", |b| {
             let z = z.clone();
             b.iter(|| {
-                assert!(verify(&z, eta, k, &first_msg, &brakedown_challenge, &second_msg, &|m| brakedown_code.encode(m)));
+                assert!(verify(
+                    &z,
+                    eta,
+                    k,
+                    &brakedown_root,
+                    &first_msg,
+                    &brakedown_challenge,
+                    &second_msg,
+                    |m| brakedown_code.encode(m)
+                ));
             });
         });
     }
@@ -325,6 +245,9 @@ fn bench_iopp(c: &mut Criterion) {
             })
             .collect(),
     );
+    let ea_leaves = blake3_merkle_interleaved_leaves(&ea_segments);
+    let ea_levels = blake3_merkle_precompute_levels(&ea_leaves);
+    let ea_root = blake3_merkle_root_from_levels(&ea_levels);
 
     {
         let mut ch_rng = SmallRng::seed_from_u64(999);
@@ -336,18 +259,29 @@ fn bench_iopp(c: &mut Criterion) {
             let z = z.clone();
             b.iter(|| {
                 let first_msg = prover_first_round(&msg, &z, eta, k);
-                let _second_msg = prover_second_round(&segments, &ea_challenge, eta);
+                let _second_msg =
+                    prover_second_round(&segments, &ea_leaves, &ea_levels, &ea_challenge, eta);
                 first_msg
             });
         });
 
         let first_msg = prover_first_round(&msg, &z, eta, k);
-        let second_msg = prover_second_round(&ea_segments, &ea_challenge, eta);
+        let second_msg =
+            prover_second_round(&ea_segments, &ea_leaves, &ea_levels, &ea_challenge, eta);
 
         c.bench_function("ea_verify", |b| {
             let z = z.clone();
             b.iter(|| {
-                assert!(verify(&z, eta, k, &first_msg, &ea_challenge, &second_msg, &|m| ea_code.encode(m)));
+                assert!(verify(
+                    &z,
+                    eta,
+                    k,
+                    &ea_root,
+                    &first_msg,
+                    &ea_challenge,
+                    &second_msg,
+                    |m| ea_code.encode(m)
+                ));
             });
         });
     }
@@ -389,6 +323,9 @@ fn bench_iopp(c: &mut Criterion) {
             })
             .collect(),
     );
+    let basefold_leaves = blake3_merkle_interleaved_leaves(&basefold_segments);
+    let basefold_levels = blake3_merkle_precompute_levels(&basefold_leaves);
+    let basefold_root = blake3_merkle_root_from_levels(&basefold_levels);
 
     {
         let mut ch_rng = SmallRng::seed_from_u64(999);
@@ -400,18 +337,39 @@ fn bench_iopp(c: &mut Criterion) {
             let z = z.clone();
             b.iter(|| {
                 let first_msg = prover_first_round(&msg, &z, eta, k);
-                let _second_msg = prover_second_round(&segments, &basefold_challenge, eta);
+                let _second_msg = prover_second_round(
+                    &segments,
+                    &basefold_leaves,
+                    &basefold_levels,
+                    &basefold_challenge,
+                    eta,
+                );
                 first_msg
             });
         });
 
         let first_msg = prover_first_round(&msg, &z, eta, k);
-        let second_msg = prover_second_round(&basefold_segments, &basefold_challenge, eta);
+        let second_msg = prover_second_round(
+            &basefold_segments,
+            &basefold_leaves,
+            &basefold_levels,
+            &basefold_challenge,
+            eta,
+        );
 
         c.bench_function("basefold_verify", |b| {
             let z = z.clone();
             b.iter(|| {
-                assert!(verify(&z, eta, k, &first_msg, &basefold_challenge, &second_msg, &|m| basefold_code.encode(m)));
+                assert!(verify(
+                    &z,
+                    eta,
+                    k,
+                    &basefold_root,
+                    &first_msg,
+                    &basefold_challenge,
+                    &second_msg,
+                    |m| basefold_code.encode(m)
+                ));
             });
         });
     }
@@ -465,6 +423,9 @@ fn bench_iopp(c: &mut Criterion) {
             })
             .collect(),
     );
+    let era_leaves = blake3_merkle_interleaved_leaves(&era_segments);
+    let era_levels = blake3_merkle_precompute_levels(&era_leaves);
+    let era_root = blake3_merkle_root_from_levels(&era_levels);
 
     {
         let mut ch_rng = SmallRng::seed_from_u64(999);
@@ -476,18 +437,29 @@ fn bench_iopp(c: &mut Criterion) {
             let z = z.clone();
             b.iter(|| {
                 let first_msg = prover_first_round(&msg, &z, eta, k);
-                let _second_msg = prover_second_round(&segments, &era_challenge, eta);
+                let _second_msg =
+                    prover_second_round(&segments, &era_leaves, &era_levels, &era_challenge, eta);
                 first_msg
             });
         });
 
         let first_msg = prover_first_round(&msg, &z, eta, k);
-        let second_msg = prover_second_round(&era_segments, &era_challenge, eta);
+        let second_msg =
+            prover_second_round(&era_segments, &era_leaves, &era_levels, &era_challenge, eta);
 
         c.bench_function("era_verify", |b| {
             let z = z.clone();
             b.iter(|| {
-                assert!(verify(&z, eta, k, &first_msg, &era_challenge, &second_msg, &|m| era_code.encode_era(m)));
+                assert!(verify(
+                    &z,
+                    eta,
+                    k,
+                    &era_root,
+                    &first_msg,
+                    &era_challenge,
+                    &second_msg,
+                    |m| era_code.encode_era(m)
+                ));
             });
         });
     }

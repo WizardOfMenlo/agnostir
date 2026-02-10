@@ -101,7 +101,7 @@ pub(crate) fn era_delta(log_seg_msg_size: usize) -> f64 {
 
 pub(crate) const SECPARAM: f64 = 100.0;
 pub(crate) const LOG_FIELD_SIZE: f64 = 256.0; // bits per field element (secp256k1)
-pub(crate) const LOG_HASH_SIZE: f64 = 256.0;  // bits per hash digest (blake3)
+pub(crate) const LOG_HASH_SIZE: f64 = 256.0; // bits per hash digest (blake3)
 
 /// Number of queries for `secparam`-bit security given proximity parameter
 /// `delta`:  eps = 1 - (1 - delta)^{1/3},  q = ceil(-secparam / log2(1 - eps)).
@@ -112,7 +112,11 @@ pub(crate) fn num_queries_from_delta(secparam: f64, delta: f64) -> usize {
 }
 
 /// Merkle-tree proof size in bits.
-pub(crate) fn merkle_tree_size_bits(queries: usize, log_block_length: f64, interleaving_factor: usize) -> f64 {
+pub(crate) fn merkle_tree_size_bits(
+    queries: usize,
+    log_block_length: f64,
+    interleaving_factor: usize,
+) -> f64 {
     let q = queries as f64;
     let n = log_block_length;
 

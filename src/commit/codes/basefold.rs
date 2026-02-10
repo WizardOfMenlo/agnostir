@@ -118,12 +118,15 @@ impl<F: FieldElement> BasefoldCode<F> {
         let mut codeword = vec![F::ZERO; self.codeword_length];
         let rate = self.rate;
         #[cfg(feature = "parallel")]
-        codeword.par_chunks_mut(rate).enumerate().for_each(|(i, chunk)| {
-            let coeff = msg[i];
-            for slot in chunk.iter_mut() {
-                *slot = coeff;
-            }
-        });
+        codeword
+            .par_chunks_mut(rate)
+            .enumerate()
+            .for_each(|(i, chunk)| {
+                let coeff = msg[i];
+                for slot in chunk.iter_mut() {
+                    *slot = coeff;
+                }
+            });
         #[cfg(not(feature = "parallel"))]
         for (i, chunk) in codeword.chunks_mut(rate).enumerate() {
             let coeff = msg[i];
@@ -189,12 +192,15 @@ impl<F: FieldElement> BasefoldCode<F> {
         let mut codeword = vec![F::ZERO; self.codeword_length];
         let rate = self.rate;
         #[cfg(feature = "parallel")]
-        codeword.par_chunks_mut(rate).enumerate().for_each(|(i, chunk)| {
-            let coeff = msg[i];
-            for slot in chunk.iter_mut() {
-                *slot = coeff;
-            }
-        });
+        codeword
+            .par_chunks_mut(rate)
+            .enumerate()
+            .for_each(|(i, chunk)| {
+                let coeff = msg[i];
+                for slot in chunk.iter_mut() {
+                    *slot = coeff;
+                }
+            });
         #[cfg(not(feature = "parallel"))]
         for (i, chunk) in codeword.chunks_mut(rate).enumerate() {
             let coeff = msg[i];
@@ -240,7 +246,12 @@ impl<F: FieldElement> BasefoldCode<F> {
             codeword.par_chunks_mut(chunk_size).for_each(butterfly);
             #[cfg(not(feature = "parallel"))]
             codeword.chunks_mut(chunk_size).for_each(butterfly);
-            println!("  butterfly round {:>2}  chunk_size {:>8}:  {:?}", i, chunk_size, t.elapsed());
+            println!(
+                "  butterfly round {:>2}  chunk_size {:>8}:  {:?}",
+                i,
+                chunk_size,
+                t.elapsed()
+            );
         }
 
         // Step 3: bit-reversal permutation

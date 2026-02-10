@@ -1,8 +1,8 @@
 use std::{sync::OnceLock, time::Instant};
 
+use rand_08::SeedableRng as _;
 #[cfg(feature = "parallel")]
 use rayon::{current_num_threads, prelude::*};
-use rand_08::SeedableRng as _;
 use rip_shuffle::RipShuffleSequential;
 
 use crate::{ErrorCorrectingCode, FieldElement};
@@ -198,36 +198,36 @@ where
         let mut w1 = Vec::with_capacity(n);
         unsafe { w1.set_len(n) };
         w1.par_chunks_mut(chunk_len)
-          .enumerate()
-          .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * chunk_len;
-            let len = chunk.len();
-            for i in 0..len {
-                if i + PREFETCH_AHEAD < len {
-                    let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
-                    prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                        prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
                 }
-                chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
-            }
-        });
+            });
         Self::prefix_sum_in_place(&mut w1, &self.m1_vector, chunk_len);
 
         // SAFETY: every element is written by the gather before being read.
         let mut w2 = Vec::with_capacity(n);
         unsafe { w2.set_len(n) };
         w2.par_chunks_mut(chunk_len)
-          .enumerate()
-          .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * chunk_len;
-            let len = chunk.len();
-            for i in 0..len {
-                if i + PREFETCH_AHEAD < len {
-                    let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
-                    prefetch_read(w1.as_ptr().wrapping_add(idx));
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                        prefetch_read(w1.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = w1[self.p2_vector[start + i]];
                 }
-                chunk[i] = w1[self.p2_vector[start + i]];
-            }
-        });
+            });
         drop(w1); // free round-1 buffer early
         Self::prefix_sum_in_place(&mut w2, &self.m2_vector, chunk_len);
 
@@ -393,18 +393,18 @@ where
         let mut w1 = Vec::with_capacity(n);
         unsafe { w1.set_len(n) };
         w1.par_chunks_mut(chunk_len)
-          .enumerate()
-          .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * chunk_len;
-            let len = chunk.len();
-            for i in 0..len {
-                if i + PREFETCH_AHEAD < len {
-                    let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
-                    prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                        prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
                 }
-                chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
-            }
-        });
+            });
         let t_perm1 = t0.elapsed();
 
         let t0 = Instant::now();
@@ -417,18 +417,18 @@ where
         let mut w2 = Vec::with_capacity(n);
         unsafe { w2.set_len(n) };
         w2.par_chunks_mut(chunk_len)
-          .enumerate()
-          .for_each(|(chunk_idx, chunk)| {
-            let start = chunk_idx * chunk_len;
-            let len = chunk.len();
-            for i in 0..len {
-                if i + PREFETCH_AHEAD < len {
-                    let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
-                    prefetch_read(w1.as_ptr().wrapping_add(idx));
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                        prefetch_read(w1.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = w1[self.p2_vector[start + i]];
                 }
-                chunk[i] = w1[self.p2_vector[start + i]];
-            }
-        });
+            });
         drop(w1);
         let t_perm2 = t0.elapsed();
 

@@ -1,8 +1,8 @@
 use rand::Rng;
 
 use super::{IPSumcheck, TIPSumcheck};
-use crate::poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint};
 use crate::FieldElement;
+use crate::poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint};
 
 #[derive(Debug, Clone)]
 pub struct PermutationTransitionTables<F> {
@@ -380,7 +380,7 @@ impl<F: FieldElement> PermutationTransitionSumcheck<F> {
 #[cfg(test)]
 mod tests {
     use p3_koala_bear::KoalaBear;
-    use rand::{rngs::SmallRng, SeedableRng};
+    use rand::{SeedableRng, rngs::SmallRng};
 
     use super::*;
 
