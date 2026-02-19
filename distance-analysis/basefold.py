@@ -30,7 +30,6 @@ def compute_formula(q, c, d, lam):
     # Initialize n sequence. 
     # The loop runs for i = 1 to d.
     # It requires n_{i-1} and n_i.
-    # We assume the prompt "n_i = 1" sets the base case n_0 = 1.
     n_prev = c  # This corresponds to n_{0}
     
     for i in range(1, d + 1):

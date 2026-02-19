@@ -6,7 +6,7 @@ import argparse
 # ==========================================
 
 M31 = 2**31 - 1
-F128 = 2**128 - 1
+F256 = 2**256 - 1
 
 def log2(x):
     """Base-2 logarithm."""
@@ -64,7 +64,8 @@ PARS = [
     [0.211, 0.097, 1.616, 9, 21],
     [0.238, 0.1205, 1.72, 9, 12],
     [0.68, 0.59, 6, 16, 16],
-    [0.3, 0.2, 2, 11, 22]
+    [0.3, 0.2, 2, 10, 20],
+    [0.05, 0.01 * 1.1, 1.1, 6, 40]
 ]
 
 def convert_params(alpha, beta, r):
@@ -515,10 +516,10 @@ def main(alpha, beta, r, n, security):
 
     print("Trivial Alpha Range:", alpha_range_trivial(rho, delta))
 
-    range_secant = alpha_range(rho, delta, n_in, security, F128, secant=True)
+    range_secant = alpha_range(rho, delta, n_in, security, F256, secant=True)
     print("Alpha Range (Secant):", range_secant)
 
-    range_tangent = alpha_range(rho, delta, n_in, security, F128, secant=False)
+    range_tangent = alpha_range(rho, delta, n_in, security, F256, secant=False)
     print("Alpha Range (Tangent):", range_tangent)
 
     print(f"\nCalculating RowWeightA for n={n_in} with params {params}")
