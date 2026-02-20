@@ -180,6 +180,46 @@ impl<F: FieldElement> BasefoldCode<F> {
         codeword
     }
 
+    /// Sequential variant of [`Self::encode`], useful when parallelism is
+    /// orchestrated at a higher level.
+    pub fn encode_sequential(&self, msg: &[F]) -> Vec<F> {
+        assert_eq!(msg.len(), self.message_size);
+
+        // Step 1: repetition base code
+        let mut codeword = vec![F::ZERO; self.codeword_length];
+        let rate = self.rate;
+        for (i, chunk) in codeword.chunks_mut(rate).enumerate() {
+            let coeff = msg[i];
+            for slot in chunk.iter_mut() {
+                *slot = coeff;
+            }
+        }
+
+        // Step 2: butterfly mixing passes
+        let mut chunk_size = self.rate;
+        for i in 0..self.log_message_size {
+            let level = &self.table[i];
+            chunk_size <<= 1;
+            debug_assert_eq!(level.len(), chunk_size >> 1);
+
+            for chunk in codeword.chunks_mut(chunk_size) {
+                let half = chunk_size >> 1;
+                let (lo, hi) = chunk.split_at_mut(half);
+                for j in 0..half {
+                    let rhs = hi[j] * level[j];
+                    let lhs = lo[j];
+                    hi[j] = lhs - rhs;
+                    lo[j] = lhs + rhs;
+                }
+            }
+        }
+
+        // Step 3: bit-reversal permutation
+        reverse_index_bits_in_place(&mut codeword);
+
+        codeword
+    }
+
     /// Encode with per-iteration profiling: prints chunk size and elapsed time
     /// for each butterfly round, plus the repetition and bit-reversal steps.
     pub fn encode_profiled(&self, msg: &[F]) -> Vec<F> {

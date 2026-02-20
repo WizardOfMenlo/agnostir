@@ -6,8 +6,8 @@
 
 pub(crate) const BRAKEDOWN_ALPHA: f64 = 0.3;
 pub(crate) const BRAKEDOWN_INV_RATE: f64 = 2.0;
-pub(crate) const BRAKEDOWN_CN: usize = 11;
-pub(crate) const BRAKEDOWN_DN: usize = 22;
+pub(crate) const BRAKEDOWN_CN: usize = 10;
+pub(crate) const BRAKEDOWN_DN: usize = 20;
 pub(crate) const BRAKEDOWN_DELTA: f64 = 0.1;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -22,7 +22,7 @@ pub(crate) const EA_DELTA: f64 = 0.1;
 // Basefold
 // ═══════════════════════════════════════════════════════════════════════════
 
-pub(crate) const BASEFOLD_LOG_RATE: usize = 2;
+pub(crate) const BASEFOLD_LOG_RATE: usize = 1;
 
 /// Basefold distance (rate 1/2) as a function of log2(segment message size).
 pub(crate) fn basefold_2_delta(log_seg_msg_size: usize) -> f64 {
@@ -68,10 +68,10 @@ pub(crate) fn basefold_4_delta(log_seg_msg_size: usize) -> f64 {
 // ERA (Tensor-Brakedown base code)
 // ═══════════════════════════════════════════════════════════════════════════
 
-pub(crate) const ERA_REPETITION: usize = 6;
+pub(crate) const ERA_REPETITION: usize = 4;
 
 /// ERA inner-Brakedown parameters indexed by log2(k)
-pub(crate) fn era_inner_params(k_log: u32) -> (f64, f64, usize, usize) {
+pub(crate) fn era_inner_params_tensor(k_log: u32) -> (f64, f64, usize, usize) {
     match k_log {
         10 => (0.04, 1.1, 9, 16),
         11 => (0.045, 1.1, 9, 26),
@@ -81,8 +81,24 @@ pub(crate) fn era_inner_params(k_log: u32) -> (f64, f64, usize, usize) {
     }
 }
 
+/// ERA inner-Brakedown parameters indexed by log2(k)
+pub(crate) fn era_inner_params_normal(k_log: u32) -> (f64, f64, usize, usize) {
+    (0.05, 1.1, 6, 38)
+}
+
 /// ERA distance as a function of log2(segment message size).
-pub(crate) fn era_delta(log_seg_msg_size: usize) -> f64 {
+pub(crate) fn era_delta_r4(log_seg_msg_size: usize) -> f64 {
+    match log_seg_msg_size {
+        12 => 0.204,
+        13 => 0.226,
+        14 => 0.227,
+        _ if log_seg_msg_size >= 15 => 0.228,
+        other => panic!("no ERA delta for segment message size 2^{other}"),
+    }
+}
+
+/// ERA distance as a function of log2(segment message size).
+pub(crate) fn era_delta_r6(log_seg_msg_size: usize) -> f64 {
     match log_seg_msg_size {
         10 => 0.248,
         11 => 0.335,

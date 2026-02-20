@@ -185,6 +185,106 @@ where
             });
     }
 
+    fn prefix_sum_add_only_in_place(values: &mut [F], chunk_len: usize) {
+        if values.is_empty() {
+            return;
+        }
+
+        // Compute local prefix sums in parallel and collect each chunk's total.
+        let mut totals: Vec<F> = values
+            .par_chunks_mut(chunk_len)
+            .map(|chunk| {
+                let mut acc = F::ZERO;
+                for value in chunk.iter_mut() {
+                    acc += *value;
+                    *value = acc;
+                }
+                acc
+            })
+            .collect();
+
+        // Prefix-sum the chunk totals to get offsets.
+        let mut running = F::ZERO;
+        for total in totals.iter_mut() {
+            let tmp = *total;
+            *total = running;
+            running += tmp;
+        }
+
+        // Add the offsets back into each chunk.
+        values
+            .par_chunks_mut(chunk_len)
+            .zip(totals.into_par_iter())
+            .for_each(|(chunk, offset)| {
+                if !offset.is_zero() {
+                    Self::add_const_in_place(chunk, offset);
+                }
+            });
+    }
+
+    fn prefix_sum_in_place_sequential(values: &mut [F], weights: &[F], chunk_len: usize) {
+        if values.is_empty() {
+            return;
+        }
+        debug_assert_eq!(values.len(), weights.len());
+
+        let mut totals = Vec::with_capacity(values.len().div_ceil(chunk_len));
+        for (chunk, weights_chunk) in values.chunks_mut(chunk_len).zip(weights.chunks(chunk_len)) {
+            let mut acc = F::ZERO;
+            for (value, weight) in chunk.iter_mut().zip(weights_chunk.iter()) {
+                acc += *value * *weight;
+                *value = acc;
+            }
+            totals.push(acc);
+        }
+
+        let mut running = F::ZERO;
+        for total in &mut totals {
+            let tmp = *total;
+            *total = running;
+            running += tmp;
+        }
+
+        for (chunk, offset) in values.chunks_mut(chunk_len).zip(totals.into_iter()) {
+            if !offset.is_zero() {
+                for value in chunk.iter_mut() {
+                    *value += offset;
+                }
+            }
+        }
+    }
+
+    fn prefix_sum_add_only_in_place_sequential(values: &mut [F], chunk_len: usize) {
+        if values.is_empty() {
+            return;
+        }
+
+        let mut totals = Vec::with_capacity(values.len().div_ceil(chunk_len));
+        for chunk in values.chunks_mut(chunk_len) {
+            let mut acc = F::ZERO;
+            for value in chunk.iter_mut() {
+                acc += *value;
+                *value = acc;
+            }
+            totals.push(acc);
+        }
+
+        let mut running = F::ZERO;
+        for total in &mut totals {
+            let tmp = *total;
+            *total = running;
+            running += tmp;
+        }
+
+        for (chunk, offset) in values.chunks_mut(chunk_len).zip(totals.into_iter()) {
+            if !offset.is_zero() {
+                for value in chunk.iter_mut() {
+                    *value += offset;
+                }
+            }
+        }
+    }
+
     pub fn encode_era(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
@@ -230,6 +330,237 @@ where
             });
         drop(w1); // free round-1 buffer early
         Self::prefix_sum_in_place(&mut w2, &self.m2_vector, chunk_len);
+
+        w2
+    }
+
+    /// Sequential variant of [`Self::encode_era`], intended for use when
+    /// parallelism is managed at a higher level.
+    pub fn encode_era_sequential(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let n = self.block_length;
+        let base_encoding = self.base_code.encode(msg);
+        let base_bl = self.base_code.block_length();
+        let chunk_len = Self::chunk_len(self.block_length);
+
+        let mut w1 = Vec::with_capacity(n);
+        unsafe { w1.set_len(n) };
+        for (chunk_idx, chunk) in w1.chunks_mut(chunk_len).enumerate() {
+            let start = chunk_idx * chunk_len;
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                    prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                }
+                chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
+            }
+        }
+        Self::prefix_sum_in_place_sequential(&mut w1, &self.m1_vector, chunk_len);
+
+        let mut w2 = Vec::with_capacity(n);
+        unsafe { w2.set_len(n) };
+        for (chunk_idx, chunk) in w2.chunks_mut(chunk_len).enumerate() {
+            let start = chunk_idx * chunk_len;
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                    prefetch_read(w1.as_ptr().wrapping_add(idx));
+                }
+                chunk[i] = w1[self.p2_vector[start + i]];
+            }
+        }
+        drop(w1);
+        Self::prefix_sum_in_place_sequential(&mut w2, &self.m2_vector, chunk_len);
+
+        w2
+    }
+
+    /// Conjectured ERA variant:
+    /// base encoding -> repeat+permute -> prefix sum (add only) -> permute ->
+    /// prefix sum (add only).
+    pub fn encode_conjectured_era(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let n = self.block_length;
+        let base_encoding = self.base_code.encode(msg);
+        let base_bl = self.base_code.block_length();
+        let chunk_len = Self::chunk_len(self.block_length);
+
+        // Round 1: fused repetition + permutation gather, then add-only prefix sum
+        let mut w1 = Vec::with_capacity(n);
+        unsafe { w1.set_len(n) };
+        w1.par_chunks_mut(chunk_len)
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                        prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
+                }
+            });
+        Self::prefix_sum_add_only_in_place(&mut w1, chunk_len);
+
+        // Round 2: permutation gather, then add-only prefix sum
+        let mut w2 = Vec::with_capacity(n);
+        unsafe { w2.set_len(n) };
+        w2.par_chunks_mut(chunk_len)
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                        prefetch_read(w1.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = w1[self.p2_vector[start + i]];
+                }
+            });
+        drop(w1);
+        Self::prefix_sum_add_only_in_place(&mut w2, chunk_len);
+
+        w2
+    }
+
+    /// Sequential variant of [`Self::encode_conjectured_era`], intended for
+    /// use when parallelism is managed at a higher level.
+    pub fn encode_conjectured_era_sequential(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let n = self.block_length;
+        let base_encoding = self.base_code.encode(msg);
+        let base_bl = self.base_code.block_length();
+        let chunk_len = Self::chunk_len(self.block_length);
+
+        let mut w1 = Vec::with_capacity(n);
+        unsafe { w1.set_len(n) };
+        for (chunk_idx, chunk) in w1.chunks_mut(chunk_len).enumerate() {
+            let start = chunk_idx * chunk_len;
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                    prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                }
+                chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
+            }
+        }
+        Self::prefix_sum_add_only_in_place_sequential(&mut w1, chunk_len);
+
+        let mut w2 = Vec::with_capacity(n);
+        unsafe { w2.set_len(n) };
+        for (chunk_idx, chunk) in w2.chunks_mut(chunk_len).enumerate() {
+            let start = chunk_idx * chunk_len;
+            let len = chunk.len();
+            for i in 0..len {
+                if i + PREFETCH_AHEAD < len {
+                    let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                    prefetch_read(w1.as_ptr().wrapping_add(idx));
+                }
+                chunk[i] = w1[self.p2_vector[start + i]];
+            }
+        }
+        drop(w1);
+        Self::prefix_sum_add_only_in_place_sequential(&mut w2, chunk_len);
+
+        w2
+    }
+
+    /// Same as [`Self::encode_conjectured_era`] but prints a table with
+    /// per-step timings.
+    pub fn encode_conjectured_profiled(&self, msg: &[C::Alphabet]) -> Vec<C::Alphabet> {
+        debug_assert!(self.validate_parameters());
+
+        let n = self.block_length;
+        let chunk_len = Self::chunk_len(self.block_length);
+
+        let t0 = Instant::now();
+        let base_encoding = self.base_code.encode(msg);
+        let t_base = t0.elapsed();
+        let base_bl = self.base_code.block_length();
+
+        // Round 1: fused repetition + permutation gather, then add-only prefix sum
+        let t0 = Instant::now();
+        // SAFETY: every element is written by the gather before being read.
+        let mut w1 = Vec::with_capacity(n);
+        unsafe { w1.set_len(n) };
+        w1.par_chunks_mut(chunk_len)
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p1_vector[start + i + PREFETCH_AHEAD] % base_bl;
+                        prefetch_read(base_encoding.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = base_encoding[self.p1_vector[start + i] % base_bl];
+                }
+            });
+        let t_perm1 = t0.elapsed();
+
+        let t0 = Instant::now();
+        Self::prefix_sum_add_only_in_place(&mut w1, chunk_len);
+        let t_prefix1 = t0.elapsed();
+
+        // Round 2: permutation gather, then add-only prefix sum
+        let t0 = Instant::now();
+        // SAFETY: every element is written by the gather before being read.
+        let mut w2 = Vec::with_capacity(n);
+        unsafe { w2.set_len(n) };
+        w2.par_chunks_mut(chunk_len)
+            .enumerate()
+            .for_each(|(chunk_idx, chunk)| {
+                let start = chunk_idx * chunk_len;
+                let len = chunk.len();
+                for i in 0..len {
+                    if i + PREFETCH_AHEAD < len {
+                        let idx = self.p2_vector[start + i + PREFETCH_AHEAD];
+                        prefetch_read(w1.as_ptr().wrapping_add(idx));
+                    }
+                    chunk[i] = w1[self.p2_vector[start + i]];
+                }
+            });
+        drop(w1);
+        let t_perm2 = t0.elapsed();
+
+        let t0 = Instant::now();
+        Self::prefix_sum_add_only_in_place(&mut w2, chunk_len);
+        let t_prefix2 = t0.elapsed();
+
+        let total = t_base + t_perm1 + t_prefix1 + t_perm2 + t_prefix2;
+
+        eprintln!();
+        eprintln!("┌──────────────────────────┬────────────┬─────────┐");
+        eprintln!("│ Step                     │       Time │   % Tot │");
+        eprintln!("├──────────────────────────┼────────────┼─────────┤");
+        for (label, dur) in [
+            ("1. Base-code encode", t_base),
+            ("2a. Rep+Perm   (round 1)", t_perm1),
+            ("2b. Prefix sum (round 1)", t_prefix1),
+            ("3a. Perm       (round 2)", t_perm2),
+            ("3b. Prefix sum (round 2)", t_prefix2),
+        ] {
+            let pct = dur.as_secs_f64() / total.as_secs_f64() * 100.0;
+            eprintln!(
+                "│ {label:<24} │ {:>8.3} ms │ {:>5.1} % │",
+                dur.as_secs_f64() * 1e3,
+                pct
+            );
+        }
+        eprintln!("├──────────────────────────┼────────────┼─────────┤");
+        eprintln!(
+            "│ Total                    │ {:>8.3} ms │ 100.0 % │",
+            total.as_secs_f64() * 1e3
+        );
+        eprintln!("└──────────────────────────┴────────────┴─────────┘");
 
         w2
     }

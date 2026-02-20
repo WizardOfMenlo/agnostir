@@ -39,10 +39,10 @@
 
 use rand::Rng;
 
-use super::claims::{split_claim_ip, split_claim_tip, SplitIpClaim, SplitTipClaim};
-use super::oracles::{split_and_encode, SplitEncoding};
+use super::claims::{SplitIpClaim, SplitTipClaim, split_claim_ip, split_claim_tip};
+use super::oracles::{SplitEncoding, split_and_encode};
 use super::sumcheck::{
-    build_permutation_transition_tables, PermutationTransitionSumcheck, TIPSumcheck,
+    PermutationTransitionSumcheck, TIPSumcheck, build_permutation_transition_tables,
 };
 use crate::poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint};
 use crate::{ErrorCorrectingCode, FieldElement};
@@ -2289,7 +2289,7 @@ where
 #[cfg(test)]
 mod tests {
     use p3_koala_bear::KoalaBear;
-    use rand::{rngs::SmallRng, SeedableRng};
+    use rand::{SeedableRng, rngs::SmallRng};
 
     use super::*;
     use crate::poly_utils::{evals::EvaluationsList, multilinear::MultilinearPoint};
@@ -3904,8 +3904,8 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "base-code sumcheck claim does not match sigma_code_b_at_r_x")]
-    fn test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_base_code_generator_matrix(
-    ) {
+    fn test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_base_code_generator_matrix()
+     {
         let era_code = IdentityCode::<KoalaBear>::new(4);
         let base_code = IdentityCode::<KoalaBear>::new(4);
         let output_code = IdentityCode::<KoalaBear>::new(2);
