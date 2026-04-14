@@ -1,49 +1,121 @@
-import numpy as np
+import math
 
-LOG_FIELD_SIZE = 256
+# --- 1. DEFINED VARIABLES ---
+
+# General parameters
 LOG_HASH_SIZE = 256
+LOG_FIELD_SIZE = 256
+lam = 100
 
-def merkle_tree_size(queries, n, interleaving_factor):
-    
-    # for the first log queries levels of the Merkle tree, just return all the nodes 
-    # (-2 because the root is already in the commitment)
-    top_levels = np.log2(queries)
-    proof_size_top_levels = LOG_HASH_SIZE * (queries - 2)
+# IOPP parameters
+eta = 2**4
+k = 2**26
+k_prime = 2**26 # 2**24
+n_last = 2**12
+log_n_last = math.ceil(math.log2(n_last))
+log_k_prime = math.ceil(math.log2(k_prime))
 
-    # siblings for remaining levels of the Merkle tree
-    proof_size_siblings = LOG_HASH_SIZE * (n - top_levels) * queries
+# Initial ERA code parameters
+r = 4
+b = 1.21
+delta_era = 0.221
+n_b = b * k
+n_era = r * b * k
+eps_era = 1 - (1 - delta_era)**(1/3)
+indices_era = math.ceil(-lam / math.log2(1 - eps_era))
 
-    # leaves
-    proof_size_leaves = LOG_FIELD_SIZE * (queries * interleaving_factor)
+# Basefold parameters
+delta_bf = 0.158 # 0.842
+inv_rate_bf = 2 # 16
+eps_bf = 1 - (1 - delta_bf)**(1/3)
+indices_bf = math.ceil(-lam / math.log2(1 - eps_bf))
 
-    return proof_size_top_levels + proof_size_siblings + proof_size_leaves
+# --- 2. ORACLE PARAMETERS (CEILED INDEPENDENTLY) ---
+ell_m = math.ceil(k / k_prime)
+ell_b = math.ceil(b * k / k_prime)
+ell_g = math.ceil(math.sqrt(b) * k / k_prime)
+ell_era = math.ceil(r * b * k / k_prime)
 
-def num_queries(secparam, eps):
+# --- 3. FIELD ELEMENTS: STARTING IOR ---
+# starting_elements = indices_era * eta + 3 * math.ceil(math.log2(k * eta))
+starting_elements = indices_bf * eta
 
-    denom = np.log2(1 - eps)
-    return -secparam / denom
+# --- 4. FIELD ELEMENTS: BASE PROOF ---
+log_n_era_ceil = math.ceil(math.log2(n_era))
 
-def total_proof_size(secparam, delta, n, interleaving_factor, ud=False):
+term_1 = (2 * log_n_era_ceil + 1) * log_n_era_ceil
+term_2_5 = 5 * ell_m + 4 * ell_g + 4 * ell_b + 20 * ell_era
+term_6_8 = 8 + 3 * math.log2(k) + 4 * math.log2(k_prime)
 
-    if ud:
-        eps = delta / 3
-    else:
-        eps = 1 - (1 - delta) ** (1/3)
+codeswitch_elements = term_1 + term_2_5 + term_6_8
 
-    q = num_queries(secparam, eps)
-    return merkle_tree_size(q, n, interleaving_factor)
+# --- 5. FIELD ELEMENTS: ORACLES ---
+indexer_oracles = ell_g + 3 * ell_era
+indexer_elements = indexer_oracles * indices_bf
 
+online_oracles = ell_m + ell_b + 2 * ell_era
+online_elements = online_oracles * indices_bf
 
-if __name__ == "__main__":
-    import argparse
+# --- 6. BASEFOLD IOPP FIELD ELEMENTS ---
+rounds = log_k_prime - log_n_last
+sumcheck_elements = rounds * 3
+queried_elements = rounds * 3 * indices_bf
+base_case_elements = n_last
+total_basefold_elements = sumcheck_elements + queried_elements + base_case_elements
 
-    parser = argparse.ArgumentParser(description="Estimate proof size for Merkle-based commitment")
-    parser.add_argument("-n", type=int, required=True, help="log2 of the codeword length")
-    parser.add_argument("-eta", "--interleaving-factor", type=int, required=True, help="Interleaving factor (number of rows)")
-    parser.add_argument("-delta", type=float, required=True, help="Distance of the code")
-    parser.add_argument("--secparam", type=int, default=100, help="Security parameter (default: 100)")
-    parser.add_argument("--ud", action="store_true", help="Use UD distance instead of standard distance")
-    args = parser.parse_args()
+# --- 7. HASH SIZES (MERKLE TREES) ---
+def merkle_tree_hashes(queries, n_depth):
+    top_levels = math.log2(queries)
+    hashes_top = queries - 2
+    hashes_sib = math.ceil((n_depth - top_levels) * queries)
+    return hashes_top, hashes_sib
 
-    bits = total_proof_size(args.secparam, args.delta, args.n, args.interleaving_factor, ud=args.ud)
-    print(f"proof size = {bits / 8 / 1024:.2f} KiB")
+# Tree A (Starting IOR)
+top_A, sib_A = merkle_tree_hashes(indices_era, math.ceil(math.log2(n_era)))
+total_hashes_A = top_A + sib_A
+
+# Trees B (Codeswitch IOR)
+top_B, sib_B = merkle_tree_hashes(indices_bf, math.ceil(math.log2(k_prime * inv_rate_bf)))
+total_hashes_B = 2 * (top_B + sib_B)
+
+# Trees C (Basefold IOPP)
+top_C_total = 0
+sib_C_total = 0
+for n in range(log_n_last+1, log_k_prime+1):
+    top_C, sib_C = merkle_tree_hashes(indices_bf, n + math.ceil(math.log2(inv_rate_bf)) - 1) # The -1 is coz the oracles are are folded in half and then stacked
+    top_C_total += top_C
+    sib_C_total += sib_C
+total_hashes_C = 2 * (top_C_total + sib_C_total)
+
+# --- 8. GRAND TOTALS ---
+# total_field_elements = starting_elements + codeswitch_elements + indexer_elements + online_elements + total_basefold_elements
+total_field_elements = starting_elements + total_basefold_elements
+field_kb = (total_field_elements * LOG_FIELD_SIZE) / 8 / 1000
+
+# total_hashes = total_hashes_A + total_hashes_B + total_hashes_C
+total_hashes = total_hashes_C
+hash_kb = (total_hashes * LOG_HASH_SIZE) / 8 / 1000
+
+grand_total_kb = field_kb + hash_kb
+grand_total_mb = grand_total_kb / 1000
+
+print("--- ORACLE PARAMETERS ---")
+print(f"ell_m: {ell_m}, ell_b: {ell_b}, ell_g: {ell_g}, ell_era: {ell_era}")
+
+print("\n--- FIELD ELEMENTS ---")
+print(f"Starting IOR Elements: {starting_elements}")
+print(f"Codeswitch Elements: {codeswitch_elements}")
+print(f"Indexer Elements: {indexer_elements} ({indexer_oracles} oracles * {indices_bf} indices)")
+print(f"Online Elements: {online_elements} ({online_oracles} oracles * {indices_bf} indices)")
+print(f"Basefold Elements: {total_basefold_elements}")
+print(f"Total Field Elements: {total_field_elements} ({field_kb:.3f} KB)")
+
+print("\n--- HASH COMPONENTS (CEILED) ---")
+print(f"Tree A Hashes: {total_hashes_A} (Starting IOR)")
+print(f"Trees B Hashes: {total_hashes_B} (Codeswitch IOR)")
+print(f"Trees C Hashes: {total_hashes_C} (Basefold IOPP)")
+print(f"Total Hashes: {total_hashes} ({hash_kb:.3f} KB)")
+
+print("\n--- GRAND TOTAL ---")
+print(f"Total Proof Size: {grand_total_kb:.3f} KB")
+print(f"Total Proof Size: {grand_total_mb:.3f} MB")
