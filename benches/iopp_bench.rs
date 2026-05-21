@@ -1,8 +1,8 @@
 mod iopp_params;
 
 use agnostir::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
-    ErrorCorrectingCode, FieldElement, blake3_merkle_commit_interleaved,
+    BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode, ErrorCorrectingCode,
+    FieldElement, blake3_merkle_commit_interleaved,
     blake3_merkle_interleaved_leaves, blake3_merkle_precompute_levels,
     blake3_merkle_root_from_levels,
     interleaved_iopp::{prover_first_round, prover_second_round, verifier_challenge, verify},
@@ -46,6 +46,30 @@ fn build_message(message_size: usize, rng: &mut impl Rng) -> Vec<SecpScalar> {
     (0..message_size).map(|_| SecpScalar::random(rng)).collect()
 }
 
+fn build_era_code(
+    rng: &mut impl Rng,
+    segment_msg_size: usize,
+) -> EraCode<BrakedownCode<SecpScalar>, SecpScalar> {
+    let (alpha, inverse_rate, cn, dn) = era_inner_params_normal(segment_msg_size.ilog2());
+    let base_code = BrakedownCode::<SecpScalar>::new(
+        segment_msg_size,
+        BrakedownParams {
+            alpha,
+            inverse_rate,
+            cn,
+            dn,
+        },
+        rng,
+    );
+    let bl_seg = base_code.block_length() * ERA_REPETITION;
+    let p1 = random_permutation(rng, bl_seg);
+    let p2 = random_permutation(rng, bl_seg);
+    let m1: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(rng)).collect();
+    let m2: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(rng)).collect();
+
+    EraCode::new(base_code, ERA_REPETITION, p1, p2, m1, m2)
+}
+
 fn encode_segments_conditional<EncodeFn>(
     input: &[SecpScalar],
     seg_count: usize,
@@ -75,11 +99,9 @@ fn bench_iopp(c: &mut Criterion) {
     let use_sequential_encode = current_num_threads() < seg_count;
     let bd_delta = BRAKEDOWN_DELTA;
     let ea_delta = EA_DELTA;
-    let bf_delta = basefold_2_delta(log_seg_msg);
     let er_delta = era_delta_r4(log_seg_msg);
     let brakedown_num_queries = num_queries_from_delta(SECPARAM, bd_delta);
     let ea_num_queries = num_queries_from_delta(SECPARAM, ea_delta);
-    let basefold_num_queries = num_queries_from_delta(SECPARAM, bf_delta);
     let era_num_queries = num_queries_from_delta(SECPARAM, er_delta);
     let run_all_codes = !env_bool("IOPP_ONLY_CONJECTURED_ERA");
     let include_conjectured_era = env_bool("IOPP_INCLUDE_CONJECTURED_ERA") || !run_all_codes;
@@ -109,35 +131,7 @@ fn bench_iopp(c: &mut Criterion) {
             },
             &mut SmallRng::seed_from_u64(0),
         );
-        let bf_code = BasefoldCode::<SecpScalar>::new(
-            seg_msg_size,
-            BasefoldParams {
-                log_rate: BASEFOLD_LOG_RATE,
-            },
-            &mut SmallRng::seed_from_u64(0),
-        );
-
-        let (a, ir, cn, dn) = era_inner_params_normal(seg_msg_size.ilog2());
-        let base_tmp = BrakedownCode::<SecpScalar>::new(
-            seg_msg_size,
-            BrakedownParams {
-                alpha: a,
-                inverse_rate: ir,
-                cn,
-                dn,
-            },
-            &mut SmallRng::seed_from_u64(0),
-        );
-        let bl_seg_tmp = base_tmp.block_length() * ERA_REPETITION;
-        let p1 = random_permutation(&mut SmallRng::seed_from_u64(0), bl_seg_tmp);
-        let p2 = random_permutation(&mut SmallRng::seed_from_u64(1), bl_seg_tmp);
-        let m1: Vec<SecpScalar> = (0..bl_seg_tmp)
-            .map(|_| SecpScalar::random(&mut SmallRng::seed_from_u64(2)))
-            .collect();
-        let m2: Vec<SecpScalar> = (0..bl_seg_tmp)
-            .map(|_| SecpScalar::random(&mut SmallRng::seed_from_u64(3)))
-            .collect();
-        let era_tmp = EraCode::new(base_tmp, ERA_REPETITION, p1, p2, m1, m2);
+        let era_tmp = build_era_code(&mut SmallRng::seed_from_u64(0), seg_msg_size);
 
         eprintln!("  Proof sizes (k={k}, eta={eta}, seg_msg=2^{log_seg_msg}):");
         eprintln!(
@@ -152,11 +146,6 @@ fn bench_iopp(c: &mut Criterion) {
                 proof_size_kib(ea_code_tmp.codeword_length(), k, eta, ea_delta)
             );
         }
-        eprintln!(
-            "    Basefold   delta={bf_delta:.3}  q={}  proof={:.1} KiB",
-            basefold_num_queries,
-            proof_size_kib(bf_code.codeword_length(), k, eta, bf_delta)
-        );
         eprintln!(
             "    ERA        delta={er_delta:.3}  q={}  proof={:.1} KiB",
             era_num_queries,
@@ -340,123 +329,8 @@ fn bench_iopp(c: &mut Criterion) {
             }
         }
 
-        // ── Basefold ──
-        let basefold_code = BasefoldCode::<SecpScalar>::new(
-            seg_msg_size,
-            BasefoldParams {
-                log_rate: BASEFOLD_LOG_RATE,
-            },
-            &mut rng,
-        );
-        let basefold_bl = basefold_code.codeword_length();
-
-        c.bench_function("basefold_commit", |b| {
-            let msg = Arc::clone(&msg);
-            b.iter_batched(
-                || (*msg).clone(),
-                |input| {
-                    let segments =
-                        encode_segments_conditional(&input, seg_count, seg_msg_size, |segment| {
-                            if use_sequential_encode {
-                                basefold_code.encode_sequential(segment)
-                            } else {
-                                basefold_code.encode(segment)
-                            }
-                        });
-                    blake3_merkle_commit_interleaved(&segments)
-                },
-                BatchSize::LargeInput,
-            );
-        });
-
-        let basefold_segments: Arc<Vec<Vec<SecpScalar>>> = Arc::new(encode_segments_conditional(
-            msg.as_ref(),
-            seg_count,
-            seg_msg_size,
-            |segment| {
-                if use_sequential_encode {
-                    basefold_code.encode_sequential(segment)
-                } else {
-                    basefold_code.encode(segment)
-                }
-            },
-        ));
-        let basefold_leaves = blake3_merkle_interleaved_leaves(&basefold_segments);
-        let basefold_levels = blake3_merkle_precompute_levels(&basefold_leaves);
-        let basefold_root = blake3_merkle_root_from_levels(&basefold_levels);
-
-        {
-            let mut ch_rng = SmallRng::seed_from_u64(999);
-            let basefold_challenge =
-                verifier_challenge(basefold_bl, basefold_num_queries, &mut ch_rng);
-
-            c.bench_function("basefold_eval_prover", |b| {
-                let msg = Arc::clone(&msg);
-                let segments = Arc::clone(&basefold_segments);
-                let z = z.clone();
-                b.iter(|| {
-                    let first_msg = prover_first_round(&msg, &z, eta, k);
-                    let _second_msg = prover_second_round(
-                        &segments,
-                        &basefold_leaves,
-                        &basefold_levels,
-                        &basefold_challenge,
-                        eta,
-                    );
-                    first_msg
-                });
-            });
-
-            let first_msg = prover_first_round(&msg, &z, eta, k);
-            let second_msg = prover_second_round(
-                &basefold_segments,
-                &basefold_leaves,
-                &basefold_levels,
-                &basefold_challenge,
-                eta,
-            );
-
-            c.bench_function("basefold_verify", |b| {
-                let z = z.clone();
-                b.iter(|| {
-                    assert!(verify(
-                        &z,
-                        eta,
-                        k,
-                        &basefold_root,
-                        &first_msg,
-                        &basefold_challenge,
-                        &second_msg,
-                        |m| {
-                            if use_sequential_encode {
-                                basefold_code.encode_sequential(m)
-                            } else {
-                                basefold_code.encode(m)
-                            }
-                        }
-                    ));
-                });
-            });
-        }
-
         // ── ERA ──
-        let (alpha, inverse_rate, cn, dn) = era_inner_params_normal(seg_msg_size.ilog2());
-        let base_code = BrakedownCode::<SecpScalar>::new(
-            seg_msg_size,
-            BrakedownParams {
-                alpha,
-                inverse_rate,
-                cn,
-                dn,
-            },
-            &mut rng,
-        );
-        let bl_seg = base_code.block_length() * ERA_REPETITION;
-        let p1 = random_permutation(&mut rng, bl_seg);
-        let p2 = random_permutation(&mut rng, bl_seg);
-        let m1: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(&mut rng)).collect();
-        let m2: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(&mut rng)).collect();
-        let era_code = EraCode::new(base_code, ERA_REPETITION, p1, p2, m1, m2);
+        let era_code = build_era_code(&mut rng, seg_msg_size);
         let era_bl = era_code.block_length();
 
         c.bench_function("era_commit", |b| {
@@ -547,23 +421,7 @@ fn bench_iopp(c: &mut Criterion) {
 
     if include_conjectured_era {
         // ── Conjectured ERA (no multiplication in prefix rounds) ──
-        let (alpha, inverse_rate, cn, dn) = era_inner_params_normal(seg_msg_size.ilog2());
-        let base_code = BrakedownCode::<SecpScalar>::new(
-            seg_msg_size,
-            BrakedownParams {
-                alpha,
-                inverse_rate,
-                cn,
-                dn,
-            },
-            &mut rng,
-        );
-        let bl_seg = base_code.block_length() * ERA_REPETITION;
-        let p1 = random_permutation(&mut rng, bl_seg);
-        let p2 = random_permutation(&mut rng, bl_seg);
-        let m1: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(&mut rng)).collect();
-        let m2: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(&mut rng)).collect();
-        let conjectured_era_code = EraCode::new(base_code, ERA_REPETITION, p1, p2, m1, m2);
+        let conjectured_era_code = build_era_code(&mut rng, seg_msg_size);
         let conjectured_era_bl = conjectured_era_code.block_length();
 
         c.bench_function("conjectured_era_commit", |b| {

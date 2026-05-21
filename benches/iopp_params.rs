@@ -35,7 +35,7 @@ pub(crate) fn basefold_2_delta(log_seg_msg_size: usize) -> f64 {
         15 => 0.219,
         16 => 0.213,
         17 => 0.208,
-        18 => 0.203,
+        18 => 0.202_586_068_445_465_9,
         19 => 0.197,
         20 => 0.192,
         21 => 0.186,
@@ -55,7 +55,7 @@ pub(crate) fn basefold_4_delta(log_seg_msg_size: usize) -> f64 {
         15 => 0.589,
         16 => 0.585,
         17 => 0.581,
-        18 => 0.577,
+        18 => 0.577_307_210_185_305_6,
         19 => 0.573,
         20 => 0.569,
         21 => 0.565,
@@ -65,25 +65,29 @@ pub(crate) fn basefold_4_delta(log_seg_msg_size: usize) -> f64 {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ERA (Tensor-Brakedown base code)
+// ERA (Brakedown base code)
 // ═══════════════════════════════════════════════════════════════════════════
 
 pub(crate) const ERA_REPETITION: usize = 4;
 
-/// ERA inner-Brakedown parameters indexed by log2(k)
+/// ERA inner-Brakedown parameters indexed by log2(inner message size).
 pub(crate) fn era_inner_params_tensor(k_log: u32) -> (f64, f64, usize, usize) {
     match k_log {
+        6 => (0.03, 1.1, 1, 1),
+        7 => (0.03, 1.1, 1, 1),
+        8 => (0.03, 1.1, 3, 6),
+        9 => (0.04, 1.1, 7, 12),
         10 => (0.04, 1.1, 9, 16),
-        11 => (0.045, 1.1, 9, 26),
-        12 => (0.05, 1.1, 7, 37),
-        _ if k_log >= 13 => (0.05, 1.1, 6, 40),
+        11 => (0.045, 1.08, 8, 26),
+        12 => (0.05, 1.08, 7, 41),
+        13 => (0.05, 1.08, 6, 47),
         other => panic!("no tuned ERA params for segment message size 2^{other}"),
     }
 }
 
 /// ERA inner-Brakedown parameters indexed by log2(k)
-pub(crate) fn era_inner_params_normal(k_log: u32) -> (f64, f64, usize, usize) {
-    (0.05, 1.1, 6, 38)
+pub(crate) fn era_inner_params_normal(_k_log: u32) -> (f64, f64, usize, usize) {
+    (0.04, 1.05, 5, 42)
 }
 
 /// ERA distance as a function of log2(segment message size).
@@ -92,6 +96,7 @@ pub(crate) fn era_delta_r4(log_seg_msg_size: usize) -> f64 {
         12 => 0.204,
         13 => 0.226,
         14 => 0.227,
+        18 => 0.224_403_355_646_751_46,
         _ if log_seg_msg_size >= 15 => 0.228,
         other => panic!("no ERA delta for segment message size 2^{other}"),
     }
