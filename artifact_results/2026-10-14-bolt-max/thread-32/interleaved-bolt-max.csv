@@ -1,0 +1,2 @@
+code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted
+bolt-max,22,6,2025,32,0,19891,81920,6.290208,193.473084,968.344875,254.897292,39119368,32,true

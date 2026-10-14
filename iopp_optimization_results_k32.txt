@@ -1,0 +1,48 @@
+Distance table written to: precomputed_distances.txt
+Precomputed ERA entries: 364
+Precomputed Basefold entries: 112
+Fixed ERA stage 0 repetition: r=4
+Conjecture mode: OFF
+Eta exponent range: [4, 14] (eta in [2^4, 2^14])
+Feasible (k0_exp, eta_exp) pairs: (19, 13), (20, 12), (21, 11), (22, 10), (23, 9), (24, 8), (25, 7), (26, 6), (27, 5), (28, 4)
+k0 optimization: ON (constraint eta*k0 = 2^32)
+Derived oracle budget = budget_scale * (eta*k0) * era0_inv_rate = 1.000 * 4294967296 * 4.840000 = 20787641712.640 (using floor -> 20787641712)
+
+=== Optimization Results ===
+Oracle budget <= 20787641712 (~2^34.275) field elements
+  proof size: 4008.864 KB (4.008864 MB)
+  field elements in proof: 68366.000
+  hashes in proof: 56911.000
+  starting IOR contribution: field_elements=53216.000, hashes=16850, size=2242.112 KB (55.93% of proof)
+  total oracle length: 17179803648 (codeswitch=16106127360, basefold=1073676288)
+  num codeswitches: 1
+  eta: 64
+  k exponents: (26, 26)
+  k values: (67108864, 67108864)
+  eta * k0: 4294967296
+  basefold code: d=26, c=8, rate=0.125000, delta=0.739168, rounds=14
+  era stages:
+    stage 0: k=2^26, r=4, inv_rate=4.840000, rate=0.206612, delta=0.221817, log_block_length=28.275007
+  codeswitch contributions:
+    codeswitch 1: field_elements=6672.000, hashes=7042, oracle_length=16106127360
+  basefold IOPP contribution: field_elements=8478.000, hashes=33019, oracle_length=1073676288, queries=155, rounds=14
+
+=== Baseline (No Codeswitch) ===
+Oracle budget <= 20787641712 (~2^34.275) field elements
+  baseline proof size: 9846.560 KB (9.846560 MB)
+  field elements in proof: 82233.000
+  hashes in proof: 225472.000
+  starting IOR contribution: field_elements=40352.000, hashes=23527, size=2044.128 KB (20.76% of proof)
+  total oracle length: 536854528 (basefold only)
+  eta: 32
+  k0 exponent: 27
+  k0 value: 134217728
+  eta * k0: 4294967296
+  basefold code: d=27, c=2, rate=0.500000, delta=0.152454, rounds=15
+  basefold IOPP contribution: field_elements=41881.000, hashes=201945, oracle_length=536854528
+
+=== Best Params By Codeswitch Count ===
+Oracle budget <= 20787641712 (~2^34.275) field elements
+  codeswitches=1: proof=4008.864 KB, oracle=17179803648
+  codeswitches=2: skipped by current CLI range
+  codeswitches=3: skipped by current CLI range

@@ -1,227 +1,152 @@
-use std::time::Instant;
-
 use agnostir::{
-    BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement,
-    blake3_merkle_interleaved_leaves, blake3_merkle_precompute_levels,
-    blake3_merkle_root_from_levels,
-    interleaved_iopp::{prover_first_round, prover_second_round, verifier_challenge, verify},
-    random_permutation,
+    ErrorCorrectingCode,
+    interleaved_iopp::fs::{Parameters, prove, verify},
+    iopp_experiment::{
+        CodeKind, DEFAULT_ETA, DEFAULT_MESSAGE_LOG, DEFAULT_SEED, ExperimentConfig,
+        num_queries_from_delta,
+    },
+    proof::merkle::Commitment,
 };
-use ark_secp256k1::Fr as SecpScalar;
-use rand::{Rng, SeedableRng, rngs::SmallRng};
+use clap::Parser;
+use rayon::{current_num_threads, prelude::*};
+use std::{fs::OpenOptions, io::Write, path::PathBuf, time::Instant};
 
-// ---------------------------------------------------------------------------
-// Structs
-// ---------------------------------------------------------------------------
-
-/// Public parameters produced by setup.
-struct IoppParams {
-    era_code: EraCode<BrakedownCode<SecpScalar>, SecpScalar>,
-    k: usize,           // log2 of total message length (2^k field elements)
-    eta: usize,         // interleaving factor (rows = 2^eta)
-    num_queries: usize, // number of random column queries for proximity test
-}
-
-/// Commitment output from the prover.
-struct IoppCommitment {
-    root: [u8; 32],
-    segments: Vec<Vec<SecpScalar>>,
-    merkle_leaves: Vec<[u8; 32]>,
-    merkle_levels: Vec<Vec<[u8; 32]>>,
-}
-
-/// Build ERA code with tuned Brakedown parameters (from compare_codes bench).
-///
-/// `k` is log2 of the total message length.  The message has `2^k` field
-/// elements, split into `2^eta` rows of `2^{k-eta}` each.
-fn setup(
-    k: usize,
-    repetition: usize,
+/// Canonical Fiat–Shamir interleaved IOPP benchmark. Times include proof transport.
+#[derive(Debug, Parser)]
+struct Args {
+    #[arg(long, value_enum, default_value_t = CodeKind::Era)]
+    code: CodeKind,
+    #[arg(long, default_value_t = DEFAULT_MESSAGE_LOG)]
+    message_log: usize,
+    #[arg(long, default_value_t = DEFAULT_ETA)]
     eta: usize,
-    num_queries: usize,
-    rng: &mut impl Rng,
-) -> IoppParams {
-    assert!(k > eta, "k must be greater than eta");
+    #[arg(long, default_value_t = DEFAULT_SEED)]
+    seed: u64,
+    /// Override the conditional query model; this is not security calibration.
+    #[arg(long)]
+    queries: Option<usize>,
+    /// Explicit Rayon worker count; otherwise use RAYON_NUM_THREADS.
+    #[arg(long)]
+    threads: Option<usize>,
+    /// Number of independent measured commit/prove/verify runs.
+    #[arg(long, default_value_t = 3)]
+    samples: usize,
+    /// Untimed warmup runs before collecting samples.
+    #[arg(long, default_value_t = 1)]
+    warmups: usize,
+    /// Write the last serialized proof to a new file (never overwrite).
+    #[arg(long)]
+    proof_out: Option<PathBuf>,
+    /// Print machine-readable CSV on stdout, diagnostics on stderr.
+    #[arg(long)]
+    csv: bool,
+}
 
-    let segment_msg_size = 1usize << (k - eta);
-
-    // Brakedown parameters tuned per segment message size.
-    let (alpha, inverse_rate, cn, dn) = match (k - eta) as u32 {
-        12 => (0.03, 1.08, 1, 1),
-        14 => (0.03, 1.08, 1, 1),
-        16 => (0.03, 1.08, 3, 6),
-        18 => (0.04, 1.08, 7, 12),
-        20 => (0.04, 1.08, 9, 16),
-        22 => (0.045, 1.08, 8, 26),
-        24 => (0.05, 1.08, 7, 41),
-        26 => (0.05, 1.08, 6, 47),
-        other => panic!("no tuned params for segment_msg_size=2^{other}"),
+fn main() -> Result<(), String> {
+    let args = Args::parse();
+    if args.samples == 0 || args.threads == Some(0) {
+        return Err("samples and threads must be positive".into());
+    }
+    if let Some(threads) = args.threads {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()
+            .map_err(|e| e.to_string())?;
+    }
+    let config = ExperimentConfig {
+        message_log: args.message_log,
+        eta: args.eta,
+        seed: args.seed,
     };
-
-    let base_code = BrakedownCode::<SecpScalar>::new(
-        segment_msg_size,
-        BrakedownParams {
-            alpha,
-            inverse_rate,
-            cn,
-            dn,
-        },
-        rng,
-    );
-
-    let block_length_segment = base_code.block_length() * repetition;
-
-    let p1 = random_permutation(rng, block_length_segment);
-    let p2 = random_permutation(rng, block_length_segment);
-    let m1: Vec<SecpScalar> = (0..block_length_segment)
-        .map(|_| SecpScalar::random(rng))
-        .collect();
-    let m2: Vec<SecpScalar> = (0..block_length_segment)
-        .map(|_| SecpScalar::random(rng))
-        .collect();
-
-    let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
-
-    IoppParams {
-        era_code,
-        k,
-        eta,
-        num_queries,
+    config.validate(args.code)?;
+    let delta = args.code.assumed_distance(config.message_log - config.eta);
+    let queries = args
+        .queries
+        .unwrap_or_else(|| num_queries_from_delta(delta));
+    if queries == 0 || queries > 1 << 20 {
+        return Err("queries must be in 1..=1048576".into());
     }
-}
-
-/// Encode and Merkle-commit an interleaved message.
-fn commit(params: &IoppParams, message: &[SecpScalar]) -> IoppCommitment {
-    let rows = 1usize << params.eta;
-    let block_length = params.era_code.block_length();
-
-    let encoded = params.era_code.encode_interleaved(message, params.eta);
-
-    let segments: Vec<Vec<SecpScalar>> = (0..rows)
-        .map(|r| encoded[r * block_length..(r + 1) * block_length].to_vec())
-        .collect();
-
-    let merkle_leaves = blake3_merkle_interleaved_leaves(&segments);
-    let merkle_levels = blake3_merkle_precompute_levels(&merkle_leaves);
-    let root = blake3_merkle_root_from_levels(&merkle_levels);
-
-    IoppCommitment {
-        root,
-        segments,
-        merkle_leaves,
-        merkle_levels,
+    let start = Instant::now();
+    let code = config.build_code(args.code)?;
+    let setup_ms = start.elapsed().as_secs_f64() * 1000.0;
+    let (message, point) = config.message_and_point();
+    let parameters = Parameters {
+        message_log: config.message_log,
+        eta: config.eta,
+        block_len: code.block_length(),
+        queries,
+        code_id: config.code_id(args.code),
+    };
+    eprintln!(
+        "protocol=interleaved-fs-v1 hash=BLAKE3-256 field=secp256k1_scalar threads={} setup_ms={setup_ms:.3} assumed_delta={delta} query_model={} (distance/setup bounds require separate certification)",
+        current_num_threads(),
+        if args.queries.is_some() {
+            "override"
+        } else {
+            "conditional-100-bit"
+        }
+    );
+    if args.code == CodeKind::BoltMax {
+        eprintln!(
+            "bolt-max adaptation: kernel_delta=0.013 is an unproved prime-field assumption; full_code_delta=0.0104; no certified setup-failure bound"
+        );
     }
-}
-
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
-fn main() {
-    let k = 22; // total message = 2^22 field elements
-    let eta = 4; // 2^4 = 16 interleaved rows
-    let repetition = 6;
-    let num_queries = 40;
-
-    let mut rng = SmallRng::seed_from_u64(42);
-
-    // ── Setup ──
-    let t0 = Instant::now();
-    let params = setup(k, repetition, eta, num_queries, &mut rng);
-    let setup_time = t0.elapsed();
-    println!(
-        "setup:  {:.3} ms  (k={k}, rep={repetition}, eta={eta}, queries={num_queries})",
-        setup_time.as_secs_f64() * 1e3
-    );
-
-    // ── Generate random message ──
-    let total_msg_len = 1usize << k;
-    let rows = 1usize << eta;
-    let segment_msg_size = params.era_code.message_size();
-    let block_length = params.era_code.block_length();
-    let msg: Vec<SecpScalar> = (0..total_msg_len)
-        .map(|_| SecpScalar::random(&mut rng))
-        .collect();
-    println!(
-        "message: {total_msg_len} elements ({rows} rows x {segment_msg_size} msg + {block_length} cw each)"
-    );
-
-    // ── Commit ──
-    let t_commit = Instant::now();
-    let commitment = commit(&params, &msg);
-    let commit_time = t_commit.elapsed();
-    println!(
-        "commit: {:.3} ms  (root = {:?})",
-        commit_time.as_secs_f64() * 1e3,
-        &commitment.root[..8]
-    );
-
-    // ── Generate evaluation point z ∈ F^k ──
-    let z: Vec<SecpScalar> = (0..k).map(|_| SecpScalar::random(&mut rng)).collect();
-
-    // ── Eval prover time (first round + second round) ──
-    let t_eval = Instant::now();
-    let first_msg = prover_first_round(&msg, &z, params.eta, params.k);
-    let challenge =
-        verifier_challenge(params.era_code.block_length(), params.num_queries, &mut rng);
-    let second_msg = prover_second_round(
-        &commitment.segments,
-        &commitment.merkle_leaves,
-        &commitment.merkle_levels,
-        &challenge,
-        params.eta,
-    );
-    let eval_prover_time = t_eval.elapsed();
-    println!(
-        "eval prover: {:.3} ms  (folded_msg len={}, {} columns opened)",
-        eval_prover_time.as_secs_f64() * 1e3,
-        first_msg.folded_msg.len(),
-        second_msg.columns.len(),
-    );
-
-    // ── Verifier time (challenge + verify) ──
-    let t_verify = Instant::now();
-    let _challenge_v =
-        verifier_challenge(params.era_code.block_length(), params.num_queries, &mut rng);
-    let ok = verify(
-        &z,
-        params.eta,
-        params.k,
-        &commitment.root,
-        &first_msg,
-        &challenge,
-        &second_msg,
-        |m| params.era_code.encode(m),
-    );
-    let verify_time = t_verify.elapsed();
-    println!(
-        "verify: {:.3} ms  => {}",
-        verify_time.as_secs_f64() * 1e3,
-        if ok { "PASS" } else { "FAIL" }
-    );
-
-    assert!(ok, "IOPP verification failed!");
-
-    // ── Proof size estimate ──
-    // The proof consists of:
-    //   1. y (evaluation): 256 bits (one field element)
-    //   2. folded_msg: 2^{k-eta} field elements = 256 * 2^{k-eta} bits
-    //   3. opened columns: num_queries columns, each with 2^eta field elements
-    //      = 256 * num_queries * 2^eta bits
-    //   4. Merkle paths: num_queries paths, each with log2(padded_block_length)
-    //      sibling hashes of 256 bits
-    let seg_msg_size = 1usize << (k - eta);
-    let padded_block_len = block_length.next_power_of_two().max(2);
-    let merkle_path_len = padded_block_len.ilog2() as u64;
-    let proof_bits_y = 256u64;
-    let proof_bits_folded_msg = 256 * seg_msg_size as u64;
-    let proof_bits_columns = 256 * num_queries as u64 * rows as u64;
-    let proof_bits_merkle = 256 * num_queries as u64 * merkle_path_len;
-    let total_proof_bits =
-        proof_bits_y + proof_bits_folded_msg + proof_bits_columns + proof_bits_merkle;
-    let total_proof_kib = total_proof_bits as f64 / 8.0 / 1024.0;
-    println!(
-        "proof size: {:.2} KiB  (y: {} bits, folded_msg: {} bits, columns: {} bits, merkle: {} bits)",
-        total_proof_kib, proof_bits_y, proof_bits_folded_msg, proof_bits_columns, proof_bits_merkle,
-    );
+    if args.csv {
+        println!(
+            "code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted"
+        );
+    }
+    for sample in 0..args.samples + args.warmups {
+        let start = Instant::now();
+        let tree = Commitment::new(
+            message
+                .par_chunks(code.message_size())
+                .map(|row| code.encode_row(row, config.rows() >= current_num_threads()))
+                .collect(),
+        );
+        let commit_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let start = Instant::now();
+        let (value, proof) =
+            prove(parameters, &tree, &message, &point).map_err(|e| e.to_string())?;
+        let prove_ms = start.elapsed().as_secs_f64() * 1000.0;
+        let start = Instant::now();
+        verify(parameters, tree.root(), &point, value, &proof, |m| {
+            code.encode(m)
+        })
+        .map_err(|e| e.to_string())?;
+        let verify_ms = start.elapsed().as_secs_f64() * 1000.0;
+        if sample < args.warmups {
+            continue;
+        }
+        let sample = sample - args.warmups;
+        if args.csv {
+            println!(
+                "{},{},{},{},{},{sample},{queries},{},{setup_ms:.6},{commit_ms:.6},{prove_ms:.6},{verify_ms:.6},{},32,true",
+                args.code.name(),
+                config.message_log,
+                config.eta,
+                config.seed,
+                current_num_threads(),
+                code.block_length(),
+                proof.len()
+            );
+        } else {
+            println!(
+                "sample {sample}: commit={commit_ms:.3} ms prove={prove_ms:.3} ms verify={verify_ms:.3} ms proof={} bytes ({:.3} KiB), public commitment=32 bytes, PASS",
+                proof.len(),
+                proof.len() as f64 / 1024.0
+            );
+        }
+        if sample + 1 == args.samples {
+            if let Some(path) = &args.proof_out {
+                let mut file = OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(path)
+                    .map_err(|e| e.to_string())?;
+                file.write_all(&proof).map_err(|e| e.to_string())?;
+            }
+        }
+    }
+    Ok(())
 }

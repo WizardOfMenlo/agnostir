@@ -1,0 +1,2 @@
+code,scope,field,hash,message_log,eta,seed,threads,sample,degree,compression,block_length,setup_ms,buffer_ms,expander_ms,rs_ms,merkle_ms,commit_ms,commitment_bytes,root_hex,encoder_checked,merkle_checked
+bolt-min,commitment-only,GF(2^32),sha256,14,2,2025,32,0,16,8,5120,3.291875,0.003708,0.335792,0.067875,1.149625,1.557000,32,000cad0426c154db0275c1454212c9e7823e5a5d0c58bca359d4829fd8079e5e,true,true

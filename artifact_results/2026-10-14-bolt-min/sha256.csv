@@ -1,0 +1,4 @@
+code,scope,field,hash,message_log,eta,seed,threads,sample,degree,compression,block_length,setup_ms,buffer_ms,expander_ms,rs_ms,merkle_ms,commit_ms,commitment_bytes,root_hex,encoder_checked,merkle_checked
+bolt-min,commitment-only,GF(2^32),sha256,22,6,2025,8,0,16,8,81920,41.104959,1.302958,5.120584,3.366750,4.244541,14.034833,32,c57bbc72271ed798d31115beb50999c99ef3d9f8ede7b67f017f35f7a27d383d,true,true
+bolt-min,commitment-only,GF(2^32),sha256,22,6,2025,8,1,16,8,81920,41.104959,1.218709,4.945125,3.259791,4.081417,13.505042,32,c57bbc72271ed798d31115beb50999c99ef3d9f8ede7b67f017f35f7a27d383d,true,true
+bolt-min,commitment-only,GF(2^32),sha256,22,6,2025,8,2,16,8,81920,41.104959,1.169542,4.996708,3.368542,3.799541,13.334333,32,c57bbc72271ed798d31115beb50999c99ef3d9f8ede7b67f017f35f7a27d383d,true,true

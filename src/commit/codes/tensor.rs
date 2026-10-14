@@ -27,6 +27,9 @@ pub struct TensorCode<C> {
 }
 
 impl<C: ErrorCorrectingCode> TensorCode<C> {
+    pub const fn inner(&self) -> &C {
+        &self.inner
+    }
     /// Build a new tensor code wrapping `inner`.
     pub fn new(inner: C) -> Self {
         let k = inner.message_size();
@@ -100,5 +103,22 @@ where
         }
 
         result
+    }
+
+    fn encode_sequential(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
+        assert_eq!(msg.len(), self.k * self.k);
+        let rows: Vec<_> = msg
+            .chunks_exact(self.k)
+            .map(|row| self.inner.encode_sequential(row))
+            .collect();
+        let columns: Vec<_> = (0..self.n)
+            .map(|j| {
+                self.inner
+                    .encode_sequential(&(0..self.k).map(|i| rows[i][j].clone()).collect::<Vec<_>>())
+            })
+            .collect();
+        (0..self.n)
+            .flat_map(|i| columns.iter().map(move |column| column[i].clone()))
+            .collect()
     }
 }

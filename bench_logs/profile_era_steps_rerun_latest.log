@@ -1,0 +1,66 @@
+   Compiling agnostir v0.1.0 (/Users/anubhavbaweja/Desktop/Research/research-git/agnostir)
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+warning: unreachable `pub` item
+  --> src/commit/merkle.rs:41:1
+   |
+41 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+warning: `agnostir` (lib) generated 3 warnings (run `cargo fix --lib -p agnostir` to apply 3 suggestions)
+    Finished `release` profile [optimized + debuginfo] target(s) in 3.60s
+     Running `target/release/profile_era_steps`
+=== ERA Step Profile (message_size=2^14) ===
+message_size=16384, repetition=4, block_length=78640
+params: alpha=0.12, inverse_rate=1.2, cn=6, dn=19
+
+--- Current ERA (with multiplication in prefix rounds) ---
+
+┌──────────────────────────┬────────────┬─────────┐
+│ Step                     │       Time │   % Tot │
+├──────────────────────────┼────────────┼─────────┤
+│ 1. Base-code encode      │    0.959 ms │  32.4 % │
+│ 2a. Rep+Perm   (round 1) │    0.188 ms │   6.3 % │
+│ 2b. Prefix sum (round 1) │    0.803 ms │  27.1 % │
+│ 3a. Perm       (round 2) │    0.191 ms │   6.4 % │
+│ 3b. Prefix sum (round 2) │    0.823 ms │  27.8 % │
+├──────────────────────────┼────────────┼─────────┤
+│ Total                    │    2.965 ms │ 100.0 % │
+└──────────────────────────┴────────────┴─────────┘
+
+--- Conjectured ERA (no multiplication in prefix rounds) ---
+
+┌──────────────────────────┬────────────┬─────────┐
+│ Step                     │       Time │   % Tot │
+├──────────────────────────┼────────────┼─────────┤
+│ 1. Base-code encode      │    1.163 ms │  45.8 % │
+│ 2a. Rep+Perm   (round 1) │    0.310 ms │  12.2 % │
+│ 2b. Prefix sum (round 1) │    0.352 ms │  13.8 % │
+│ 3a. Perm       (round 2) │    0.352 ms │  13.8 % │
+│ 3b. Prefix sum (round 2) │    0.363 ms │  14.3 % │
+├──────────────────────────┼────────────┼─────────┤
+│ Total                    │    2.540 ms │ 100.0 % │
+└──────────────────────────┴────────────┴─────────┘

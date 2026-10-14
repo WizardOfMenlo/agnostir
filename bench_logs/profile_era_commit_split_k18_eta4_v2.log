@@ -1,0 +1,56 @@
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+warning: unreachable `pub` item
+  --> src/commit/merkle.rs:41:1
+   |
+41 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+warning: `agnostir` (lib) generated 3 warnings (run `cargo fix --lib -p agnostir` to apply 3 suggestions)
+   Compiling agnostir v0.1.0 (/Users/anubhavbaweja/Desktop/Research/research-git/agnostir)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2.22s
+     Running `target/release/profile_era_commit_split`
+=== ERA commit split profile ===
+k=2^18, eta=4, message_size=262144, seg_count=16, seg_msg=2^14
+ERA params: alpha=0.12, inverse_rate=1.2, cn=6, dn=19, repetition=4
+Runs: 10 (warmups: 2)
+
+Encoding-only context:
+  single encode (avg/median):    2.941 /    2.889 ms
+  16 encodes sequential total (avg/median):   46.598 /   46.182 ms
+  16 encodes parallel total (avg/median):     24.178 /   24.142 ms
+  per-message in parallel (avg/median):        1.511 /    1.509 ms
+  speedup vs sequential 16 (avg/median):        1.93x /     1.91x
+
+Average times over 10 runs:
+  encode segments:   24.178 ms ( 49.2%)
+  merkle commit:     24.965 ms ( 50.8%)
+  total:             49.144 ms
+
+Median times over 10 runs:
+  encode segments:   24.142 ms ( 50.6%)
+  merkle commit:     23.483 ms ( 49.2%)
+  total:             47.742 ms

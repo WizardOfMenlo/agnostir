@@ -1,0 +1,1 @@
+This preliminary one-worker run overlapped a numerical calibration process for part of its execution. It is excluded from the reported scaling summary. A fresh one-worker run was then made with no other Codex compute jobs active.

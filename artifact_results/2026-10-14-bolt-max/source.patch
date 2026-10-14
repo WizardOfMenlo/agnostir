@@ -1,0 +1,2993 @@
+diff --git a/.gitignore b/.gitignore
+index ea8c4bf..507c6dc 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1 +1,3 @@
+ /target
++/comparisons/*/target
++/results/
+diff --git a/Cargo.toml b/Cargo.toml
+index de8e6e3..9946150 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -70,8 +70,8 @@ thiserror = { version = "2.0", default-features = false }
+ tracing = { version = "0.1.37", default-features = false, features = [
+     "attributes",
+ ] }
+-rand = { version = "0.9", default-features = false, features = ["small_rng"] }
+-rand_08 = { package = "rand", version = "0.8", default-features = false, features = ["small_rng"] }
++rand = { version = "0.9", default-features = false, features = ["small_rng", "alloc"] }
++rand_08 = { package = "rand", version = "0.8", default-features = false, features = ["small_rng", "alloc"] }
+ rip_shuffle = "0.2"
+ voracious_radix_sort = { version = "1.2.0", features = ["voracious_multithread"] }
+ 
+@@ -108,3 +108,11 @@ harness = false
+ [[bench]]
+ name = "iopp_bench"
+ harness = false
++
++[[bin]]
++name = "interleaved_iopp"
++required-features = ["cli", "parallel"]
++
++[[bin]]
++name = "compare_iopps"
++required-features = ["cli", "parallel"]
+diff --git a/benches/iopp_bench.rs b/benches/iopp_bench.rs
+index d94f813..a4f897b 100644
+--- a/benches/iopp_bench.rs
++++ b/benches/iopp_bench.rs
+@@ -1,520 +1,119 @@
+-mod iopp_params;
+-
+ use agnostir::{
+-    BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode, ErrorCorrectingCode,
+-    FieldElement, blake3_merkle_commit_interleaved,
+-    blake3_merkle_interleaved_leaves, blake3_merkle_precompute_levels,
+-    blake3_merkle_root_from_levels,
+-    interleaved_iopp::{prover_first_round, prover_second_round, verifier_challenge, verify},
+-    random_permutation,
++    ErrorCorrectingCode,
++    interleaved_iopp::fs::{Parameters, prove, verify},
++    iopp_experiment::{
++        CodeKind, DEFAULT_ETA, DEFAULT_MESSAGE_LOG, DEFAULT_SEED, ExperimentConfig,
++        num_queries_from_delta,
++    },
++    proof::merkle::Commitment,
+ };
+-use ark_secp256k1::Fr as SecpScalar;
+-use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
+-use iopp_params::*;
+-use rand::{Rng, SeedableRng, rngs::SmallRng};
++use criterion::{Criterion, criterion_group, criterion_main};
+ use rayon::{current_num_threads, prelude::*};
+-use std::env;
+-use std::sync::Arc;
+-
+-const DEFAULT_MESSAGE_LOG: usize = 18;
+-const DEFAULT_ETA: usize = 5;
+-
+-// ═══════════════════════════════════════════════════════════════════════════
+-// Benchmark
+-// ═══════════════════════════════════════════════════════════════════════════
++use std::{env, hint::black_box};
+ 
+-fn env_usize(name: &str, default: usize) -> usize {
+-    match env::var(name) {
+-        Ok(raw) => raw
+-            .parse::<usize>()
+-            .unwrap_or_else(|_| panic!("invalid {name}='{raw}', expected usize")),
+-        Err(_) => default,
+-    }
++fn env_number<T: std::str::FromStr>(name: &str, default: T) -> T {
++    env::var(name).map_or(default, |raw| {
++        raw.parse()
++            .unwrap_or_else(|_| panic!("invalid {name}='{raw}'"))
++    })
+ }
+ 
+ fn env_bool(name: &str) -> bool {
+-    match env::var(name) {
+-        Ok(raw) => matches!(
+-            raw.trim().to_ascii_lowercase().as_str(),
+-            "1" | "true" | "yes" | "y" | "on"
+-        ),
+-        Err(_) => false,
+-    }
+-}
+-
+-fn build_message(message_size: usize, rng: &mut impl Rng) -> Vec<SecpScalar> {
+-    (0..message_size).map(|_| SecpScalar::random(rng)).collect()
+-}
+-
+-fn build_era_code(
+-    rng: &mut impl Rng,
+-    segment_msg_size: usize,
+-) -> EraCode<BrakedownCode<SecpScalar>, SecpScalar> {
+-    let (alpha, inverse_rate, cn, dn) = era_inner_params_normal(segment_msg_size.ilog2());
+-    let base_code = BrakedownCode::<SecpScalar>::new(
+-        segment_msg_size,
+-        BrakedownParams {
+-            alpha,
+-            inverse_rate,
+-            cn,
+-            dn,
+-        },
+-        rng,
+-    );
+-    let bl_seg = base_code.block_length() * ERA_REPETITION;
+-    let p1 = random_permutation(rng, bl_seg);
+-    let p2 = random_permutation(rng, bl_seg);
+-    let m1: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(rng)).collect();
+-    let m2: Vec<SecpScalar> = (0..bl_seg).map(|_| SecpScalar::random(rng)).collect();
+-
+-    EraCode::new(base_code, ERA_REPETITION, p1, p2, m1, m2)
+-}
+-
+-fn encode_segments_conditional<EncodeFn>(
+-    input: &[SecpScalar],
+-    seg_count: usize,
+-    segment_msg_size: usize,
+-    encode_fn: EncodeFn,
+-) -> Vec<Vec<SecpScalar>>
+-where
+-    EncodeFn: Fn(&[SecpScalar]) -> Vec<SecpScalar> + Sync,
+-{
+-    (0..seg_count)
+-        .into_par_iter()
+-        .map(|seg| {
+-            let start = seg * segment_msg_size;
+-            encode_fn(&input[start..start + segment_msg_size])
+-        })
+-        .collect()
++    env::var(name).is_ok_and(|raw| match raw.trim().to_ascii_lowercase().as_str() {
++        "1" | "true" | "yes" | "y" | "on" => true,
++        "0" | "false" | "no" | "n" | "off" => false,
++        _ => panic!("invalid boolean {name}='{raw}'"),
++    })
+ }
+ 
+ fn bench_iopp(c: &mut Criterion) {
+-    let k = env_usize("IOPP_MESSAGE_LOG", DEFAULT_MESSAGE_LOG);
+-    let eta = env_usize("IOPP_ETA", DEFAULT_ETA);
+-    assert!(eta < k, "expected eta < k, got eta={eta}, k={k}");
+-    let message_size = 1usize << k;
+-    let log_seg_msg = k - eta;
+-    let seg_msg_size = 1usize << log_seg_msg;
+-    let seg_count = 1usize << eta;
+-    let use_sequential_encode = current_num_threads() < seg_count;
+-    let bd_delta = BRAKEDOWN_DELTA;
+-    let ea_delta = EA_DELTA;
+-    let er_delta = era_delta_r4(log_seg_msg);
+-    let brakedown_num_queries = num_queries_from_delta(SECPARAM, bd_delta);
+-    let ea_num_queries = num_queries_from_delta(SECPARAM, ea_delta);
+-    let era_num_queries = num_queries_from_delta(SECPARAM, er_delta);
+-    let run_all_codes = !env_bool("IOPP_ONLY_CONJECTURED_ERA");
+-    let include_conjectured_era = env_bool("IOPP_INCLUDE_CONJECTURED_ERA") || !run_all_codes;
+-    let skip_ea = env_bool("IOPP_SKIP_EA");
+-
+-    let mut rng = SmallRng::seed_from_u64(2025);
+-    let msg = Arc::new(build_message(message_size, &mut rng));
+-    let z: Vec<SecpScalar> = (0..k).map(|_| SecpScalar::random(&mut rng)).collect();
+-
+-    // Print proof sizes for each code.
+-    {
+-        let bd_code = BrakedownCode::<SecpScalar>::new(
+-            seg_msg_size,
+-            BrakedownParams {
+-                alpha: BRAKEDOWN_ALPHA,
+-                inverse_rate: BRAKEDOWN_INV_RATE,
+-                cn: BRAKEDOWN_CN,
+-                dn: BRAKEDOWN_DN,
+-            },
+-            &mut SmallRng::seed_from_u64(0),
+-        );
+-        let ea_code_tmp = EaCode::<SecpScalar>::new(
+-            seg_msg_size,
+-            EaParams {
+-                inverse_rate: EA_INV_RATE,
+-                prob_multiplier: EA_PROB_MUL,
+-            },
+-            &mut SmallRng::seed_from_u64(0),
+-        );
+-        let era_tmp = build_era_code(&mut SmallRng::seed_from_u64(0), seg_msg_size);
++    let config = ExperimentConfig {
++        message_log: env_number("IOPP_MESSAGE_LOG", DEFAULT_MESSAGE_LOG),
++        eta: env_number("IOPP_ETA", DEFAULT_ETA),
++        seed: env_number("IOPP_SEED", DEFAULT_SEED),
++    };
++    let only_conjectured = env_bool("IOPP_ONLY_CONJECTURED_ERA");
++    let mut kinds = if only_conjectured {
++        Vec::new()
++    } else {
++        CodeKind::STANDARD.to_vec()
++    };
++    if env_bool("IOPP_SKIP_EA") {
++        kinds.retain(|kind| *kind != CodeKind::Ea);
++    }
++    if only_conjectured || env_bool("IOPP_INCLUDE_CONJECTURED_ERA") {
++        kinds.push(CodeKind::ConjecturedEra);
++    }
++    for &kind in &kinds {
++        config
++            .validate(kind)
++            .expect("invalid experiment configuration");
++    }
+ 
+-        eprintln!("  Proof sizes (k={k}, eta={eta}, seg_msg=2^{log_seg_msg}):");
+-        eprintln!(
+-            "    Brakedown  delta={bd_delta:.3}  q={}  proof={:.1} KiB",
+-            brakedown_num_queries,
+-            proof_size_kib(bd_code.block_length(), k, eta, bd_delta)
+-        );
+-        if !skip_ea {
+-            eprintln!(
+-                "    EA         delta={ea_delta:.3}  q={}  proof={:.1} KiB",
+-                ea_num_queries,
+-                proof_size_kib(ea_code_tmp.codeword_length(), k, eta, ea_delta)
+-            );
+-        }
+-        eprintln!(
+-            "    ERA        delta={er_delta:.3}  q={}  proof={:.1} KiB",
+-            era_num_queries,
+-            proof_size_kib(era_tmp.block_length(), k, eta, er_delta)
+-        );
+-        if include_conjectured_era {
++    eprintln!(
++        "config: message_log={} eta={} rows={} seed={} threads={} chunk_len={}",
++        config.message_log,
++        config.eta,
++        config.rows(),
++        config.seed,
++        current_num_threads(),
++        env::var("AGNOSTIR_CHUNK_LEN").unwrap_or_else(|_| "8192 (default)".into())
++    );
++    let (message, point) = config.message_and_point();
++    let sequential_era = current_num_threads() <= config.rows();
++
++    for kind in kinds {
++        let code = config
++            .build_code(kind)
++            .expect("validated code configuration");
++        let delta = kind.assumed_distance(config.message_log - config.eta);
++        let queries = num_queries_from_delta(delta);
++        if kind == CodeKind::BoltMax {
+             eprintln!(
+-                "    Conj. ERA  delta={er_delta:.3}  q={}  proof={:.1} KiB",
+-                era_num_queries,
+-                proof_size_kib(era_tmp.block_length(), k, eta, er_delta)
++                "bolt-max adaptation assumes prime-field kernel distance 0.013; setup failure is not certified"
+             );
+         }
+-    }
+-
+-    if run_all_codes {
+-        // ── Brakedown ──
+-        let brakedown_code = BrakedownCode::<SecpScalar>::new(
+-            seg_msg_size,
+-            BrakedownParams {
+-                alpha: BRAKEDOWN_ALPHA,
+-                inverse_rate: BRAKEDOWN_INV_RATE,
+-                cn: BRAKEDOWN_CN,
+-                dn: BRAKEDOWN_DN,
+-            },
+-            &mut rng,
+-        );
+-        let brakedown_bl = brakedown_code.block_length();
+-
+-        c.bench_function("brakedown_commit", |b| {
+-            let msg = Arc::clone(&msg);
+-            b.iter_batched(
+-                || (*msg).clone(),
+-                |input| {
+-                    let segments =
+-                        encode_segments_conditional(&input, seg_count, seg_msg_size, |segment| {
+-                            brakedown_code.encode(segment)
+-                        });
+-                    blake3_merkle_commit_interleaved(&segments)
+-                },
+-                BatchSize::LargeInput,
+-            );
++        let encode_segments = |input: &[ark_secp256k1::Fr]| -> Vec<_> {
++            input
++                .par_chunks(code.message_size())
++                .map(|row| code.encode_row(row, sequential_era))
++                .collect()
++        };
++
++        let parameters = Parameters {
++            message_log: config.message_log,
++            eta: config.eta,
++            block_len: code.block_length(),
++            queries,
++            code_id: config.code_id(kind),
++        };
++        c.bench_function(&format!("{}_commit_fs", kind.name()), |b| {
++            b.iter(|| black_box(Commitment::new(encode_segments(black_box(&message)))));
+         });
+-
+-        let brakedown_segments: Arc<Vec<Vec<SecpScalar>>> = Arc::new(encode_segments_conditional(
+-            msg.as_ref(),
+-            seg_count,
+-            seg_msg_size,
+-            |segment| brakedown_code.encode(segment),
+-        ));
+-        let brakedown_leaves = blake3_merkle_interleaved_leaves(&brakedown_segments);
+-        let brakedown_levels = blake3_merkle_precompute_levels(&brakedown_leaves);
+-        let brakedown_root = blake3_merkle_root_from_levels(&brakedown_levels);
+-
+-        {
+-            let mut ch_rng = SmallRng::seed_from_u64(999);
+-            let brakedown_challenge =
+-                verifier_challenge(brakedown_bl, brakedown_num_queries, &mut ch_rng);
+-
+-            c.bench_function("brakedown_eval_prover", |b| {
+-                let msg = Arc::clone(&msg);
+-                let segments = Arc::clone(&brakedown_segments);
+-                let z = z.clone();
+-                b.iter(|| {
+-                    let first_msg = prover_first_round(&msg, &z, eta, k);
+-                    let _second_msg = prover_second_round(
+-                        &segments,
+-                        &brakedown_leaves,
+-                        &brakedown_levels,
+-                        &brakedown_challenge,
+-                        eta,
+-                    );
+-                    first_msg
+-                });
+-            });
+-
+-            let first_msg = prover_first_round(&msg, &z, eta, k);
+-            let second_msg = prover_second_round(
+-                &brakedown_segments,
+-                &brakedown_leaves,
+-                &brakedown_levels,
+-                &brakedown_challenge,
+-                eta,
+-            );
+-
+-            c.bench_function("brakedown_verify", |b| {
+-                let z = z.clone();
+-                b.iter(|| {
+-                    assert!(verify(
+-                        &z,
+-                        eta,
+-                        k,
+-                        &brakedown_root,
+-                        &first_msg,
+-                        &brakedown_challenge,
+-                        &second_msg,
+-                        |m| brakedown_code.encode(m)
+-                    ));
+-                });
+-            });
+-        }
+-
+-        if !skip_ea {
+-            // ── EA ──
+-            let ea_code = EaCode::<SecpScalar>::new(
+-                seg_msg_size,
+-                EaParams {
+-                    inverse_rate: EA_INV_RATE,
+-                    prob_multiplier: EA_PROB_MUL,
+-                },
+-                &mut rng,
+-            );
+-            let ea_bl = ea_code.codeword_length();
+-
+-            c.bench_function("ea_commit", |b| {
+-                let msg = Arc::clone(&msg);
+-                b.iter_batched(
+-                    || (*msg).clone(),
+-                    |input| {
+-                        let segments = encode_segments_conditional(
+-                            &input,
+-                            seg_count,
+-                            seg_msg_size,
+-                            |segment| ea_code.encode(segment),
+-                        );
+-                        blake3_merkle_commit_interleaved(&segments)
+-                    },
+-                    BatchSize::LargeInput,
+-                );
+-            });
+-
+-            let ea_segments: Arc<Vec<Vec<SecpScalar>>> = Arc::new(encode_segments_conditional(
+-                msg.as_ref(),
+-                seg_count,
+-                seg_msg_size,
+-                |segment| ea_code.encode(segment),
+-            ));
+-            let ea_leaves = blake3_merkle_interleaved_leaves(&ea_segments);
+-            let ea_levels = blake3_merkle_precompute_levels(&ea_leaves);
+-            let ea_root = blake3_merkle_root_from_levels(&ea_levels);
+-
+-            {
+-                let mut ch_rng = SmallRng::seed_from_u64(999);
+-                let ea_challenge = verifier_challenge(ea_bl, ea_num_queries, &mut ch_rng);
+-
+-                c.bench_function("ea_eval_prover", |b| {
+-                    let msg = Arc::clone(&msg);
+-                    let segments = Arc::clone(&ea_segments);
+-                    let z = z.clone();
+-                    b.iter(|| {
+-                        let first_msg = prover_first_round(&msg, &z, eta, k);
+-                        let _second_msg = prover_second_round(
+-                            &segments,
+-                            &ea_leaves,
+-                            &ea_levels,
+-                            &ea_challenge,
+-                            eta,
+-                        );
+-                        first_msg
+-                    });
+-                });
+-
+-                let first_msg = prover_first_round(&msg, &z, eta, k);
+-                let second_msg =
+-                    prover_second_round(&ea_segments, &ea_leaves, &ea_levels, &ea_challenge, eta);
+-
+-                c.bench_function("ea_verify", |b| {
+-                    let z = z.clone();
+-                    b.iter(|| {
+-                        assert!(verify(
+-                            &z,
+-                            eta,
+-                            k,
+-                            &ea_root,
+-                            &first_msg,
+-                            &ea_challenge,
+-                            &second_msg,
+-                            |m| ea_code.encode(m)
+-                        ));
+-                    });
+-                });
+-            }
+-        }
+-
+-        // ── ERA ──
+-        let era_code = build_era_code(&mut rng, seg_msg_size);
+-        let era_bl = era_code.block_length();
+-
+-        c.bench_function("era_commit", |b| {
+-            let msg = Arc::clone(&msg);
+-            b.iter_batched(
+-                || (*msg).clone(),
+-                |input| {
+-                    let segment_msg = era_code.message_size();
+-                    let segments =
+-                        encode_segments_conditional(&input, seg_count, segment_msg, |segment| {
+-                            if use_sequential_encode {
+-                                era_code.encode_era_sequential(segment)
+-                            } else {
+-                                era_code.encode_era(segment)
+-                            }
+-                        });
+-                    blake3_merkle_commit_interleaved(&segments)
+-                },
+-                BatchSize::LargeInput,
+-            );
++        let tree = Commitment::new(encode_segments(&message));
++        c.bench_function(&format!("{}_eval_prover_fs", kind.name()), |b| {
++            b.iter(|| black_box(prove(parameters, &tree, black_box(&message), &point).unwrap()));
+         });
+-
+-        let era_segment_msg = era_code.message_size();
+-        let era_segments: Arc<Vec<Vec<SecpScalar>>> = Arc::new(encode_segments_conditional(
+-            msg.as_ref(),
+-            seg_count,
+-            era_segment_msg,
+-            |segment| {
+-                if use_sequential_encode {
+-                    era_code.encode_era_sequential(segment)
+-                } else {
+-                    era_code.encode_era(segment)
+-                }
+-            },
+-        ));
+-        let era_leaves = blake3_merkle_interleaved_leaves(&era_segments);
+-        let era_levels = blake3_merkle_precompute_levels(&era_leaves);
+-        let era_root = blake3_merkle_root_from_levels(&era_levels);
+-
+-        {
+-            let mut ch_rng = SmallRng::seed_from_u64(999);
+-            let era_challenge = verifier_challenge(era_bl, era_num_queries, &mut ch_rng);
+-
+-            c.bench_function("era_eval_prover", |b| {
+-                let msg = Arc::clone(&msg);
+-                let segments = Arc::clone(&era_segments);
+-                let z = z.clone();
+-                b.iter(|| {
+-                    let first_msg = prover_first_round(&msg, &z, eta, k);
+-                    let _second_msg = prover_second_round(
+-                        &segments,
+-                        &era_leaves,
+-                        &era_levels,
+-                        &era_challenge,
+-                        eta,
+-                    );
+-                    first_msg
+-                });
+-            });
+-
+-            let first_msg = prover_first_round(&msg, &z, eta, k);
+-            let second_msg =
+-                prover_second_round(&era_segments, &era_leaves, &era_levels, &era_challenge, eta);
+-
+-            c.bench_function("era_verify", |b| {
+-                let z = z.clone();
+-                b.iter(|| {
+-                    assert!(verify(
+-                        &z,
+-                        eta,
+-                        k,
+-                        &era_root,
+-                        &first_msg,
+-                        &era_challenge,
+-                        &second_msg,
+-                        |m| {
+-                            if use_sequential_encode {
+-                                era_code.encode_era_sequential(m)
+-                            } else {
+-                                era_code.encode_era(m)
+-                            }
+-                        }
+-                    ));
+-                });
++        let (value, proof) = prove(parameters, &tree, &message, &point).unwrap();
++        eprintln!(
++            "{} assumed_delta={delta:.6} queries={queries} block_length={} serialized_proof_bytes={} commitment_bytes=32",
++            kind.name(),
++            code.block_length(),
++            proof.len()
++        );
++        c.bench_function(&format!("{}_verify_fs", kind.name()), |b| {
++            b.iter(|| {
++                verify(
++                    parameters,
++                    tree.root(),
++                    &point,
++                    value,
++                    black_box(&proof),
++                    |m| code.encode(m),
++                )
++                .unwrap()
+             });
+-        }
+-    }
+-
+-    if include_conjectured_era {
+-        // ── Conjectured ERA (no multiplication in prefix rounds) ──
+-        let conjectured_era_code = build_era_code(&mut rng, seg_msg_size);
+-        let conjectured_era_bl = conjectured_era_code.block_length();
+-
+-        c.bench_function("conjectured_era_commit", |b| {
+-            let msg = Arc::clone(&msg);
+-            b.iter_batched(
+-                || (*msg).clone(),
+-                |input| {
+-                    let segment_msg = conjectured_era_code.message_size();
+-                    let segments =
+-                        encode_segments_conditional(&input, seg_count, segment_msg, |segment| {
+-                            if use_sequential_encode {
+-                                conjectured_era_code.encode_conjectured_era_sequential(segment)
+-                            } else {
+-                                conjectured_era_code.encode_conjectured_era(segment)
+-                            }
+-                        });
+-                    blake3_merkle_commit_interleaved(&segments)
+-                },
+-                BatchSize::LargeInput,
+-            );
+         });
+-
+-        let conjectured_era_segment_msg = conjectured_era_code.message_size();
+-        let conjectured_era_segments: Arc<Vec<Vec<SecpScalar>>> =
+-            Arc::new(encode_segments_conditional(
+-                msg.as_ref(),
+-                seg_count,
+-                conjectured_era_segment_msg,
+-                |segment| {
+-                    if use_sequential_encode {
+-                        conjectured_era_code.encode_conjectured_era_sequential(segment)
+-                    } else {
+-                        conjectured_era_code.encode_conjectured_era(segment)
+-                    }
+-                },
+-            ));
+-        let conjectured_era_leaves = blake3_merkle_interleaved_leaves(&conjectured_era_segments);
+-        let conjectured_era_levels = blake3_merkle_precompute_levels(&conjectured_era_leaves);
+-        let conjectured_era_root = blake3_merkle_root_from_levels(&conjectured_era_levels);
+-
+-        {
+-            let mut ch_rng = SmallRng::seed_from_u64(999);
+-            let conjectured_era_challenge =
+-                verifier_challenge(conjectured_era_bl, era_num_queries, &mut ch_rng);
+-
+-            c.bench_function("conjectured_era_eval_prover", |b| {
+-                let msg = Arc::clone(&msg);
+-                let segments = Arc::clone(&conjectured_era_segments);
+-                let z = z.clone();
+-                b.iter(|| {
+-                    let first_msg = prover_first_round(&msg, &z, eta, k);
+-                    let _second_msg = prover_second_round(
+-                        &segments,
+-                        &conjectured_era_leaves,
+-                        &conjectured_era_levels,
+-                        &conjectured_era_challenge,
+-                        eta,
+-                    );
+-                    first_msg
+-                });
+-            });
+-
+-            let first_msg = prover_first_round(&msg, &z, eta, k);
+-            let second_msg = prover_second_round(
+-                &conjectured_era_segments,
+-                &conjectured_era_leaves,
+-                &conjectured_era_levels,
+-                &conjectured_era_challenge,
+-                eta,
+-            );
+-
+-            c.bench_function("conjectured_era_verify", |b| {
+-                let z = z.clone();
+-                b.iter(|| {
+-                    assert!(verify(
+-                        &z,
+-                        eta,
+-                        k,
+-                        &conjectured_era_root,
+-                        &first_msg,
+-                        &conjectured_era_challenge,
+-                        &second_msg,
+-                        |m| {
+-                            if use_sequential_encode {
+-                                conjectured_era_code.encode_conjectured_era_sequential(m)
+-                            } else {
+-                                conjectured_era_code.encode_conjectured_era(m)
+-                            }
+-                        }
+-                    ));
+-                });
+-            });
+-        }
+     }
+ }
+ 
+@@ -523,5 +122,4 @@ criterion_group! {
+     config = Criterion::default().sample_size(10).without_plots();
+     targets = bench_iopp
+ }
+-
+ criterion_main!(iopp);
+diff --git a/benches/iopp_params.rs b/benches/iopp_params.rs
+deleted file mode 100644
+index 15e303f..0000000
+--- a/benches/iopp_params.rs
++++ /dev/null
+@@ -1,163 +0,0 @@
+-// Experiment parameters for IOPP benchmarks.
+-
+-// ═══════════════════════════════════════════════════════════════════════════
+-// Brakedown
+-// ═══════════════════════════════════════════════════════════════════════════
+-
+-pub(crate) const BRAKEDOWN_ALPHA: f64 = 0.3;
+-pub(crate) const BRAKEDOWN_INV_RATE: f64 = 2.0;
+-pub(crate) const BRAKEDOWN_CN: usize = 10;
+-pub(crate) const BRAKEDOWN_DN: usize = 20;
+-pub(crate) const BRAKEDOWN_DELTA: f64 = 0.1;
+-
+-// ═══════════════════════════════════════════════════════════════════════════
+-// EA
+-// ═══════════════════════════════════════════════════════════════════════════
+-
+-pub(crate) const EA_INV_RATE: usize = 2;
+-pub(crate) const EA_PROB_MUL: usize = 18;
+-pub(crate) const EA_DELTA: f64 = 0.1;
+-
+-// ═══════════════════════════════════════════════════════════════════════════
+-// Basefold
+-// ═══════════════════════════════════════════════════════════════════════════
+-
+-pub(crate) const BASEFOLD_LOG_RATE: usize = 1;
+-
+-/// Basefold distance (rate 1/2) as a function of log2(segment message size).
+-pub(crate) fn basefold_2_delta(log_seg_msg_size: usize) -> f64 {
+-    match log_seg_msg_size {
+-        10 => 0.246,
+-        11 => 0.240,
+-        12 => 0.235,
+-        13 => 0.230,
+-        14 => 0.224,
+-        15 => 0.219,
+-        16 => 0.213,
+-        17 => 0.208,
+-        18 => 0.202_586_068_445_465_9,
+-        19 => 0.197,
+-        20 => 0.192,
+-        21 => 0.186,
+-        22 => 0.181,
+-        other => panic!("no basefold (rate 1/2) delta for segment message size 2^{other}"),
+-    }
+-}
+-
+-/// Basefold distance (rate 1/4) as a function of log2(segment message size).
+-pub(crate) fn basefold_4_delta(log_seg_msg_size: usize) -> f64 {
+-    match log_seg_msg_size {
+-        10 => 0.608,
+-        11 => 0.605,
+-        12 => 0.601,
+-        13 => 0.597,
+-        14 => 0.593,
+-        15 => 0.589,
+-        16 => 0.585,
+-        17 => 0.581,
+-        18 => 0.577_307_210_185_305_6,
+-        19 => 0.573,
+-        20 => 0.569,
+-        21 => 0.565,
+-        22 => 0.561,
+-        other => panic!("no basefold (rate 1/4) delta for segment message size 2^{other}"),
+-    }
+-}
+-
+-// ═══════════════════════════════════════════════════════════════════════════
+-// ERA (Brakedown base code)
+-// ═══════════════════════════════════════════════════════════════════════════
+-
+-pub(crate) const ERA_REPETITION: usize = 4;
+-
+-/// ERA inner-Brakedown parameters indexed by log2(inner message size).
+-pub(crate) fn era_inner_params_tensor(k_log: u32) -> (f64, f64, usize, usize) {
+-    match k_log {
+-        6 => (0.03, 1.1, 1, 1),
+-        7 => (0.03, 1.1, 1, 1),
+-        8 => (0.03, 1.1, 3, 6),
+-        9 => (0.04, 1.1, 7, 12),
+-        10 => (0.04, 1.1, 9, 16),
+-        11 => (0.045, 1.08, 8, 26),
+-        12 => (0.05, 1.08, 7, 41),
+-        13 => (0.05, 1.08, 6, 47),
+-        other => panic!("no tuned ERA params for segment message size 2^{other}"),
+-    }
+-}
+-
+-/// ERA inner-Brakedown parameters indexed by log2(k)
+-pub(crate) fn era_inner_params_normal(_k_log: u32) -> (f64, f64, usize, usize) {
+-    (0.04, 1.05, 5, 42)
+-}
+-
+-/// ERA distance as a function of log2(segment message size).
+-pub(crate) fn era_delta_r4(log_seg_msg_size: usize) -> f64 {
+-    match log_seg_msg_size {
+-        12 => 0.204,
+-        13 => 0.226,
+-        14 => 0.227,
+-        18 => 0.224_403_355_646_751_46,
+-        _ if log_seg_msg_size >= 15 => 0.228,
+-        other => panic!("no ERA delta for segment message size 2^{other}"),
+-    }
+-}
+-
+-/// ERA distance as a function of log2(segment message size).
+-pub(crate) fn era_delta_r6(log_seg_msg_size: usize) -> f64 {
+-    match log_seg_msg_size {
+-        10 => 0.248,
+-        11 => 0.335,
+-        12 => 0.368,
+-        13 => 0.382,
+-        14 => 0.389,
+-        15 => 0.393,
+-        _ if log_seg_msg_size >= 16 => 0.395,
+-        other => panic!("no ERA delta for segment message size 2^{other}"),
+-    }
+-}
+-
+-// ═══════════════════════════════════════════════════════════════════════════
+-// Proof size estimation
+-// ═══════════════════════════════════════════════════════════════════════════
+-
+-pub(crate) const SECPARAM: f64 = 100.0;
+-pub(crate) const LOG_FIELD_SIZE: f64 = 256.0; // bits per field element (secp256k1)
+-pub(crate) const LOG_HASH_SIZE: f64 = 256.0; // bits per hash digest (blake3)
+-
+-/// Number of queries for `secparam`-bit security given proximity parameter
+-/// `delta`:  eps = 1 - (1 - delta)^{1/3},  q = ceil(-secparam / log2(1 - eps)).
+-pub(crate) fn num_queries_from_delta(secparam: f64, delta: f64) -> usize {
+-    let eps = 1.0 - (1.0 - delta).cbrt();
+-    let denom = (1.0 - eps).log2();
+-    (-secparam / denom).ceil() as usize
+-}
+-
+-/// Merkle-tree proof size in bits.
+-pub(crate) fn merkle_tree_size_bits(
+-    queries: usize,
+-    log_block_length: f64,
+-    interleaving_factor: usize,
+-) -> f64 {
+-    let q = queries as f64;
+-    let n = log_block_length;
+-
+-    let top_levels = q.log2();
+-    let proof_size_top = LOG_HASH_SIZE * (q - 2.0);
+-    let proof_size_siblings = LOG_HASH_SIZE * (n - top_levels) * q;
+-    let proof_size_leaves = LOG_FIELD_SIZE * q * interleaving_factor as f64;
+-
+-    proof_size_top + proof_size_siblings + proof_size_leaves
+-}
+-
+-/// Total proof size in KiB, including the folded message (2^{k-eta} field
+-/// elements) and the evaluation y (1 field element).
+-pub(crate) fn proof_size_kib(block_length: usize, k: usize, eta: usize, delta: f64) -> f64 {
+-    let q = num_queries_from_delta(SECPARAM, delta);
+-    let log_bl = (block_length as f64).log2();
+-    let interleaving = 1usize << eta;
+-    let merkle_bits = merkle_tree_size_bits(q, log_bl, interleaving);
+-
+-    let first_msg_bits = LOG_FIELD_SIZE + LOG_FIELD_SIZE * (1u64 << (k - eta)) as f64;
+-
+-    (merkle_bits + first_msg_bits) / 8.0 / 1024.0
+-}
+diff --git a/proof-size-estimate.py b/proof-size-estimate.py
+index 9a309fc..420fa48 100644
+--- a/proof-size-estimate.py
++++ b/proof-size-estimate.py
+@@ -300,12 +300,12 @@ def generate_k_exponent_sequences(
+     min_k_exp: int,
+ ) -> list[tuple[int, ...]]:
+     sequences: list[tuple[int, ...]] = []
+-    for middle in itertools.combinations_with_replacement(
+-        range(min_k_exp, start_k_exp + 1),
++    for middle in itertools.combinations(
++        range(min_k_exp, start_k_exp),
+         num_codeswitches,
+     ):
+         seq = (start_k_exp,) + tuple(reversed(middle))
+-        if all(seq[i] >= seq[i + 1] for i in range(len(seq) - 1)):
++        if all(seq[i] > seq[i + 1] for i in range(len(seq) - 1)):
+             sequences.append(seq)
+     return sequences
+ 
+diff --git a/src/bin/interleaved_iopp.rs b/src/bin/interleaved_iopp.rs
+index 7985030..b6aead8 100644
+--- a/src/bin/interleaved_iopp.rs
++++ b/src/bin/interleaved_iopp.rs
+@@ -1,227 +1,152 @@
+-use std::time::Instant;
+-
+ use agnostir::{
+-    BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement,
+-    blake3_merkle_interleaved_leaves, blake3_merkle_precompute_levels,
+-    blake3_merkle_root_from_levels,
+-    interleaved_iopp::{prover_first_round, prover_second_round, verifier_challenge, verify},
+-    random_permutation,
++    ErrorCorrectingCode,
++    interleaved_iopp::fs::{Parameters, prove, verify},
++    iopp_experiment::{
++        CodeKind, DEFAULT_ETA, DEFAULT_MESSAGE_LOG, DEFAULT_SEED, ExperimentConfig,
++        num_queries_from_delta,
++    },
++    proof::merkle::Commitment,
+ };
+-use ark_secp256k1::Fr as SecpScalar;
+-use rand::{Rng, SeedableRng, rngs::SmallRng};
+-
+-// ---------------------------------------------------------------------------
+-// Structs
+-// ---------------------------------------------------------------------------
+-
+-/// Public parameters produced by setup.
+-struct IoppParams {
+-    era_code: EraCode<BrakedownCode<SecpScalar>, SecpScalar>,
+-    k: usize,           // log2 of total message length (2^k field elements)
+-    eta: usize,         // interleaving factor (rows = 2^eta)
+-    num_queries: usize, // number of random column queries for proximity test
+-}
+-
+-/// Commitment output from the prover.
+-struct IoppCommitment {
+-    root: [u8; 32],
+-    segments: Vec<Vec<SecpScalar>>,
+-    merkle_leaves: Vec<[u8; 32]>,
+-    merkle_levels: Vec<Vec<[u8; 32]>>,
+-}
+-
+-/// Build ERA code with tuned Brakedown parameters (from compare_codes bench).
+-///
+-/// `k` is log2 of the total message length.  The message has `2^k` field
+-/// elements, split into `2^eta` rows of `2^{k-eta}` each.
+-fn setup(
+-    k: usize,
+-    repetition: usize,
++use clap::Parser;
++use rayon::{current_num_threads, prelude::*};
++use std::{fs::OpenOptions, io::Write, path::PathBuf, time::Instant};
++
++/// Canonical Fiat–Shamir interleaved IOPP benchmark. Times include proof transport.
++#[derive(Debug, Parser)]
++struct Args {
++    #[arg(long, value_enum, default_value_t = CodeKind::Era)]
++    code: CodeKind,
++    #[arg(long, default_value_t = DEFAULT_MESSAGE_LOG)]
++    message_log: usize,
++    #[arg(long, default_value_t = DEFAULT_ETA)]
+     eta: usize,
+-    num_queries: usize,
+-    rng: &mut impl Rng,
+-) -> IoppParams {
+-    assert!(k > eta, "k must be greater than eta");
+-
+-    let segment_msg_size = 1usize << (k - eta);
++    #[arg(long, default_value_t = DEFAULT_SEED)]
++    seed: u64,
++    /// Override the conditional query model; this is not security calibration.
++    #[arg(long)]
++    queries: Option<usize>,
++    /// Explicit Rayon worker count; otherwise use RAYON_NUM_THREADS.
++    #[arg(long)]
++    threads: Option<usize>,
++    /// Number of independent measured commit/prove/verify runs.
++    #[arg(long, default_value_t = 3)]
++    samples: usize,
++    /// Untimed warmup runs before collecting samples.
++    #[arg(long, default_value_t = 1)]
++    warmups: usize,
++    /// Write the last serialized proof to a new file (never overwrite).
++    #[arg(long)]
++    proof_out: Option<PathBuf>,
++    /// Print machine-readable CSV on stdout, diagnostics on stderr.
++    #[arg(long)]
++    csv: bool,
++}
+ 
+-    // Brakedown parameters tuned per segment message size.
+-    let (alpha, inverse_rate, cn, dn) = match (k - eta) as u32 {
+-        12 => (0.03, 1.08, 1, 1),
+-        14 => (0.03, 1.08, 1, 1),
+-        16 => (0.03, 1.08, 3, 6),
+-        18 => (0.04, 1.08, 7, 12),
+-        20 => (0.04, 1.08, 9, 16),
+-        22 => (0.045, 1.08, 8, 26),
+-        24 => (0.05, 1.08, 7, 41),
+-        26 => (0.05, 1.08, 6, 47),
+-        other => panic!("no tuned params for segment_msg_size=2^{other}"),
++fn main() -> Result<(), String> {
++    let args = Args::parse();
++    if args.samples == 0 || args.threads == Some(0) {
++        return Err("samples and threads must be positive".into());
++    }
++    if let Some(threads) = args.threads {
++        rayon::ThreadPoolBuilder::new()
++            .num_threads(threads)
++            .build_global()
++            .map_err(|e| e.to_string())?;
++    }
++    let config = ExperimentConfig {
++        message_log: args.message_log,
++        eta: args.eta,
++        seed: args.seed,
+     };
+-
+-    let base_code = BrakedownCode::<SecpScalar>::new(
+-        segment_msg_size,
+-        BrakedownParams {
+-            alpha,
+-            inverse_rate,
+-            cn,
+-            dn,
+-        },
+-        rng,
++    config.validate(args.code)?;
++    let delta = args.code.assumed_distance(config.message_log - config.eta);
++    let queries = args
++        .queries
++        .unwrap_or_else(|| num_queries_from_delta(delta));
++    if queries == 0 || queries > 1 << 20 {
++        return Err("queries must be in 1..=1048576".into());
++    }
++    let start = Instant::now();
++    let code = config.build_code(args.code)?;
++    let setup_ms = start.elapsed().as_secs_f64() * 1000.0;
++    let (message, point) = config.message_and_point();
++    let parameters = Parameters {
++        message_log: config.message_log,
++        eta: config.eta,
++        block_len: code.block_length(),
++        queries,
++        code_id: config.code_id(args.code),
++    };
++    eprintln!(
++        "protocol=interleaved-fs-v1 hash=BLAKE3-256 field=secp256k1_scalar threads={} setup_ms={setup_ms:.3} assumed_delta={delta} query_model={} (distance/setup bounds require separate certification)",
++        current_num_threads(),
++        if args.queries.is_some() {
++            "override"
++        } else {
++            "conditional-100-bit"
++        }
+     );
+-
+-    let block_length_segment = base_code.block_length() * repetition;
+-
+-    let p1 = random_permutation(rng, block_length_segment);
+-    let p2 = random_permutation(rng, block_length_segment);
+-    let m1: Vec<SecpScalar> = (0..block_length_segment)
+-        .map(|_| SecpScalar::random(rng))
+-        .collect();
+-    let m2: Vec<SecpScalar> = (0..block_length_segment)
+-        .map(|_| SecpScalar::random(rng))
+-        .collect();
+-
+-    let era_code = EraCode::new(base_code, repetition, p1, p2, m1, m2);
+-
+-    IoppParams {
+-        era_code,
+-        k,
+-        eta,
+-        num_queries,
++    if args.code == CodeKind::BoltMax {
++        eprintln!(
++            "bolt-max adaptation: kernel_delta=0.013 is an unproved prime-field assumption; full_code_delta=0.0104; no certified setup-failure bound"
++        );
+     }
+-}
+-
+-/// Encode and Merkle-commit an interleaved message.
+-fn commit(params: &IoppParams, message: &[SecpScalar]) -> IoppCommitment {
+-    let rows = 1usize << params.eta;
+-    let block_length = params.era_code.block_length();
+-
+-    let encoded = params.era_code.encode_interleaved(message, params.eta);
+-
+-    let segments: Vec<Vec<SecpScalar>> = (0..rows)
+-        .map(|r| encoded[r * block_length..(r + 1) * block_length].to_vec())
+-        .collect();
+-
+-    let merkle_leaves = blake3_merkle_interleaved_leaves(&segments);
+-    let merkle_levels = blake3_merkle_precompute_levels(&merkle_leaves);
+-    let root = blake3_merkle_root_from_levels(&merkle_levels);
+-
+-    IoppCommitment {
+-        root,
+-        segments,
+-        merkle_leaves,
+-        merkle_levels,
++    if args.csv {
++        println!(
++            "code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted"
++        );
+     }
+-}
+-
+-// ---------------------------------------------------------------------------
+-// Main
+-// ---------------------------------------------------------------------------
+-
+-fn main() {
+-    let k = 22; // total message = 2^22 field elements
+-    let eta = 4; // 2^4 = 16 interleaved rows
+-    let repetition = 6;
+-    let num_queries = 40;
+-
+-    let mut rng = SmallRng::seed_from_u64(42);
+-
+-    // ── Setup ──
+-    let t0 = Instant::now();
+-    let params = setup(k, repetition, eta, num_queries, &mut rng);
+-    let setup_time = t0.elapsed();
+-    println!(
+-        "setup:  {:.3} ms  (k={k}, rep={repetition}, eta={eta}, queries={num_queries})",
+-        setup_time.as_secs_f64() * 1e3
+-    );
+-
+-    // ── Generate random message ──
+-    let total_msg_len = 1usize << k;
+-    let rows = 1usize << eta;
+-    let segment_msg_size = params.era_code.message_size();
+-    let block_length = params.era_code.block_length();
+-    let msg: Vec<SecpScalar> = (0..total_msg_len)
+-        .map(|_| SecpScalar::random(&mut rng))
+-        .collect();
+-    println!(
+-        "message: {total_msg_len} elements ({rows} rows x {segment_msg_size} msg + {block_length} cw each)"
+-    );
+-
+-    // ── Commit ──
+-    let t_commit = Instant::now();
+-    let commitment = commit(&params, &msg);
+-    let commit_time = t_commit.elapsed();
+-    println!(
+-        "commit: {:.3} ms  (root = {:?})",
+-        commit_time.as_secs_f64() * 1e3,
+-        &commitment.root[..8]
+-    );
+-
+-    // ── Generate evaluation point z ∈ F^k ──
+-    let z: Vec<SecpScalar> = (0..k).map(|_| SecpScalar::random(&mut rng)).collect();
+-
+-    // ── Eval prover time (first round + second round) ──
+-    let t_eval = Instant::now();
+-    let first_msg = prover_first_round(&msg, &z, params.eta, params.k);
+-    let challenge =
+-        verifier_challenge(params.era_code.block_length(), params.num_queries, &mut rng);
+-    let second_msg = prover_second_round(
+-        &commitment.segments,
+-        &commitment.merkle_leaves,
+-        &commitment.merkle_levels,
+-        &challenge,
+-        params.eta,
+-    );
+-    let eval_prover_time = t_eval.elapsed();
+-    println!(
+-        "eval prover: {:.3} ms  (folded_msg len={}, {} columns opened)",
+-        eval_prover_time.as_secs_f64() * 1e3,
+-        first_msg.folded_msg.len(),
+-        second_msg.columns.len(),
+-    );
+-
+-    // ── Verifier time (challenge + verify) ──
+-    let t_verify = Instant::now();
+-    let _challenge_v =
+-        verifier_challenge(params.era_code.block_length(), params.num_queries, &mut rng);
+-    let ok = verify(
+-        &z,
+-        params.eta,
+-        params.k,
+-        &commitment.root,
+-        &first_msg,
+-        &challenge,
+-        &second_msg,
+-        |m| params.era_code.encode(m),
+-    );
+-    let verify_time = t_verify.elapsed();
+-    println!(
+-        "verify: {:.3} ms  => {}",
+-        verify_time.as_secs_f64() * 1e3,
+-        if ok { "PASS" } else { "FAIL" }
+-    );
+-
+-    assert!(ok, "IOPP verification failed!");
+-
+-    // ── Proof size estimate ──
+-    // The proof consists of:
+-    //   1. y (evaluation): 256 bits (one field element)
+-    //   2. folded_msg: 2^{k-eta} field elements = 256 * 2^{k-eta} bits
+-    //   3. opened columns: num_queries columns, each with 2^eta field elements
+-    //      = 256 * num_queries * 2^eta bits
+-    //   4. Merkle paths: num_queries paths, each with log2(padded_block_length)
+-    //      sibling hashes of 256 bits
+-    let seg_msg_size = 1usize << (k - eta);
+-    let padded_block_len = block_length.next_power_of_two().max(2);
+-    let merkle_path_len = padded_block_len.ilog2() as u64;
+-    let proof_bits_y = 256u64;
+-    let proof_bits_folded_msg = 256 * seg_msg_size as u64;
+-    let proof_bits_columns = 256 * num_queries as u64 * rows as u64;
+-    let proof_bits_merkle = 256 * num_queries as u64 * merkle_path_len;
+-    let total_proof_bits =
+-        proof_bits_y + proof_bits_folded_msg + proof_bits_columns + proof_bits_merkle;
+-    let total_proof_kib = total_proof_bits as f64 / 8.0 / 1024.0;
+-    println!(
+-        "proof size: {:.2} KiB  (y: {} bits, folded_msg: {} bits, columns: {} bits, merkle: {} bits)",
+-        total_proof_kib, proof_bits_y, proof_bits_folded_msg, proof_bits_columns, proof_bits_merkle,
+-    );
++    for sample in 0..args.samples + args.warmups {
++        let start = Instant::now();
++        let tree = Commitment::new(
++            message
++                .par_chunks(code.message_size())
++                .map(|row| code.encode_row(row, config.rows() >= current_num_threads()))
++                .collect(),
++        );
++        let commit_ms = start.elapsed().as_secs_f64() * 1000.0;
++        let start = Instant::now();
++        let (value, proof) =
++            prove(parameters, &tree, &message, &point).map_err(|e| e.to_string())?;
++        let prove_ms = start.elapsed().as_secs_f64() * 1000.0;
++        let start = Instant::now();
++        verify(parameters, tree.root(), &point, value, &proof, |m| {
++            code.encode(m)
++        })
++        .map_err(|e| e.to_string())?;
++        let verify_ms = start.elapsed().as_secs_f64() * 1000.0;
++        if sample < args.warmups {
++            continue;
++        }
++        let sample = sample - args.warmups;
++        if args.csv {
++            println!(
++                "{},{},{},{},{},{sample},{queries},{},{setup_ms:.6},{commit_ms:.6},{prove_ms:.6},{verify_ms:.6},{},32,true",
++                args.code.name(),
++                config.message_log,
++                config.eta,
++                config.seed,
++                current_num_threads(),
++                code.block_length(),
++                proof.len()
++            );
++        } else {
++            println!(
++                "sample {sample}: commit={commit_ms:.3} ms prove={prove_ms:.3} ms verify={verify_ms:.3} ms proof={} bytes ({:.3} KiB), public commitment=32 bytes, PASS",
++                proof.len(),
++                proof.len() as f64 / 1024.0
++            );
++        }
++        if sample + 1 == args.samples {
++            if let Some(path) = &args.proof_out {
++                let mut file = OpenOptions::new()
++                    .write(true)
++                    .create_new(true)
++                    .open(path)
++                    .map_err(|e| e.to_string())?;
++                file.write_all(&proof).map_err(|e| e.to_string())?;
++            }
++        }
++    }
++    Ok(())
+ }
+diff --git a/src/commit/codes/basefold.rs b/src/commit/codes/basefold.rs
+index 9196996..b35d51f 100644
+--- a/src/commit/codes/basefold.rs
++++ b/src/commit/codes/basefold.rs
+@@ -80,7 +80,15 @@ impl<F: FieldElement> BasefoldCode<F> {
+         let mut table = Vec::with_capacity(log_message_size);
+         for i in 0..log_message_size {
+             let level_size = rate << i; // rate * 2^i
+-            let level: Vec<F> = (0..level_size).map(|_| F::random(rng)).collect();
++            let level: Vec<F> = (0..level_size)
++                .map(|_| {
++                    let mut value = F::random(rng);
++                    while value.is_zero() {
++                        value = F::random(rng);
++                    }
++                    value
++                })
++                .collect();
+             table.push(level);
+         }
+ 
+@@ -106,6 +114,40 @@ impl<F: FieldElement> BasefoldCode<F> {
+         self.codeword_length
+     }
+ 
++    /// Encode a message at a lower level using the same nested code family.
++    pub fn encode_lower(&self, message: &[F]) -> Vec<F> {
++        assert!(message.len().is_power_of_two() && message.len() <= self.message_size);
++        let mut word: Vec<F> = message
++            .iter()
++            .flat_map(|&x| std::iter::repeat_n(x, self.rate))
++            .collect();
++        for level in self.table.iter().take(message.len().ilog2() as usize) {
++            let butterfly = |chunk: &mut [F]| {
++                let (a, b) = chunk.split_at_mut(level.len());
++                for ((a, b), &t) in a.iter_mut().zip(b).zip(level) {
++                    let x = *a;
++                    let y = *b * t;
++                    *a = x + y;
++                    *b = x - y;
++                }
++            };
++            #[cfg(feature = "parallel")]
++            word.par_chunks_mut(level.len() * 2).for_each(butterfly);
++            #[cfg(not(feature = "parallel"))]
++            word.chunks_mut(level.len() * 2).for_each(butterfly);
++        }
++        reverse_index_bits_in_place(&mut word);
++        word
++    }
++
++    /// Butterfly coefficients in the adjacent-pair order used by Type-1 words.
++    pub fn folding_table(&self, log_message: usize) -> Vec<F> {
++        assert!(log_message > 0 && log_message <= self.log_message_size);
++        let mut table = self.table[log_message - 1].clone();
++        reverse_index_bits_in_place(&mut table);
++        table
++    }
++
+     /// Encode a single message (segment).
+     ///
+     /// 1. Repetition base code: each element repeated `rate` times.
+diff --git a/src/commit/codes/brakedown.rs b/src/commit/codes/brakedown.rs
+index 4dc1d25..df0f449 100644
+--- a/src/commit/codes/brakedown.rs
++++ b/src/commit/codes/brakedown.rs
+@@ -1,307 +1,256 @@
+-//! Brakedown linear-code encoding.
+-//!
+-//! This module contains only the encoding logic from the Brakedown polynomial
+-//! commitment scheme, ported to work over any `p3_field::Field`.
++//! Systematic Brakedown encoder with input-regular expanders and a systematic
++//! Reed–Solomon base case. Setup stores edges by output for cache-friendly gathers.
++use crate::{ErrorCorrectingCode, FieldElement};
++use rand::{Rng, seq::index::sample};
+ 
+-use std::time::Duration;
+-
+-use rand::Rng;
+-
+-use crate::{ErrorCorrectingCode, FieldElement, SparseMatEntry, sparse_mat_vec};
+-
+-/// Parameters that control the Brakedown code construction.
+ #[derive(Debug, Clone, Copy)]
+ pub struct BrakedownParams {
+-    /// Fraction of the message length used for the intermediate vector y.
+     pub alpha: f64,
+-    /// Codeword-length / message-length ratio.
+     pub inverse_rate: f64,
+-    /// Column-degree multiplier for the E1 sparse matrix.
+     pub cn: usize,
+-    /// Column-degree multiplier for the E2 sparse matrix.
+     pub dn: usize,
+ }
+ 
+-/// Pre-computed code description for Brakedown (all sparse matrices at every
+-/// recursion level).
+ #[derive(Debug)]
+-pub struct BrakedownCode<F> {
+-    /// Message length (number of field elements in one row).
+-    message_size: usize,
+-    /// Code parameters.
+-    params: BrakedownParams,
+-    /// Sparse matrices E1 at each recursion depth.
+-    e1: Vec<Vec<SparseMatEntry<F>>>,
+-    /// Sparse matrices E2 at each recursion depth.
+-    e2: Vec<Vec<SparseMatEntry<F>>>,
+-    /// Cached "tail" constants for the base-case (depth where y_length < 1).
+-    base_vals: Vec<F>,
++struct Expander<F> {
++    offsets: Vec<usize>,
++    edges: Vec<(usize, F)>,
+ }
+ 
+-/// Compute the derived lengths for a given message length and parameters.
+-fn brakedown_code_lengths(
+-    cur_msg_length: usize,
+-    params: &BrakedownParams,
+-) -> (usize, usize, usize, usize) {
+-    let cur_codeword_length = (cur_msg_length as f64 * params.inverse_rate) as usize;
+-    let cur_y_length = (cur_msg_length as f64 * params.alpha) as usize;
+-    let cur_z_length = if cur_y_length >= 1 {
+-        (cur_y_length as f64 * params.inverse_rate) as usize
+-    } else {
+-        0
+-    };
+-    let cur_v_length = cur_codeword_length - cur_msg_length - cur_z_length;
+-    (
+-        cur_codeword_length,
+-        cur_y_length,
+-        cur_z_length,
+-        cur_v_length,
+-    )
+-}
+-
+-impl<F: FieldElement> BrakedownCode<F> {
+-    /// Build a new Brakedown code for a given `message_size` and `params`.
+-    ///
+-    /// This pre-generates all the random sparse matrices needed at every
+-    /// recursion level.
+-    pub fn new(message_size: usize, params: BrakedownParams, rng: &mut impl Rng) -> Self {
+-        let mut e1 = Vec::new();
+-        let mut e2 = Vec::new();
+-        let mut base_vals = Vec::new();
+-        let mut cur_msg_length = message_size;
++impl<F: FieldElement> Expander<F> {
++    fn new(input: usize, output: usize, degree: usize, rng: &mut impl Rng) -> Self {
++        assert!(degree <= output && degree > 0);
++        let mut columns = vec![Vec::new(); output];
++        for i in 0..input {
++            // Distinct neighbours for every input, as in the expansion analysis.
++            for j in sample(rng, output, degree) {
++                let mut value = F::random(rng);
++                while value.is_zero() {
++                    value = F::random(rng);
++                }
++                columns[j].push((i, value));
++            }
++        }
++        let mut offsets = Vec::with_capacity(output + 1);
++        let mut edges = Vec::with_capacity(input * degree);
++        offsets.push(0);
++        for column in columns {
++            edges.extend(column);
++            offsets.push(edges.len());
++        }
++        Self { offsets, edges }
++    }
+ 
+-        loop {
+-            let (_cw_len, cur_y_length, cur_z_length, cur_v_length) =
+-                brakedown_code_lengths(cur_msg_length, &params);
++    fn apply(&self, message: &[F]) -> Vec<F> {
++        self.offsets
++            .windows(2)
++            .map(|range| {
++                self.edges[range[0]..range[1]]
++                    .iter()
++                    .map(|&(i, weight)| message[i] * weight)
++                    .fold(F::ZERO, |a, b| a + b)
++            })
++            .collect()
++    }
++}
+ 
+-            let mut level_e1 = Vec::new();
+-            let mut level_e2 = Vec::new();
++#[derive(Debug)]
++enum Layer<F> {
++    Recursive {
++        a: Expander<F>,
++        b: Expander<F>,
++        child: Box<BrakedownCode<F>>,
++    },
++    /// Row-major parity part of a systematic RS generator matrix.
++    Base { parity: Vec<Vec<F>> },
++}
+ 
+-            if cur_y_length >= 1 {
+-                // E1: maps msg -> y
+-                for i in 0..cur_y_length {
+-                    let nnz = params.cn;
+-                    for _ in 0..nnz {
+-                        level_e1.push(SparseMatEntry {
+-                            row: rng.random_range(0..cur_msg_length),
+-                            col: i,
+-                            val: F::random(rng),
+-                        });
+-                    }
+-                }
++#[derive(Debug)]
++pub struct BrakedownCode<F> {
++    message_size: usize,
++    codeword_length: usize,
++    layer: Layer<F>,
++}
+ 
+-                // E2: maps z -> v
+-                for i in 0..cur_v_length {
+-                    let nnz = params.dn;
+-                    for _ in 0..nnz {
+-                        level_e2.push(SparseMatEntry {
+-                            row: rng.random_range(0..cur_z_length),
+-                            col: i,
+-                            val: F::random(rng),
+-                        });
+-                    }
+-                }
+-            } else {
+-                // Base case: just store random values
+-                for _ in 0..cur_v_length {
+-                    base_vals.push(F::random(rng));
+-                }
++impl<F: FieldElement> BrakedownCode<F> {
++    pub fn new(message_size: usize, params: BrakedownParams, rng: &mut impl Rng) -> Self {
++        assert!(message_size > 0 && u32::try_from(message_size).is_ok());
++        assert!(params.alpha > 0.0 && params.alpha < 1.0 && params.inverse_rate > 1.0);
++        let codeword_length = (message_size as f64 * params.inverse_rate) as usize;
++        let y = (message_size as f64 * params.alpha).ceil() as usize;
++        let z = (y as f64 * params.inverse_rate) as usize;
++        let v = codeword_length
++            .checked_sub(message_size + z)
++            .expect("invalid Brakedown rate/alpha");
++        let layer = if y >= params.cn && v >= params.dn && message_size > 32 {
++            Layer::Recursive {
++                a: Expander::new(message_size, y, params.cn, rng),
++                b: Expander::new(z, v, params.dn, rng),
++                child: Box::new(Self::new(y, params, rng)),
+             }
+-
+-            e1.push(level_e1);
+-            e2.push(level_e2);
+-
+-            if cur_y_length < 1 {
+-                break;
++        } else {
++            // Messages are evaluations at 0,...,k-1. Interpolate them at k,...,n-1.
++            // This preserves the systematic layout and gives an MDS base code.
++            assert!(u32::try_from(codeword_length).is_ok());
++            let mut barycentric = Vec::with_capacity(message_size);
++            for i in 0..message_size {
++                let xi = F::from_u32(i as u32);
++                let denominator = (0..message_size)
++                    .filter(|&j| j != i)
++                    .map(|j| xi - F::from_u32(j as u32))
++                    .fold(F::ONE, |a, b| a * b);
++                barycentric.push(
++                    denominator
++                        .inverse()
++                        .expect("field too small for base code"),
++                );
+             }
+-            cur_msg_length = cur_y_length;
+-        }
+-
++            let parity = (message_size..codeword_length)
++                .map(|j| {
++                    let x = F::from_u32(j as u32);
++                    let product = (0..message_size)
++                        .map(|i| x - F::from_u32(i as u32))
++                        .fold(F::ONE, |a, b| a * b);
++                    (0..message_size)
++                        .map(|i| {
++                            product
++                                * barycentric[i]
++                                * (x - F::from_u32(i as u32)).inverse().unwrap()
++                        })
++                        .collect()
++                })
++                .collect();
++            Layer::Base { parity }
++        };
+         Self {
+             message_size,
+-            params,
+-            e1,
+-            e2,
+-            base_vals,
++            codeword_length,
++            layer,
+         }
+     }
+ 
+-    /// Returns the message size this code was built for.
+     #[must_use]
+-    pub fn message_size(&self) -> usize {
++    pub const fn message_size(&self) -> usize {
+         self.message_size
+     }
+-
+-    /// Returns the codeword length for this code.
+     #[must_use]
+-    pub fn codeword_length(&self) -> usize {
+-        let (codeword_length, _, _, _) = brakedown_code_lengths(self.message_size, &self.params);
+-        codeword_length
++    pub const fn codeword_length(&self) -> usize {
++        self.codeword_length
+     }
+ 
+-    /// Encode a single message (row).
+-    pub fn encode(&self, msg: &[F]) -> Vec<F> {
+-        assert_eq!(msg.len(), self.message_size);
+-        self.encode_recursive(msg, 0)
+-    }
+-
+-    // ── private helpers ──────────────────────────────────────────────────
+-
+-    fn encode_recursive(&self, msg: &[F], depth: usize) -> Vec<F> {
+-        let cur_msg_length = msg.len();
+-        let (_cw_len, cur_y_length, _cur_z_length, cur_v_length) =
+-            brakedown_code_lengths(cur_msg_length, &self.params);
+-
+-        let mut x = msg.to_vec();
+-
+-        if cur_y_length >= 1 {
+-            let nnz_e1 = self.params.cn;
+-            let y = sparse_mat_vec(msg, &self.e1[depth], cur_y_length, nnz_e1);
+-
+-            let z = self.encode_recursive(&y, depth + 1);
+-
+-            let nnz_e2 = self.params.dn;
+-            let v = sparse_mat_vec(&z, &self.e2[depth], cur_v_length, nnz_e2);
+-
+-            x.extend_from_slice(&z);
+-            x.extend_from_slice(&v);
+-        } else {
+-            x.extend_from_slice(&self.base_vals);
+-        }
+-
+-        x
+-    }
+-
+-    /// Like [`Self::encode`] but prints per-depth nnz and sparse_mat_vec timings.
+-    pub fn encode_profiled(&self, msg: &[F]) -> Vec<F> {
+-        assert_eq!(msg.len(), self.message_size);
+-        let mut stats = Vec::new();
+-        let result = self.encode_recursive_profiled(msg, 0, &mut stats);
+-
+-        eprintln!();
+-        eprintln!(
+-            "┌───────┬──────────┬──────────┬──────────┬──────────┬────────────┬────────────┐"
+-        );
+-        eprintln!(
+-            "│ Depth │  msg_len │   y_len  │   z_len  │   v_len  │  E1 spmv   │  E2 spmv   │"
+-        );
+-        eprintln!(
+-            "├───────┼──────────┼──────────┼──────────┼──────────┼────────────┼────────────┤"
+-        );
+-        for s in &stats {
+-            eprintln!(
+-                "│ {:>5} │ {:>8} │ {:>8} │ {:>8} │ {:>8} │{:>5}×{:<5} {:>7.3}ms │{:>5}×{:<5} {:>7.3}ms │",
+-                s.depth,
+-                s.msg_len,
+-                s.y_len,
+-                s.z_len,
+-                s.v_len,
+-                s.nnz_e1,
+-                s.y_len,
+-                s.t_e1.as_secs_f64() * 1e3,
+-                s.nnz_e2,
+-                s.v_len,
+-                s.t_e2.as_secs_f64() * 1e3,
+-            );
++    pub fn encode(&self, message: &[F]) -> Vec<F> {
++        assert_eq!(message.len(), self.message_size);
++        let mut result = Vec::with_capacity(self.codeword_length);
++        result.extend_from_slice(message);
++        match &self.layer {
++            Layer::Recursive { a, b, child } => {
++                let z = child.encode(&a.apply(message));
++                let v = b.apply(&z);
++                result.extend(z);
++                result.extend(v);
++            }
++            Layer::Base { parity } => {
++                result.extend(parity.iter().map(|row| {
++                    row.iter()
++                        .zip(message)
++                        .map(|(&a, &b)| a * b)
++                        .fold(F::ZERO, |a, b| a + b)
++                }));
++            }
+         }
+-        eprintln!(
+-            "└───────┴──────────┴──────────┴──────────┴──────────┴────────────┴────────────┘"
+-        );
+-
+-        let total_e1: Duration = stats.iter().map(|s| s.t_e1).sum();
+-        let total_e2: Duration = stats.iter().map(|s| s.t_e2).sum();
+-        eprintln!(
+-            "  Totals: E1 spmv = {:.3} ms, E2 spmv = {:.3} ms, combined = {:.3} ms",
+-            total_e1.as_secs_f64() * 1e3,
+-            total_e2.as_secs_f64() * 1e3,
+-            (total_e1 + total_e2).as_secs_f64() * 1e3,
+-        );
+-
++        debug_assert_eq!(result.len(), self.codeword_length);
+         result
+     }
+ 
+-    fn encode_recursive_profiled(
+-        &self,
+-        msg: &[F],
+-        depth: usize,
+-        stats: &mut Vec<BrakedownDepthStats>,
+-    ) -> Vec<F> {
+-        let cur_msg_length = msg.len();
+-        let (_cw_len, cur_y_length, cur_z_length, cur_v_length) =
+-            brakedown_code_lengths(cur_msg_length, &self.params);
+-
+-        let mut x = msg.to_vec();
+-
+-        if cur_y_length >= 1 {
+-            let nnz_e1 = self.params.cn;
+-            let t0 = std::time::Instant::now();
+-            let y = sparse_mat_vec(msg, &self.e1[depth], cur_y_length, nnz_e1);
+-            let t_e1 = t0.elapsed();
+-
+-            let z = self.encode_recursive_profiled(&y, depth + 1, stats);
+-
+-            let nnz_e2 = self.params.dn;
+-            let t0 = std::time::Instant::now();
+-            let v = sparse_mat_vec(&z, &self.e2[depth], cur_v_length, nnz_e2);
+-            let t_e2 = t0.elapsed();
+-
+-            stats.push(BrakedownDepthStats {
+-                depth,
+-                msg_len: cur_msg_length,
+-                y_len: cur_y_length,
+-                z_len: cur_z_length,
+-                v_len: cur_v_length,
+-                nnz_e1,
+-                nnz_e2,
+-                t_e1,
+-                t_e2,
+-            });
+-
+-            x.extend_from_slice(&z);
+-            x.extend_from_slice(&v);
+-        } else {
+-            stats.push(BrakedownDepthStats {
+-                depth,
+-                msg_len: cur_msg_length,
+-                y_len: 0,
+-                z_len: 0,
+-                v_len: cur_v_length,
+-                nnz_e1: 0,
+-                nnz_e2: 0,
+-                t_e1: Duration::ZERO,
+-                t_e2: Duration::ZERO,
+-            });
+-            x.extend_from_slice(&self.base_vals);
+-        }
+-
+-        x
++    pub fn encode_profiled(&self, message: &[F]) -> Vec<F> {
++        let start = std::time::Instant::now();
++        let codeword = self.encode(message);
++        eprintln!("Brakedown encoding: {:?}", start.elapsed());
++        codeword
+     }
+ }
+ 
+-struct BrakedownDepthStats {
+-    depth: usize,
+-    msg_len: usize,
+-    y_len: usize,
+-    z_len: usize,
+-    v_len: usize,
+-    nnz_e1: usize,
+-    nnz_e2: usize,
+-    t_e1: Duration,
+-    t_e2: Duration,
+-}
+-
+ impl<F: FieldElement> ErrorCorrectingCode for BrakedownCode<F> {
+     type Alphabet = F;
+-
+     fn message_size(&self) -> usize {
+         self.message_size
+     }
+-
+     fn block_length(&self) -> usize {
+-        self.codeword_length()
++        self.codeword_length
++    }
++    fn encode(&self, message: &[F]) -> Vec<F> {
++        self.encode(message)
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use ark_secp256k1::Fr as F;
++    use rand::{SeedableRng, rngs::SmallRng};
++
++    #[test]
++    fn linear_systematic_and_input_regular() {
++        let code = BrakedownCode::<F>::new(
++            128,
++            BrakedownParams {
++                alpha: 0.3,
++                inverse_rate: 2.0,
++                cn: 10,
++                dn: 20,
++            },
++            &mut SmallRng::seed_from_u64(2025),
++        );
++        assert!(
++            code.encode(&vec![F::ZERO; 128])
++                .iter()
++                .all(FieldElement::is_zero)
++        );
++        let a: Vec<_> = (1..=128).map(F::from).collect();
++        let b: Vec<_> = a.iter().map(|&x| x * x).collect();
++        let combined: Vec<_> = a
++            .iter()
++            .zip(&b)
++            .map(|(&x, &y)| x * F::from(7) + y * F::from(9))
++            .collect();
++        let ea = code.encode(&a);
++        let eb = code.encode(&b);
++        assert_eq!(&ea[..128], &a);
++        assert_eq!(
++            code.encode(&combined),
++            ea.iter()
++                .zip(&eb)
++                .map(|(&x, &y)| x * F::from(7) + y * F::from(9))
++                .collect::<Vec<_>>()
++        );
++        if let Layer::Recursive { a, .. } = &code.layer {
++            let mut degrees = vec![0; 128];
++            for &(i, _) in &a.edges {
++                degrees[i] += 1;
++            }
++            assert!(degrees.iter().all(|&degree| degree == 10));
++        } else {
++            panic!("expected recursive test fixture");
++        }
+     }
+ 
+-    fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
+-        self.encode(msg)
++    #[test]
++    fn base_case_extends_a_known_polynomial() {
++        let code = BrakedownCode::<F>::new(
++            8,
++            BrakedownParams {
++                alpha: 0.3,
++                inverse_rate: 2.0,
++                cn: 10,
++                dn: 20,
++            },
++            &mut SmallRng::seed_from_u64(1),
++        );
++        let polynomial = |x: F| x * x + F::from(3) * x + F::ONE;
++        let msg: Vec<_> = (0..8).map(|i| polynomial(F::from(i))).collect();
++        assert_eq!(
++            code.encode(&msg),
++            (0..16).map(|i| polynomial(F::from(i))).collect::<Vec<_>>()
++        );
+     }
+ }
+diff --git a/src/commit/codes/era.rs b/src/commit/codes/era.rs
+index b9dd592..6819aff 100644
+--- a/src/commit/codes/era.rs
++++ b/src/commit/codes/era.rs
+@@ -1,8 +1,7 @@
+ use std::{sync::OnceLock, time::Instant};
+ 
++use p3_maybe_rayon::prelude::*;
+ use rand_08::SeedableRng as _;
+-#[cfg(feature = "parallel")]
+-use rayon::{current_num_threads, prelude::*};
+ use rip_shuffle::RipShuffleSequential;
+ 
+ use crate::{ErrorCorrectingCode, FieldElement};
+@@ -67,6 +66,15 @@ where
+     C: ErrorCorrectingCode<Alphabet = F> + Sync,
+     F: FieldElement,
+ {
++    pub const fn base_code(&self) -> &C {
++        &self.base_code
++    }
++    pub fn permutations(&self) -> (&[usize], &[usize]) {
++        (&self.p1_vector, &self.p2_vector)
++    }
++    pub fn multipliers(&self) -> (&[F], &[F]) {
++        (&self.m1_vector, &self.m2_vector)
++    }
+     pub fn new(
+         base_code: C,
+         repetition_parameter: usize,
+@@ -89,7 +97,7 @@ where
+             m2_vector,
+         };
+ 
+-        debug_assert!(code.validate_parameters());
++        assert!(code.validate_parameters(), "invalid ERA parameters");
+         code
+     }
+ 
+@@ -109,7 +117,12 @@ where
+     }
+ 
+     fn validate_parameters(&self) -> bool {
+-        Self::check_permutation(&self.p1_vector)
++        self.repetition_parameter > 0
++            && self.p1_vector.len() == self.block_length
++            && self.p2_vector.len() == self.block_length
++            && self.m1_vector.len() == self.block_length
++            && self.m2_vector.len() == self.block_length
++            && Self::check_permutation(&self.p1_vector)
+             && Self::check_permutation(&self.p2_vector)
+             && self.base_code.message_size() == self.message_size
+             && self.repetition_parameter * self.base_code.block_length() == self.block_length()
+@@ -222,66 +235,20 @@ where
+             });
+     }
+ 
+-    fn prefix_sum_in_place_sequential(values: &mut [F], weights: &[F], chunk_len: usize) {
+-        if values.is_empty() {
+-            return;
+-        }
+-        debug_assert_eq!(values.len(), weights.len());
+-
+-        let mut totals = Vec::with_capacity(values.len().div_ceil(chunk_len));
+-        for (chunk, weights_chunk) in values.chunks_mut(chunk_len).zip(weights.chunks(chunk_len)) {
+-            let mut acc = F::ZERO;
+-            for (value, weight) in chunk.iter_mut().zip(weights_chunk.iter()) {
+-                acc += *value * *weight;
+-                *value = acc;
+-            }
+-            totals.push(acc);
+-        }
+-
+-        let mut running = F::ZERO;
+-        for total in &mut totals {
+-            let tmp = *total;
+-            *total = running;
+-            running += tmp;
+-        }
+-
+-        for (chunk, offset) in values.chunks_mut(chunk_len).zip(totals.into_iter()) {
+-            if !offset.is_zero() {
+-                for value in chunk.iter_mut() {
+-                    *value += offset;
+-                }
+-            }
++    fn prefix_sum_in_place_sequential(values: &mut [F], weights: &[F], _chunk_len: usize) {
++        assert_eq!(values.len(), weights.len());
++        let mut acc = F::ZERO;
++        for (value, &weight) in values.iter_mut().zip(weights) {
++            acc += *value * weight;
++            *value = acc;
+         }
+     }
+ 
+-    fn prefix_sum_add_only_in_place_sequential(values: &mut [F], chunk_len: usize) {
+-        if values.is_empty() {
+-            return;
+-        }
+-
+-        let mut totals = Vec::with_capacity(values.len().div_ceil(chunk_len));
+-        for chunk in values.chunks_mut(chunk_len) {
+-            let mut acc = F::ZERO;
+-            for value in chunk.iter_mut() {
+-                acc += *value;
+-                *value = acc;
+-            }
+-            totals.push(acc);
+-        }
+-
+-        let mut running = F::ZERO;
+-        for total in &mut totals {
+-            let tmp = *total;
+-            *total = running;
+-            running += tmp;
+-        }
+-
+-        for (chunk, offset) in values.chunks_mut(chunk_len).zip(totals.into_iter()) {
+-            if !offset.is_zero() {
+-                for value in chunk.iter_mut() {
+-                    *value += offset;
+-                }
+-            }
++    fn prefix_sum_add_only_in_place_sequential(values: &mut [F], _chunk_len: usize) {
++        let mut acc = F::ZERO;
++        for value in values {
++            acc += *value;
++            *value = acc;
+         }
+     }
+ 
+@@ -295,8 +262,7 @@ where
+ 
+         // Round 1: fused repetition + permutation gather, then prefix sum
+         // SAFETY: every element is written by the gather before being read.
+-        let mut w1 = Vec::with_capacity(n);
+-        unsafe { w1.set_len(n) };
++        let mut w1 = vec![F::ZERO; n];
+         w1.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+@@ -313,8 +279,7 @@ where
+         Self::prefix_sum_in_place(&mut w1, &self.m1_vector, chunk_len);
+ 
+         // SAFETY: every element is written by the gather before being read.
+-        let mut w2 = Vec::with_capacity(n);
+-        unsafe { w2.set_len(n) };
++        let mut w2 = vec![F::ZERO; n];
+         w2.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+@@ -340,12 +305,11 @@ where
+         debug_assert!(self.validate_parameters());
+ 
+         let n = self.block_length;
+-        let base_encoding = self.base_code.encode(msg);
++        let base_encoding = self.base_code.encode_sequential(msg);
+         let base_bl = self.base_code.block_length();
+         let chunk_len = Self::chunk_len(self.block_length);
+ 
+-        let mut w1 = Vec::with_capacity(n);
+-        unsafe { w1.set_len(n) };
++        let mut w1 = vec![F::ZERO; n];
+         for (chunk_idx, chunk) in w1.chunks_mut(chunk_len).enumerate() {
+             let start = chunk_idx * chunk_len;
+             let len = chunk.len();
+@@ -359,8 +323,7 @@ where
+         }
+         Self::prefix_sum_in_place_sequential(&mut w1, &self.m1_vector, chunk_len);
+ 
+-        let mut w2 = Vec::with_capacity(n);
+-        unsafe { w2.set_len(n) };
++        let mut w2 = vec![F::ZERO; n];
+         for (chunk_idx, chunk) in w2.chunks_mut(chunk_len).enumerate() {
+             let start = chunk_idx * chunk_len;
+             let len = chunk.len();
+@@ -390,8 +353,7 @@ where
+         let chunk_len = Self::chunk_len(self.block_length);
+ 
+         // Round 1: fused repetition + permutation gather, then add-only prefix sum
+-        let mut w1 = Vec::with_capacity(n);
+-        unsafe { w1.set_len(n) };
++        let mut w1 = vec![F::ZERO; n];
+         w1.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+@@ -408,8 +370,7 @@ where
+         Self::prefix_sum_add_only_in_place(&mut w1, chunk_len);
+ 
+         // Round 2: permutation gather, then add-only prefix sum
+-        let mut w2 = Vec::with_capacity(n);
+-        unsafe { w2.set_len(n) };
++        let mut w2 = vec![F::ZERO; n];
+         w2.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+@@ -435,12 +396,11 @@ where
+         debug_assert!(self.validate_parameters());
+ 
+         let n = self.block_length;
+-        let base_encoding = self.base_code.encode(msg);
++        let base_encoding = self.base_code.encode_sequential(msg);
+         let base_bl = self.base_code.block_length();
+         let chunk_len = Self::chunk_len(self.block_length);
+ 
+-        let mut w1 = Vec::with_capacity(n);
+-        unsafe { w1.set_len(n) };
++        let mut w1 = vec![F::ZERO; n];
+         for (chunk_idx, chunk) in w1.chunks_mut(chunk_len).enumerate() {
+             let start = chunk_idx * chunk_len;
+             let len = chunk.len();
+@@ -454,8 +414,7 @@ where
+         }
+         Self::prefix_sum_add_only_in_place_sequential(&mut w1, chunk_len);
+ 
+-        let mut w2 = Vec::with_capacity(n);
+-        unsafe { w2.set_len(n) };
++        let mut w2 = vec![F::ZERO; n];
+         for (chunk_idx, chunk) in w2.chunks_mut(chunk_len).enumerate() {
+             let start = chunk_idx * chunk_len;
+             let len = chunk.len();
+@@ -489,8 +448,7 @@ where
+         // Round 1: fused repetition + permutation gather, then add-only prefix sum
+         let t0 = Instant::now();
+         // SAFETY: every element is written by the gather before being read.
+-        let mut w1 = Vec::with_capacity(n);
+-        unsafe { w1.set_len(n) };
++        let mut w1 = vec![F::ZERO; n];
+         w1.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+@@ -513,8 +471,7 @@ where
+         // Round 2: permutation gather, then add-only prefix sum
+         let t0 = Instant::now();
+         // SAFETY: every element is written by the gather before being read.
+-        let mut w2 = Vec::with_capacity(n);
+-        unsafe { w2.set_len(n) };
++        let mut w2 = vec![F::ZERO; n];
+         w2.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+@@ -721,8 +678,7 @@ where
+         // Round 1: fused repetition + permutation gather, then prefix sum
+         let t0 = Instant::now();
+         // SAFETY: every element is written by the gather before being read.
+-        let mut w1 = Vec::with_capacity(n);
+-        unsafe { w1.set_len(n) };
++        let mut w1 = vec![F::ZERO; n];
+         w1.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+@@ -745,8 +701,7 @@ where
+         // Round 2: permutation, then fused mul + prefix sum
+         let t0 = Instant::now();
+         // SAFETY: every element is written by the gather before being read.
+-        let mut w2 = Vec::with_capacity(n);
+-        unsafe { w2.set_len(n) };
++        let mut w2 = vec![F::ZERO; n];
+         w2.par_chunks_mut(chunk_len)
+             .enumerate()
+             .for_each(|(chunk_idx, chunk)| {
+diff --git a/src/commit/codes/mod.rs b/src/commit/codes/mod.rs
+index cc4127a..b1634ab 100644
+--- a/src/commit/codes/mod.rs
++++ b/src/commit/codes/mod.rs
+@@ -1,4 +1,5 @@
+ mod basefold;
++mod bolt;
+ mod brakedown;
+ mod era;
+ mod expand_accumulate;
+@@ -6,6 +7,7 @@ mod identity;
+ mod tensor;
+ 
+ pub use basefold::{BasefoldCode, BasefoldParams};
++pub use bolt::{BOLT_COMPRESSION, BOLT_DEGREE, BOLT_MAX_DEGREE, BoltCode};
+ pub use brakedown::{BrakedownCode, BrakedownParams};
+ pub use era::EraCode;
+ pub use expand_accumulate::{EaCode, EaParams};
+diff --git a/src/commit/codes/tensor.rs b/src/commit/codes/tensor.rs
+index 73a1eb8..014e670 100644
+--- a/src/commit/codes/tensor.rs
++++ b/src/commit/codes/tensor.rs
+@@ -27,6 +27,9 @@ pub struct TensorCode<C> {
+ }
+ 
+ impl<C: ErrorCorrectingCode> TensorCode<C> {
++    pub const fn inner(&self) -> &C {
++        &self.inner
++    }
+     /// Build a new tensor code wrapping `inner`.
+     pub fn new(inner: C) -> Self {
+         let k = inner.message_size();
+@@ -101,4 +104,21 @@ where
+ 
+         result
+     }
++
++    fn encode_sequential(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
++        assert_eq!(msg.len(), self.k * self.k);
++        let rows: Vec<_> = msg
++            .chunks_exact(self.k)
++            .map(|row| self.inner.encode_sequential(row))
++            .collect();
++        let columns: Vec<_> = (0..self.n)
++            .map(|j| {
++                self.inner
++                    .encode_sequential(&(0..self.k).map(|i| rows[i][j].clone()).collect::<Vec<_>>())
++            })
++            .collect();
++        (0..self.n)
++            .flat_map(|i| columns.iter().map(move |column| column[i].clone()))
++            .collect()
++    }
+ }
+diff --git a/src/commit/merkle.rs b/src/commit/merkle.rs
+index 334f3c1..8b5e02a 100644
+--- a/src/commit/merkle.rs
++++ b/src/commit/merkle.rs
+@@ -10,23 +10,13 @@ fn merkle_root_sequential(leaves: &[[u8; 32]]) -> [u8; 32] {
+ 
+     let mut level: Vec<[u8; 32]> = leaves
+         .chunks_exact(2)
+-        .map(|pair| {
+-            let mut buf = [0u8; 64];
+-            buf[..32].copy_from_slice(&pair[0]);
+-            buf[32..].copy_from_slice(&pair[1]);
+-            *blake3::hash(&buf).as_bytes()
+-        })
++        .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
+         .collect();
+ 
+     while level.len() > 1 {
+         level = level
+             .chunks_exact(2)
+-            .map(|pair| {
+-                let mut buf = [0u8; 64];
+-                buf[..32].copy_from_slice(&pair[0]);
+-                buf[32..].copy_from_slice(&pair[1]);
+-                *blake3::hash(&buf).as_bytes()
+-            })
++            .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
+             .collect();
+     }
+ 
+@@ -61,10 +51,7 @@ pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+         blake3_merkle_root(&leaves[mid..]),
+     );
+ 
+-    let mut buf = [0u8; 64];
+-    buf[..32].copy_from_slice(&left);
+-    buf[32..].copy_from_slice(&right);
+-    *blake3::hash(&buf).as_bytes()
++    hash_merkle_node(&left, &right)
+ }
+ 
+ /// Hash a field element's canonical limbs directly into a `blake3::Hasher`,
+@@ -73,22 +60,33 @@ pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+ fn hash_field_element<F: PrimeField>(hasher: &mut blake3::Hasher, elem: &F) {
+     let bigint = elem.into_bigint();
+     let limbs: &[u64] = bigint.as_ref();
+-    for &limb in limbs {
+-        hasher.update(&limb.to_le_bytes());
++    if limbs.len() <= 8 {
++        let mut bytes = [0u8; 64];
++        for (chunk, &limb) in bytes.chunks_exact_mut(8).zip(limbs) {
++            chunk.copy_from_slice(&limb.to_le_bytes());
++        }
++        hasher.update(&bytes[..8 * limbs.len()]);
++    } else {
++        for &limb in limbs {
++            hasher.update(&limb.to_le_bytes());
++        }
+     }
+ }
+ 
+ #[inline]
+-fn hash_merkle_node(left: &[u8; 32], right: &[u8; 32]) -> [u8; 32] {
+-    let mut buf = [0u8; 64];
+-    buf[..32].copy_from_slice(left);
+-    buf[32..].copy_from_slice(right);
++pub(crate) fn hash_merkle_node(left: &[u8; 32], right: &[u8; 32]) -> [u8; 32] {
++    let mut buf = [0u8; 65];
++    buf[0] = 1; // Domain separator: internal node.
++    buf[1..33].copy_from_slice(left);
++    buf[33..].copy_from_slice(right);
+     *blake3::hash(&buf).as_bytes()
+ }
+ 
+ #[inline]
+ fn hash_interleaved_column<F: PrimeField>(segments: &[Vec<F>], col: usize) -> [u8; 32] {
+     let mut hasher = blake3::Hasher::new();
++    hasher.update(&[0]); // Domain separator: leaf.
++    hasher.update(&(segments.len() as u64).to_le_bytes());
+     for seg in segments {
+         hash_field_element(&mut hasher, &seg[col]);
+     }
+@@ -96,8 +94,10 @@ fn hash_interleaved_column<F: PrimeField>(segments: &[Vec<F>], col: usize) -> [u
+ }
+ 
+ #[inline]
+-fn hash_column_values<F: PrimeField>(column_values: &[F]) -> [u8; 32] {
++pub(crate) fn hash_column_values<F: PrimeField>(column_values: &[F]) -> [u8; 32] {
+     let mut hasher = blake3::Hasher::new();
++    hasher.update(&[0]);
++    hasher.update(&(column_values.len() as u64).to_le_bytes());
+     for value in column_values {
+         hash_field_element(&mut hasher, value);
+     }
+@@ -126,21 +126,28 @@ pub fn blake3_merkle_interleaved_leaves<F: PrimeField>(segments: &[Vec<F>]) -> V
+ }
+ 
+ pub fn blake3_merkle_precompute_levels(leaves: &[[u8; 32]]) -> Vec<Vec<[u8; 32]>> {
+-    assert!(leaves.len().is_power_of_two());
+-    assert!(leaves.len() >= 2);
++    merkle_levels_owned(leaves.to_vec())
++}
+ 
++pub(crate) fn merkle_levels_owned(leaves: Vec<[u8; 32]>) -> Vec<Vec<[u8; 32]>> {
++    assert!(leaves.len().is_power_of_two() && leaves.len() >= 2);
+     let mut levels = Vec::with_capacity(leaves.len().ilog2() as usize + 1);
+-    levels.push(leaves.to_vec());
++    levels.push(leaves);
+     while levels.last().is_some_and(|level| level.len() > 1) {
+-        let next = levels
+-            .last()
+-            .expect("levels is non-empty")
++        let level = levels.last().unwrap();
++        #[cfg(feature = "parallel")]
++        let next = level
++            .par_chunks_exact(2)
++            .with_min_len(512)
++            .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
++            .collect();
++        #[cfg(not(feature = "parallel"))]
++        let next = level
+             .chunks_exact(2)
+             .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
+             .collect();
+         levels.push(next);
+     }
+-
+     levels
+ }
+ 
+@@ -158,20 +165,12 @@ pub fn blake3_merkle_commit<F: PrimeField>(codeword: &[F]) -> [u8; 32] {
+     #[cfg(feature = "parallel")]
+     let mut leaves: Vec<[u8; 32]> = codeword
+         .par_iter()
+-        .map(|elem| {
+-            let mut hasher = blake3::Hasher::new();
+-            hash_field_element(&mut hasher, elem);
+-            *hasher.finalize().as_bytes()
+-        })
++        .map(|elem| hash_column_values(std::slice::from_ref(elem)))
+         .collect();
+     #[cfg(not(feature = "parallel"))]
+     let mut leaves: Vec<[u8; 32]> = codeword
+         .iter()
+-        .map(|elem| {
+-            let mut hasher = blake3::Hasher::new();
+-            hash_field_element(&mut hasher, elem);
+-            *hasher.finalize().as_bytes()
+-        })
++        .map(|elem| hash_column_values(std::slice::from_ref(elem)))
+         .collect();
+ 
+     // Pad to the next power of two with zero-hashes
+diff --git a/src/commit/mod.rs b/src/commit/mod.rs
+index 5142d07..e1005f5 100644
+--- a/src/commit/mod.rs
++++ b/src/commit/mod.rs
+@@ -2,8 +2,8 @@ pub mod codes;
+ pub mod merkle;
+ 
+ pub use codes::{
+-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
+-    IdentityCode, TensorCode,
++    BOLT_COMPRESSION, BOLT_DEGREE, BOLT_MAX_DEGREE, BasefoldCode, BasefoldParams, BoltCode,
++    BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode, IdentityCode, TensorCode,
+ };
+ pub use merkle::{
+     blake3_merkle_commit, blake3_merkle_commit_interleaved, blake3_merkle_interleaved_leaves,
+diff --git a/src/interleaved_iopp.rs b/src/interleaved_iopp.rs
+index c64b45f..2c59ecd 100644
+--- a/src/interleaved_iopp.rs
++++ b/src/interleaved_iopp.rs
+@@ -1,11 +1,48 @@
++//! Interactive proximity check for a column-committed interleaving of a linear code.
++//!
++//! Here `k` and `eta` are logarithms: the message has `2^k` field elements,
++//! arranged as `2^eta` contiguous rows of length `2^(k - eta)`. Each row is
++//! encoded with the same linear encoder. A Merkle leaf commits to one column
++//! containing a value from every encoded row; the tree is padded to a power of
++//! two with at least two leaves.
++//!
++//! For `z = (z_1, z_2)`, the prover first sends the rows folded with the
++//! multilinear equality weights `eq(z_1, row)` and the claimed evaluation
++//! `y = m(z)`. The verifier then samples codeword columns, and the prover opens
++//! those columns. The verifier authenticates each opening, checks that the
++//! folded columns equal the encoding of the folded message, and evaluates that
++//! message at `z_2` to check `y`.
++//!
++//! The caller supplies the committed code, evaluation point, and verifier
++//! randomness. In particular, query challenges must be sampled independently
++//! after the first message; accepting prover-selected challenges would not
++//! implement this protocol. These functions do not provide a Fiat–Shamir
++//! transcript or choose a query count for a desired soundness level.
++
+ use ark_ff::PrimeField;
+ use rand::Rng;
+ 
++pub mod fs;
++
+ use crate::{
+     FieldElement, blake3_merkle_open_interleaved, blake3_merkle_verify_interleaved_column,
+     poly_utils::multilinear::MultilinearPoint,
+ };
+ 
++const fn dimensions(eta: usize, k: usize) -> Option<(usize, usize, usize)> {
++    if eta > k || k >= usize::BITS as usize {
++        return None;
++    }
++    Some((1usize << eta, 1usize << (k - eta), 1usize << k))
++}
++
++fn padded_leaf_count(block_length: usize) -> Option<usize> {
++    if block_length == 0 {
++        return None;
++    }
++    block_length.checked_next_power_of_two().map(|n| n.max(2))
++}
++
+ /// Prover's first-round message: folded message and claimed evaluation y = m(z).
+ #[derive(Debug, Clone)]
+ pub struct ProverFirstMessage<F> {
+@@ -37,14 +74,21 @@ pub struct ProverSecondMessage<F> {
+ ///
+ /// Given evaluation point `z ∈ F^k`, split as `z = (z_1, z_2)` where
+ /// `z_1 ∈ F^eta` and `z_2 ∈ F^{k-eta}`.
++///
++/// Panics if `eta > k`, `2^k` does not fit in `usize`, `z` has a different
++/// length from `k`, or `message` has a different length from `2^k`.
+ pub fn prover_first_round<F>(message: &[F], z: &[F], eta: usize, k: usize) -> ProverFirstMessage<F>
+ where
+     F: FieldElement,
+ {
++    let (rows, seg_msg_size, message_size) = dimensions(eta, k)
++        .expect("require eta <= k and k < usize::BITS for interleaved dimensions");
+     assert_eq!(z.len(), k, "evaluation point must have k={k} coordinates");
+-
+-    let rows = 1usize << eta;
+-    let seg_msg_size = 1usize << (k - eta);
++    assert_eq!(
++        message.len(),
++        message_size,
++        "message must have 2^k={message_size} elements"
++    );
+ 
+     let z_1 = &z[..eta];
+     let z1_point = MultilinearPoint(z_1.to_vec());
+@@ -73,11 +117,16 @@ where
+ }
+ 
+ /// Verifier picks q random codeword column indices from [0, block_length).
++/// Queries are sampled with replacement, so duplicate indices are valid.
++///
++/// Panics if `block_length` or `num_queries` is zero.
+ pub fn verifier_challenge(
+     block_length: usize,
+     num_queries: usize,
+     rng: &mut impl Rng,
+ ) -> VerifierChallenge {
++    assert!(block_length > 0, "block_length must be positive");
++    assert!(num_queries > 0, "num_queries must be positive");
+     let query_indices = (0..num_queries)
+         .map(|_| rng.random_range(0..block_length))
+         .collect();
+@@ -86,6 +135,11 @@ pub fn verifier_challenge(
+ 
+ /// Prover's second round: open queried codeword columns (all 2^eta row values)
+ /// and include their Merkle authentication paths.
++///
++/// Panics on inconsistent row/tree dimensions, an empty challenge, or queries
++/// outside the unpadded codeword. The supplied tree must have been built from
++/// `segments`; this function validates its shape without recomputing its hashes.
++#[must_use]
+ pub fn prover_second_round<F>(
+     segments: &[Vec<F>],
+     merkle_leaves: &[[u8; 32]],
+@@ -96,8 +150,45 @@ pub fn prover_second_round<F>(
+ where
+     F: PrimeField,
+ {
+-    let rows = 1usize << eta;
++    let (rows, _, _) =
++        dimensions(eta, eta).expect("require eta < usize::BITS for interleaved row count");
+     assert_eq!(segments.len(), rows, "unexpected interleaving row count");
++    let block_length = segments[0].len();
++    assert!(
++        segments.iter().all(|row| row.len() == block_length),
++        "encoded rows must have the same block length"
++    );
++    let leaf_count = padded_leaf_count(block_length)
++        .expect("codeword block length must be positive and have representable Merkle padding");
++    assert_eq!(
++        merkle_leaves.len(),
++        leaf_count,
++        "unexpected padded leaf count"
++    );
++    let path_length = leaf_count.ilog2() as usize;
++    assert_eq!(
++        merkle_levels.len(),
++        path_length + 1,
++        "unexpected Merkle level count"
++    );
++    assert!(
++        merkle_levels
++            .iter()
++            .enumerate()
++            .all(|(level, hashes)| hashes.len() == leaf_count >> level),
++        "unexpected Merkle level width"
++    );
++    assert!(
++        !challenge.query_indices.is_empty(),
++        "query challenge must be non-empty"
++    );
++    assert!(
++        challenge
++            .query_indices
++            .iter()
++            .all(|&index| index < block_length),
++        "query index must be within the unpadded codeword"
++    );
+ 
+     let columns: Vec<Vec<F>> = challenge
+         .query_indices
+@@ -119,6 +210,11 @@ where
+ /// 2. Verifier recomputes folded_cw = Enc(folded_msg), then each opened
+ ///    column folds (with eq(z_1, ·)) to the matching entry in folded_cw.
+ /// 3. The folded message evaluated at z_2 equals y.
++///
++/// Returns `false` for malformed dimensions, messages, openings, and empty
++/// challenges. `encode_fn` must be the same linear encoder used for the
++/// committed rows and accept messages of length `2^(k - eta)`. It is called
++/// only after validating that length and the shapes of the supplied openings.
+ pub fn verify<F, EncodeFn>(
+     z: &[F],
+     eta: usize,
+@@ -133,12 +229,33 @@ where
+     F: FieldElement + PrimeField,
+     EncodeFn: Fn(&[F]) -> Vec<F>,
+ {
+-    let rows = 1usize << eta;
+-    let seg_msg_size = 1usize << (k - eta);
+-    let folded_cw = encode_fn(&first_msg.folded_msg);
++    let Some((rows, seg_msg_size, _)) = dimensions(eta, k) else {
++        return false;
++    };
+ 
+-    if second_msg.columns.len() != challenge.query_indices.len()
++    if z.len() != k
++        || first_msg.folded_msg.len() != seg_msg_size
++        || challenge.query_indices.is_empty()
++        || second_msg.columns.len() != challenge.query_indices.len()
+         || second_msg.merkle_paths.len() != challenge.query_indices.len()
++        || second_msg.columns.iter().any(|column| column.len() != rows)
++    {
++        return false;
++    }
++
++    let folded_cw = encode_fn(&first_msg.folded_msg);
++    let Some(leaf_count) = padded_leaf_count(folded_cw.len()) else {
++        return false;
++    };
++    let path_length = leaf_count.ilog2() as usize;
++    if challenge
++        .query_indices
++        .iter()
++        .any(|&index| index >= folded_cw.len())
++        || second_msg
++            .merkle_paths
++            .iter()
++            .any(|path| path.len() != path_length)
+     {
+         return false;
+     }
+@@ -153,18 +270,10 @@ where
+         .zip(second_msg.merkle_paths.iter())
+         .zip(challenge.query_indices.iter())
+     {
+-        if col.len() != rows {
+-            return false;
+-        }
+-
+         if !blake3_merkle_verify_interleaved_column(col, cw_idx, path, commitment_root) {
+             return false;
+         }
+ 
+-        if cw_idx >= folded_cw.len() {
+-            return false;
+-        }
+-
+         let folded_val = col
+             .iter()
+             .zip(eq_weights.iter())
+@@ -188,3 +297,413 @@ where
+ 
+     eval == first_msg.y
+ }
++
++#[cfg(test)]
++mod tests {
++    use ark_secp256k1::Fr as Scalar;
++    use rand::{SeedableRng, rngs::SmallRng};
++
++    use super::*;
++    use crate::{
++        EraCode, ErrorCorrectingCode, IdentityCode, blake3_merkle_interleaved_leaves,
++        blake3_merkle_precompute_levels, blake3_merkle_root_from_levels,
++    };
++
++    fn f(value: u32) -> Scalar {
++        <Scalar as FieldElement>::from_u32(value)
++    }
++
++    // Evaluate by interpolating adjacent Boolean entries, independently of the
++    // equality-weight calculation used by the protocol.
++    fn evaluate(message: &[Scalar], z: &[Scalar]) -> Scalar {
++        let mut values = message.to_vec();
++        for &coordinate in z.iter().rev() {
++            values = values
++                .chunks_exact(2)
++                .map(|pair| pair[0] + coordinate * (pair[1] - pair[0]))
++                .collect();
++        }
++        assert_eq!(values.len(), 1);
++        values[0]
++    }
++
++    struct Fixture {
++        k: usize,
++        eta: usize,
++        message: Vec<Scalar>,
++        z: Vec<Scalar>,
++        code: EraCode<IdentityCode<Scalar>, Scalar>,
++        segments: Vec<Vec<Scalar>>,
++        leaves: Vec<[u8; 32]>,
++        levels: Vec<Vec<[u8; 32]>>,
++        root: [u8; 32],
++        first: ProverFirstMessage<Scalar>,
++        challenge: VerifierChallenge,
++        second: ProverSecondMessage<Scalar>,
++    }
++
++    impl Fixture {
++        fn new(eta: usize) -> Self {
++            let k = 4;
++            let segment_size = 1usize << (k - eta);
++            let block_length = segment_size * 3;
++            let code = EraCode::new(
++                IdentityCode::new(segment_size),
++                3,
++                (0..block_length).rev().collect(),
++                (0..block_length).map(|i| (i + 1) % block_length).collect(),
++                (0..block_length as u32).map(|i| f(i + 1)).collect(),
++                (0..block_length as u32).map(|i| f(i + 5)).collect(),
++            );
++            let message: Vec<_> = (0..1u32 << k).map(|i| f(i * i + 3 * i + 7)).collect();
++            let z = vec![f(2), f(3), f(5), f(7)];
++            let segments: Vec<_> = message
++                .chunks_exact(segment_size)
++                .map(|row| code.encode(row))
++                .collect();
++            let leaves = blake3_merkle_interleaved_leaves(&segments);
++            let levels = blake3_merkle_precompute_levels(&leaves);
++            let root = blake3_merkle_root_from_levels(&levels);
++            let first = prover_first_round(&message, &z, eta, k);
++            let mut query_indices: Vec<_> = (0..block_length).collect();
++            query_indices.push(0); // Repeated queries are permitted.
++            let challenge = VerifierChallenge { query_indices };
++            let second = prover_second_round(&segments, &leaves, &levels, &challenge, eta);
++
++            Self {
++                k,
++                eta,
++                message,
++                z,
++                code,
++                segments,
++                leaves,
++                levels,
++                root,
++                first,
++                challenge,
++                second,
++            }
++        }
++
++        fn verify_messages(
++            &self,
++            first: &ProverFirstMessage<Scalar>,
++            challenge: &VerifierChallenge,
++            second: &ProverSecondMessage<Scalar>,
++        ) -> bool {
++            verify(
++                &self.z,
++                self.eta,
++                self.k,
++                &self.root,
++                first,
++                challenge,
++                second,
++                |msg| self.code.encode(msg),
++            )
++        }
++
++        fn reject_before_encoding(
++            &self,
++            z: &[Scalar],
++            eta: usize,
++            k: usize,
++            first: &ProverFirstMessage<Scalar>,
++            challenge: &VerifierChallenge,
++            second: &ProverSecondMessage<Scalar>,
++        ) {
++            assert!(!verify(
++                z,
++                eta,
++                k,
++                &self.root,
++                first,
++                challenge,
++                second,
++                |_| panic!("malformed input reached encoder")
++            ));
++        }
++    }
++
++    #[test]
++    fn era_roundtrip_with_non_power_of_two_blocks_and_boundary_interleavings() {
++        for eta in [0, 2, 4] {
++            let fixture = Fixture::new(eta);
++            assert!(!fixture.code.block_length().is_power_of_two());
++            assert_eq!(fixture.first.y, evaluate(&fixture.message, &fixture.z));
++            assert!(fixture.verify_messages(&fixture.first, &fixture.challenge, &fixture.second));
++        }
++    }
++
++    #[test]
++    fn zero_variable_message_roundtrip() {
++        let segments = vec![vec![f(7)]];
++        let leaves = blake3_merkle_interleaved_leaves(&segments);
++        let levels = blake3_merkle_precompute_levels(&leaves);
++        let root = blake3_merkle_root_from_levels(&levels);
++        let first = prover_first_round(&segments[0], &[], 0, 0);
++        let challenge = VerifierChallenge {
++            query_indices: vec![0],
++        };
++        let second = prover_second_round(&segments, &leaves, &levels, &challenge, 0);
++
++        assert!(verify(
++            &[],
++            0,
++            0,
++            &root,
++            &first,
++            &challenge,
++            &second,
++            <[Scalar]>::to_vec
++        ));
++    }
++
++    #[test]
++    fn rejects_tampered_messages_commitment_and_openings() {
++        let fixture = Fixture::new(2);
++        let mut first = fixture.first.clone();
++        first.y += f(1);
++        assert!(!fixture.verify_messages(&first, &fixture.challenge, &fixture.second));
++
++        first = fixture.first.clone();
++        first.folded_msg[0] += f(1);
++        first.y = evaluate(&first.folded_msg, &fixture.z[fixture.eta..]);
++        assert!(!fixture.verify_messages(&first, &fixture.challenge, &fixture.second));
++
++        let mut second = fixture.second.clone();
++        second.columns[0][0] += f(1);
++        assert!(!fixture.verify_messages(&fixture.first, &fixture.challenge, &second));
++
++        second = fixture.second.clone();
++        second.merkle_paths[0][0][0] ^= 1;
++        assert!(!fixture.verify_messages(&fixture.first, &fixture.challenge, &second));
++
++        let mut root = fixture.root;
++        root[0] ^= 1;
++        assert!(!verify(
++            &fixture.z,
++            fixture.eta,
++            fixture.k,
++            &root,
++            &fixture.first,
++            &fixture.challenge,
++            &fixture.second,
++            |msg| fixture.code.encode(msg)
++        ));
++    }
++
++    #[test]
++    fn rejects_invalid_dimensions_and_points_before_calling_encoder() {
++        let fixture = Fixture::new(2);
++        for (eta, k) in [(5, 4), (0, usize::BITS as usize), (usize::MAX, usize::MAX)] {
++            fixture.reject_before_encoding(
++                &fixture.z,
++                eta,
++                k,
++                &fixture.first,
++                &fixture.challenge,
++                &fixture.second,
++            );
++        }
++        fixture.reject_before_encoding(
++            &fixture.z[..3],
++            2,
++            4,
++            &fixture.first,
++            &fixture.challenge,
++            &fixture.second,
++        );
++        let mut z = fixture.z.clone();
++        z.push(f(11));
++        fixture.reject_before_encoding(
++            &z,
++            2,
++            4,
++            &fixture.first,
++            &fixture.challenge,
++            &fixture.second,
++        );
++    }
++
++    #[test]
++    fn rejects_malformed_message_and_opening_shapes_before_calling_encoder() {
++        let fixture = Fixture::new(2);
++        let mut first = fixture.first.clone();
++        first.folded_msg.pop();
++        fixture.reject_before_encoding(
++            &fixture.z,
++            2,
++            4,
++            &first,
++            &fixture.challenge,
++            &fixture.second,
++        );
++        first = fixture.first.clone();
++        first.folded_msg.push(f(0));
++        fixture.reject_before_encoding(
++            &fixture.z,
++            2,
++            4,
++            &first,
++            &fixture.challenge,
++            &fixture.second,
++        );
++
++        let mut second = fixture.second.clone();
++        second.columns.pop();
++        fixture.reject_before_encoding(
++            &fixture.z,
++            2,
++            4,
++            &fixture.first,
++            &fixture.challenge,
++            &second,
++        );
++        second = fixture.second.clone();
++        second.merkle_paths.pop();
++        fixture.reject_before_encoding(
++            &fixture.z,
++            2,
++            4,
++            &fixture.first,
++            &fixture.challenge,
++            &second,
++        );
++        for oversized in [false, true] {
++            second = fixture.second.clone();
++            if oversized {
++                second.columns[0].push(f(0));
++            } else {
++                second.columns[0].pop();
++            }
++            fixture.reject_before_encoding(
++                &fixture.z,
++                2,
++                4,
++                &fixture.first,
++                &fixture.challenge,
++                &second,
++            );
++        }
++
++        let empty_challenge = VerifierChallenge {
++            query_indices: vec![],
++        };
++        let empty_second = ProverSecondMessage {
++            columns: vec![],
++            merkle_paths: vec![],
++        };
++        fixture.reject_before_encoding(
++            &fixture.z,
++            2,
++            4,
++            &fixture.first,
++            &empty_challenge,
++            &empty_second,
++        );
++    }
++
++    #[test]
++    fn rejects_invalid_query_indices_merkle_depths_and_empty_encoding() {
++        let fixture = Fixture::new(2);
++        for index in [
++            fixture.code.block_length(),
++            fixture.leaves.len(),
++            usize::MAX,
++        ] {
++            let mut challenge = fixture.challenge.clone();
++            challenge.query_indices[0] = index;
++            assert!(!fixture.verify_messages(&fixture.first, &challenge, &fixture.second));
++        }
++        for oversized in [false, true] {
++            let mut second = fixture.second.clone();
++            if oversized {
++                second.merkle_paths[0].push([0; 32]);
++            } else {
++                second.merkle_paths[0].pop();
++            }
++            assert!(!fixture.verify_messages(&fixture.first, &fixture.challenge, &second));
++        }
++        assert!(!verify(
++            &fixture.z,
++            fixture.eta,
++            fixture.k,
++            &fixture.root,
++            &fixture.first,
++            &fixture.challenge,
++            &fixture.second,
++            |_| vec![]
++        ));
++    }
++
++    #[test]
++    fn prover_rejects_bad_dimensions_and_tree_shapes() {
++        for (message, z, eta, k) in [
++            (vec![f(1)], vec![f(2)], 2, 1),
++            (vec![f(1)], vec![], 0, usize::BITS as usize),
++            (vec![f(1); 4], vec![f(2)], 1, 2),
++            (vec![f(1); 3], vec![f(2); 2], 1, 2),
++            (vec![f(1); 5], vec![f(2); 2], 1, 2),
++        ] {
++            assert!(std::panic::catch_unwind(|| prover_first_round(&message, &z, eta, k)).is_err());
++        }
++
++        let fixture = Fixture::new(2);
++        let mut segments = fixture.segments.clone();
++        segments[0].pop();
++        assert!(
++            std::panic::catch_unwind(|| prover_second_round(
++                &segments,
++                &fixture.leaves,
++                &fixture.levels,
++                &fixture.challenge,
++                fixture.eta
++            ))
++            .is_err()
++        );
++        let mut levels = fixture.levels.clone();
++        levels[1].pop();
++        assert!(
++            std::panic::catch_unwind(|| prover_second_round(
++                &fixture.segments,
++                &fixture.leaves,
++                &levels,
++                &fixture.challenge,
++                fixture.eta
++            ))
++            .is_err()
++        );
++        let challenge = VerifierChallenge {
++            query_indices: vec![fixture.code.block_length()],
++        };
++        assert!(
++            std::panic::catch_unwind(|| prover_second_round(
++                &fixture.segments,
++                &fixture.leaves,
++                &fixture.levels,
++                &challenge,
++                fixture.eta
++            ))
++            .is_err()
++        );
++    }
++
++    #[test]
++    fn challenge_samples_valid_columns_and_requires_nonzero_sizes() {
++        let mut rng = SmallRng::seed_from_u64(19);
++        let challenge = verifier_challenge(12, 30, &mut rng);
++        assert_eq!(challenge.query_indices.len(), 30);
++        assert!(challenge.query_indices.iter().all(|&index| index < 12));
++        for (block_length, num_queries) in [(0, 1), (12, 0)] {
++            assert!(
++                std::panic::catch_unwind(|| {
++                    let mut rng = SmallRng::seed_from_u64(19);
++                    verifier_challenge(block_length, num_queries, &mut rng)
++                })
++                .is_err()
++            );
++        }
++    }
++}
+diff --git a/src/lib.rs b/src/lib.rs
+index 8ea72fc..7cfed77 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -3,21 +3,25 @@ use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+ use rand::Rng;
+ 
+ mod algebra;
++pub mod basefold_iopp;
+ pub mod codeswitching;
+ mod commit;
++pub mod era_iopp;
+ pub mod interleaved_iopp;
++pub mod iopp_experiment;
+ mod optimized_era;
+ pub mod poly_utils;
++pub mod proof;
+ mod reed_solomon;
+ 
+ pub use codeswitching as codeswitch;
+ 
+ pub use commit::{
+-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
+-    IdentityCode, TensorCode, blake3_merkle_commit, blake3_merkle_commit_interleaved,
+-    blake3_merkle_interleaved_leaves, blake3_merkle_open_interleaved,
+-    blake3_merkle_precompute_levels, blake3_merkle_root_from_levels,
+-    blake3_merkle_verify_interleaved_column,
++    BOLT_COMPRESSION, BOLT_DEGREE, BOLT_MAX_DEGREE, BasefoldCode, BasefoldParams, BoltCode,
++    BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode, IdentityCode, TensorCode,
++    blake3_merkle_commit, blake3_merkle_commit_interleaved, blake3_merkle_interleaved_leaves,
++    blake3_merkle_open_interleaved, blake3_merkle_precompute_levels,
++    blake3_merkle_root_from_levels, blake3_merkle_verify_interleaved_column,
+ };
+ pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
+ pub use reed_solomon::ReedSolomonCode;
+@@ -152,6 +156,10 @@ pub trait ErrorCorrectingCode {
+     fn message_size(&self) -> usize;
+     fn block_length(&self) -> usize;
+     fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet>;
++    /// Avoid nested work stealing when the caller already parallelizes rows.
++    fn encode_sequential(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
++        self.encode(msg)
++    }
+ }
+ 
+ /// Encode by interleaving the message into 2^eta segments and concatenating encodings.
+diff --git a/src/optimized_era.rs b/src/optimized_era.rs
+index a8c2e37..5a2959c 100644
+--- a/src/optimized_era.rs
++++ b/src/optimized_era.rs
+@@ -568,7 +568,10 @@ where
+             entries.push(Entry { key, value });
+         }
+ 
++        #[cfg(feature = "parallel")]
+         entries.par_sort_unstable_by_key(|entry| entry.key);
++        #[cfg(not(feature = "parallel"))]
++        entries.sort_unstable_by_key(|entry| entry.key);
+ 
+         entries.into_iter().map(|entry| entry.value).collect()
+     }

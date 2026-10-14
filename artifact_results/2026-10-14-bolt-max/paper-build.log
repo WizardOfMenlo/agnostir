@@ -1,0 +1,768 @@
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./agnostir.tex
+LaTeX2e <2023-11-01> patch level 1
+L3 programming layer <2024-02-20>
+(/usr/local/texlive/2024/texmf-dist/tex/latex/llncs/llncs.cls
+Document Class: llncs 2024/01/29 v2.24 
+ LaTeX document class for Lecture Notes in Computer Science
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2023/05/17 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/size10.clo))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/multicol.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/oberdiek/aliascnt.sty))
+(./lib/dtrt.sty
+
+LaTeX Warning: You have requested package `lib/dtrt',
+               but the package provides `dtrt'.
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/ifpdf.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/iftex.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3packages/xparse/xparse.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/infwarerr/infwarerr.sty)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/auxhook/auxhook.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/refcount/refcount.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/gettitlestring/gettitlestring.s
+ty (/usr/local/texlive/2024/texmf-dist/tex/latex/kvoptions/kvoptions.sty)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/puenc.def)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/atbegshi-ltx.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/hpdftex.def
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/atveryend-ltx.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
+))) (/usr/local/texlive/2024/texmf-dist/tex/latex/marginnote/marginnote.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/morefloats/morefloats.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/silence/silence.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/pifont.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/upzd.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/upsy.fd))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/relsize/relsize.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/framed/framed.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsopn.sty)
+
+Package amsmath Warning: Unable to redefine math accent \vec.
+
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.738, 2024/02/08 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xkeyval/xkvutils.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/fontaxes/fontaxes.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/microtype.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/microtype-pdftex.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/microtype.cfg))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/braket/braket.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/basiclayer/pgf.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfutil-common.te
+x)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfutil-latex.def
+) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfrcs.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/pgf.revision.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/basiclayer/pgfcore.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/systemlayer/pgfsys.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsys.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeyslibraryfil
+tered.code.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-pdftex.d
+ef
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-common-p
+df.def)))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsyssoftpath.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsysprotocol.
+code.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcore.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathparser.code.tex
+)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.code.
+tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.basic
+.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.trigo
+nometric.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.rando
+m.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.compa
+rison.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.base.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.round
+.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.misc.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.integ
+erarithmetics.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathcalc.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.tex)
+) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfint.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoints.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathconst
+ruct.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathusage
+.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorescopes.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraphicst
+ate.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretransform
+ations.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorequick.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreobjects.c
+ode.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathproce
+ssing.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorearrows.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreexternal.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorelayers.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretranspare
+ncy.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepatterns.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorerdf.code.
+tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmoduleshapes.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmoduleplot.code.
+tex)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version
+-0-65.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version
+-1-18.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/utilities/pgffor.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/utilities/pgfkeys.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex)
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/math/pgfmath.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgffor.code.tex))
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz.cod
+e.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryplothan
+dlers.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
+s/tikzlibrarytopaths.code.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xurl/xurl.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
+s/tikzlibrarymatrix.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/verbatim.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/array.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/cleveref/cleveref.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/multirow/multirow.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/paralist/paralist.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/enumitem/enumitem.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/doublestroke/dsfont.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-restate.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thmtools.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-patch.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/parseargs.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-kv.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-autoref.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/aliasctr.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-listof.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-llncs.sty
+
+Package thmtools Warning: LLNCS support disables automatic casing of theorem na
+mes .
+
+))) (/usr/local/texlive/2024/texmf-dist/tex/latex/jknapltx/mathrsfs.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/jknapltx/mathbbol.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/soul/soul.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/soul/soul-ori.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/etexcmds/etexcmds.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mdframed/mdframed.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/zref/zref-abspage.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/zref/zref-base.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/needspace/needspace.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mdframed/md-frame-1.mdf))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mathtools/mathtools.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/calc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mathtools/mhsetup.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/bbm-macros/bbm.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/caption/subcaption.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption3.sty)
+
+Package caption Warning: Unknown document class (or package),
+(caption)                standard defaults will be used.
+See the caption package documentation for explanation.
+
+)) (/usr/local/texlive/2024/texmf-dist/tex/latex/setspace/setspace.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tabu/tabu.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/varwidth/varwidth.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/colortbl/colortbl.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/adjustbox.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/adjcalc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/trimclip.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/collectbox/collectbox.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/tc-pdftex.def))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/ifoddpage/ifoddpage.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/siunitx/siunitx.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations.sty)
+
+Package siunitx Warning: Option "binary-units" has been removed in this
+(siunitx)                release.
+
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/oberdiek/centernot.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/bm.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/environ/environ.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/trimspaces/trimspaces.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/stmaryrd/stmaryrd.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/xspace.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/algorithms/algorithm.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/float/float.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/nicematrix/nicematrix.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3packages/l3keys2e/l3keys2e.sty)
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcolorbox.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbraster.code.tex
+Library (tcolorbox): 'tcbraster.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbskins.code.tex
+Library (tcolorbox): 'tcbskins.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tikzfill/tikzfill.image.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tikzfill/tikzfill-common.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tikzfill/tikzlibraryfill.image.co
+de.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbskinsjigsaw.code.tex
+Library (tcolorbox): 'tcbskinsjigsaw.code.tex' version '6.2.0'
+))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbbreakable.code.tex
+Library (tcolorbox): 'tcbbreakable.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pdfcol/pdfcol.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbhooks.code.tex
+Library (tcolorbox): 'tcbhooks.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbtheorems.code.tex
+Library (tcolorbox): 'tcbtheorems.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbfitting.code.tex
+Library (tcolorbox): 'tcbfitting.code.tex' version '6.2.0'
+)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcblistingsutf8.code.te
+x
+Library (tcolorbox): 'tcblistingsutf8.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcblistings.code.tex
+Library (tcolorbox): 'tcblistings.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/listings.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstpatch.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstmisc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/listings.cfg))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcblistingscore.code.te
+x
+Library (tcolorbox): 'tcblistingscore.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbprocessing.code.tex
+Library (tcolorbox): 'tcbprocessing.code.tex' version '6.2.0'
+))) (/usr/local/texlive/2024/texmf-dist/tex/latex/listingsutf8/listingsutf8.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/stringenc/stringenc.sty)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbexternal.code.tex
+Library (tcolorbox): 'tcbexternal.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbmagazine.code.tex
+Library (tcolorbox): 'tcbmagazine.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbvignette.code.tex
+Library (tcolorbox): 'tcbvignette.code.tex' version '6.2.0'
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
+s/tikzlibraryfadings.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryfadings
+.code.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbposter.code.tex
+Library (tcolorbox): 'tcbposter.code.tex' version '6.2.0'
+)) (/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/ot1minntx.fd)
+(./lib/macros.tex (./lib/modifier-shortcuts.tex) (./lib/snark-shortcuts.tex)
+(./lib/paper_specific.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/biblatex.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/logreq/logreq.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/logreq/logreq.def))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/blx-dm.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/blx-compat.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/biblatex.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/bbx/alphabetic.bbx
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/bbx/standard.bbx))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/cbx/alphabetic.cbx)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/biblatex.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/blx-case-expl3.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/ot1ntxtlf.fd)
+(/tmp/agnostir-bolt-max-texbuild/agnostir.aux)
+(/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg))
+(/tmp/agnostir-bolt-max-texbuild/agnostir.out)
+(/tmp/agnostir-bolt-max-texbuild/agnostir.out)
+
+Package microtype Warning: Unable to apply patch `footnote' on input line 199.
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-ptm.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations-basic-d
+ictionary-english.trsl)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/inputenc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/lbx/english.lbx)
+(/tmp/agnostir-bolt-max-texbuild/agnostir.bbl)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-cmr.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-msa.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-msb.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/jknapltx/ursfs.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/bbold/Ubbold.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/stmaryrd/Ustmry.fd)
+
+LaTeX Font Warning: Font shape `U/stmry/b/n' undefined
+(Font)              using `U/stmry/m/n' instead on input line 217.
+
+Title too long for running head. Please supply
+a shorter form with \titlerunning prior to \maketitle
+(./sections/abstract.tex) (./sections/intro.tex [1{/usr/local/texlive/2024/texm
+f-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/texlive/2024/texmf-dist/fo
+nts/enc/dvips/newtx/ntx-ot1-tlf.enc}] [2] [3]
+(/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/ot1ntxtt.fd)
+Underfull \hbox (badness 7631) in paragraph at lines 183--183
+[]\OT1/ntxtlf/m/n/10 (+20) base code
+[4] [5] [6] [7]
+Overfull \hbox (12.35652pt too wide) in paragraph at lines 422--426
+\OT1/ntxtlf/b/n/10 (-20) Expand-Accumulate codes. \OT1/ntxtlf/m/n/10 (-20) Expa
+nd-Accumulate (EA) codes were in-tro-duced in [[][]BCG+22[][]]
+[8] (./sections/tech-overview/tech-future.tex))
+(./sections/tech-overview/tech-main.tex (./sections/tech-overview/tech-era.tex
+[9] [10]
+Overfull \hbox (4.29962pt too wide) detected at line 93
+[]
+
+Package amsmath Warning: Foreign command \atopwithdelims;
+(amsmath)                \frac or \genfrac should be used instead
+(amsmath)                 on input line 104.
+
+
+Overfull \hbox (47.80998pt too wide) detected at line 104
+[]
+[11]) (./sections/tech-overview/tech-iopp.tex [12]
+(/usr/local/texlive/2024/texmf-dist/tex/latex/bbm-macros/ubbm.fd) [13]
+Overfull \hbox (0.84926pt too wide) in paragraph at lines 89--90
+\OML/cmm/b/it/10 o[] \OT1/cmr/m/n/10 := [][](\OML/cmm/b/it/10 w[]\OT1/cmr/m/n/1
+0 )$ \OT1/ntxtlf/m/n/10 (-20) for each $\OML/cmm/m/it/10 i \OMS/cmsy/m/n/10 2 \
+OT1/cmr/m/n/10 [\OML/cmm/m/it/10 `[]\OT1/cmr/m/n/10 ]$\OT1/ntxtlf/m/n/10 (-20) 
+, and send-ing the or-a-cles $\OT1/cmr/m/n/10 [ [\OML/cmm/b/it/10 o[]\OT1/cmr/m
+/n/10 ] ]\OML/cmm/m/it/10 ; [] ; \OT1/cmr/m/n/10 [ [\OML/cmm/b/it/10 o[]\OT1/cm
+r/m/n/10 ] ]$
+[14])) (./sections/era-analysis/era-main.tex [15]
+Overfull \hbox (10.57658pt too wide) detected at line 19
+[]
+(./sections/era-analysis/era-prelims.tex
+Overfull \hbox (23.08012pt too wide) in paragraph at lines 6--7
+\OT1/ntxtlf/m/n/10 (-20) From Sec-tion [][]1.1[][], re-call that the en-cod-ing
+ of a mes-sage $\OML/cmm/b/it/10 m \OMS/cmsy/m/n/10 2 \U/bbold/m/n/10 F[]$ \OT1
+/ntxtlf/m/n/10 (-20) un-der $[]\OT1/cmr/m/n/10 (\U/bbold/m/n/10 F\OML/cmm/m/it/
+10 ; \OMS/cmsy/m/n/10 B\OML/cmm/m/it/10 ; r; \OML/cmm/b/it/10 P[]\OML/cmm/m/it/
+10 ; \OML/cmm/b/it/10 P[]\OML/cmm/m/it/10 ; \OML/cmm/b/it/10 M\OT1/cmr/m/n/10 )
+$
+[16] [17]) (./sections/era-analysis/era-first-mult.tex
+Overfull \hbox (38.14755pt too wide) detected at line 49
+[]
+[18]) (./sections/era-analysis/era-second-mult.tex [19] [20]
+Overfull \hbox (7.73944pt too wide) detected at line 56
+[][][]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 
+1)[] \OMS/cmsy/m/n/10 ^^U \OT1/cmr/m/n/10 2[] \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/i
+t/10 n[] \OMS/cmsy/m/n/10 ^^A [][] ^^A [][] \OML/cmm/m/it/10 :
+
+Overfull \hbox (23.3544pt too wide) detected at line 87
+\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 1 \OMS/cmsy/m/n/10 ^^U 
+[][] \OML/cmm/m/it/10 ;
+) (./sections/era-analysis/era-perms.tex [21]
+(./sections/era-analysis/era-iowe-lemma.tex [22])
+Overfull \hbox (21.00774pt too wide) detected at line 68
+[]
+
+Overfull \hbox (9.9996pt too wide) in paragraph at lines 68--70
+\OT1/ntxtlf/m/it/10 (-20) Then, we have $[]\OT1/cmr/m/n/10 (\OMS/cmsy/m/n/10 F[
+]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]; `[]; ^^N\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n
+/10 j :F[]\OML/cmm/m/it/10 ; \OMS/cmsy/m/n/10 :F[]\OT1/cmr/m/n/10 ) \OMS/cmsy/m
+/n/10 ^^T \OML/cmm/m/it/10 P[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 ^^N\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^A [][]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 E[]\OT1/cmr/m/
+n/10 (\OML/cmm/m/it/10 d[]; d[]; ^^N\OT1/cmr/m/n/10 ))$\OT1/ntxtlf/m/it/10 (-20
+) . 
+[23]
+Overfull \hbox (52.35199pt too wide) detected at line 151
+[]
+
+Overfull \hbox (5.77061pt too wide) detected at line 202
+[]
+[24]) (./sections/era-analysis/era-calc-delta.tex
+(./figures/era-compute-delta.tex
+Overfull \hbox (1.08873pt too wide) detected at line 17
+[][]
+[25]) [26] [27]
+Overfull \hbox (29.28879pt too wide) detected at line 173
+[]
+)) (./sections/ai-use.tex) [28] [29{/usr/local/texlive/2024/texmf-dist/fonts/en
+c/dvips/newtx/ntx-ot1-tlf-pc.enc}] [30]
+Overfull \hbox (0.1837pt too wide) in paragraph at lines 255--255
+[]\OT1/ntxtlf/m/n/9 (-20) J. Thaler. ``Time-Optimal In-ter-ac-tive Proofs for C
+ir-cuit Eval-u-a-tion''. In: CRYPTO '13. 
+[31] [32] (./sections/preliminaries.tex (./sections/defs/defs-notation.tex
+Overfull \hbox (10.79869pt too wide) in paragraph at lines 33--37
+\OT1/ntxtlf/b/n/10 (-20) Lagrange ba-sis poly-no-mial. \OT1/ntxtlf/m/n/10 (-20)
+ The \OT1/ntxtlf/m/it/10 (-20) La-grange ba-sis poly-no-mial $[][]\OT1/cmr/m/n/
+10 (\OML/cmm/b/it/10 X\OML/cmm/m/it/10 ; \OML/cmm/b/it/10 Y\OT1/cmr/m/n/10 ) :=
+ [][](\OML/cmm/m/it/10 X[]Y[] \OT1/cmr/m/n/10 +
+) (./sections/defs/defs-coding-theory.tex [33] [34]
+Overfull \hbox (3.4239pt too wide) detected at line 82
+[] [] \OMS/cmsy/m/n/10 ^^T \OML/cmm/m/it/10 "[]\OT1/cmr/m/n/10 (\OMS/cmsy/m/n/1
+0 C\OML/cmm/m/it/10 ; `; ^^N\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 :
+
+Overfull \hbox (5.1616pt too wide) in paragraph at lines 105--109
+[]\OT1/ntxtlf/b/n/10 (-20) (Ore-DeMillo-Lipton-Schwartz-Zippel lemma). [][] \OT
+1/ntxtlf/m/it/10 (-20) Let $\OML/cmm/m/it/10 f \OMS/cmsy/m/n/10 2 \U/bbold/m/n/
+10 F[]\OT1/cmr/m/n/10 [\OML/cmm/m/it/10 X[]; [] ; X[]\OT1/cmr/m/n/10 ]$
+) (./sections/defs/defs-ior.tex [35] [36]
+Overfull \hbox (27.85841pt too wide) detected at line 79
+[] [] \OT1/cmr/m/n/10 = 1\OML/cmm/m/it/10 :
+
+Overfull \hbox (17.48576pt too wide) in paragraph at lines 106--107
+[]\OT1/ntxtlf/m/it/10 (-20) Prover moves: if $[]$ is a tran-script where the pr
+over is about to move and $[]\OT1/cmr/m/n/10 (\U/bbold/m/n/10 x\OML/cmm/m/it/10
+ ; \U/bbold/m/n/10 y\OML/cmm/m/it/10 ; []; \OT1/cmss/m/n/10 w\OT1/cmr/m/n/10 ) 
+=
+
+Overfull \hbox (5.31703pt too wide) in paragraph at lines 108--109
+[]\OT1/ntxtlf/m/it/10 (-20) Full tran-script: if $[] \OT1/cmr/m/n/10 = (\OML/cm
+m/m/it/10 ^^Y[]; []; [] ; ^^Y[]; []\OT1/cmr/m/n/10 )$ \OT1/ntxtlf/m/it/10 (-2
+0) is a full tran-script, then $[]\OT1/cmr/m/n/10 (\U/bbold/m/n/10 x\OML/cmm/m/
+it/10 ; \U/bbold/m/n/10 y\OML/cmm/m/it/10 ; []; \OT1/cmss/m/n/10 w\OT1/cmr/m/n/
+10 ) =
+[37]) (./sections/defs/defs-relations.tex [38])) (./sections/iopp.tex
+Overfull \hbox (3.49762pt too wide) in paragraph at lines 22--23
+[]\OT1/ntxtlf/m/it/10 (-20) A \OT1/ntxtlf/m/n/10 (-20) mul-ti-lin-ear
+[39] [40] [41]) (./sections/codeswitching.tex [42] (./figures/reduce-ior.tex
+Overfull \hbox (81.15982pt too wide) detected at line 54
+[]
+
+Overfull \hbox (62.80147pt too wide) detected at line 59
+[]
+
+Overfull \hbox (4.66599pt too wide) detected at line 67
+[]
+
+Overfull \hbox (20.64021pt too wide) detected at line 73
+[]
+
+Overfull \hbox (16.76575pt too wide) detected at line 86
+[]
+[43] [44])
+Overfull \hbox (64.93909pt too wide) in paragraph at lines 32--32
+ [] 
+[45] [46]
+Underfull \vbox (badness 3240) has occurred while \output is active [47]
+[48] [49] (./figures/CodeswitchOracles.tex [50])
+(./figures/CodeswitchClaims.tex
+Underfull \hbox (badness 1389) in paragraph at lines 61--62
+[]$\OT1/cmr/bx/n/10 P$ \OT1/ntxtlf/m/n/10 (+20) com-putes $\OT1/cmr/m/n/10 ([\O
+ML/cmm/b/it/10 a[]\OT1/cmr/m/n/10 ][]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10 [\OML/c
+mm/b/it/10 w[]\OT1/cmr/m/n/10 ][]) \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OML/c
+mm/b/it/10 a\OT1/cmr/m/n/10 )$ \OT1/ntxtlf/m/n/10 (+20) and
+
+Overfull \hbox (14.63733pt too wide) detected at line 80
+[]
+
+Overfull \hbox (29.36131pt too wide) detected at line 92
+[]
+
+Overfull \hbox (8.44225pt too wide) detected at line 96
+[]
+
+Underfull \hbox (badness 1953) in paragraph at lines 132--133
+[]$\OT1/cmr/bx/n/10 P$ \OT1/ntxtlf/m/n/10 (+20) com-putes $\OT1/cmr/m/n/10 ([\O
+ML/cmm/b/it/10 c[]\OT1/cmr/m/n/10 ][]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10 [\OML/c
+mm/b/it/10 w[]\OT1/cmr/m/n/10 ][]) \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OML/c
+mm/b/it/10 c\OT1/cmr/m/n/10 )$ \OT1/ntxtlf/m/n/10 (+20) and
+
+Overfull \hbox (17.8301pt too wide) detected at line 151
+[]
+
+Overfull \hbox (30.0245pt too wide) detected at line 163
+[]
+
+Overfull \hbox (11.92587pt too wide) detected at line 167
+[]
+
+Overfull \hbox (11.39326pt too wide) detected at line 194
+[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 w[]\OML/cmm/m/it/10 ; \OML/cmm/b/it/10 v\OM
+L/cmm/m/it/10 ; \OML/cmm/b/it/10 A[]\OML/cmm/m/it/10 ; ^^[[]; \OT1/cmr/m/n/10 (
+[ [\OT1/cmr/bx/n/10 o[]\OT1/cmr/m/n/10 ] ])[]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10
+ ([ [\OML/cmm/b/it/10 w[]\OT1/cmr/m/n/10 ] ])[])\OML/cmm/m/it/10 ;
+
+Overfull \hbox (6.28513pt too wide) detected at line 222
+[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 w[]\OML/cmm/m/it/10 ; \OML/cmm/b/it/10 v\OM
+L/cmm/m/it/10 ; \OML/cmm/b/it/10 A[]\OML/cmm/m/it/10 ; ^^[[]; \OT1/cmr/m/n/10 (
+[ [\OT1/cmr/bx/n/10 o[]\OT1/cmr/m/n/10 ] ])[]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10
+ ([ [\OML/cmm/b/it/10 w[]\OT1/cmr/m/n/10 ] ])[])\OML/cmm/m/it/10 ;
+[51] [52] [53] [54] [55])
+Underfull \vbox (badness 1603) has occurred while \output is active [56]
+Overfull \hbox (17.06786pt too wide) in paragraph at lines 235--236
+[]\OT1/ntxtlf/m/n/10 (-20) Finally, if $[]$ does not sat-isfy the codeswitch cl
+aims, the claim $[][] []\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/m/n/10 ) \O
+MS/cmsy/m/n/10 ^^A
+[57]
+Overfull \hbox (16.46263pt too wide) detected at line 268
+[] \OML/cmm/m/it/10 f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/m/n/10 ) = \
+OML/cmm/m/it/10 ^^[[]; [] f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/m/n/10
+ ) = \OML/cmm/m/it/10 ^^[[]; [] f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/
+m/n/10 ) = \OML/cmm/m/it/10 ^^[[][] [] f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\O
+T1/cmr/m/n/10 ) = \OML/cmm/m/it/10 ^^[[];
+[58]
+Overfull \hbox (2.65863pt too wide) in paragraph at lines 305--306
+[]\OT1/ntxtlf/m/n/10 (-20) Firstly, re-call that $\OML/cmm/m/it/10 `[] \OT1/cmr
+/m/n/10 = [][]\OML/cmm/m/it/10 ; `[] \OT1/cmr/m/n/10 = [][]\OML/cmm/m/it/10 ; `
+[] \OT1/cmr/m/n/10 = [][]\OML/cmm/m/it/10 ; `[] \OT1/cmr/m/n/10 = [][]$\OT1/ntx
+tlf/m/n/10 (-20) . 
+[59]
+Overfull \hbox (75.6265pt too wide) detected at line 361
+[]
+) (./sections/evaluation.tex [60] [61]
+Underfull \vbox (badness 5147) has occurred while \output is active [62]
+Overfull \hbox (8.50328pt too wide) in paragraph at lines 155--162
+[]\OT1/ntxtlf/m/it/10 (-20) (BaseFold's per-for-mance). [][] \OT1/ntxtlf/m/n/10
+ (-20) De-spite Base-Fold's en-cod-ing time be-ing $\OML/cmm/m/it/10 O\OT1/cmr/
+m/n/10 (\OML/cmm/m/it/10 n [] n\OT1/cmr/m/n/10 )$\OT1/ntxtlf/m/n/10 (-20) ,
+[63] [64] [65 <./figures/proof_size_vs_logk.pdf>])
+(./sections/appendix/era-mult-appendix.tex)
+(./sections/appendix/era-appendix.tex [66] (./proofs/era-mult2-gfunctionmax.tex
+
+Overfull \hbox (17.09612pt too wide) detected at line 14
+\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 1)[] \
+OMS/cmsy/m/n/10 ^^U \OT1/cmr/m/n/10 2[] \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/it/10 n
+[] \OMS/cmsy/m/n/10 ^^A [][] ^^A [][] \OML/cmm/m/it/10 :
+)
+Overfull \hbox (23.3544pt too wide) detected at line 51
+\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 1 \OMS/cmsy/m/n/10 ^^U 
+[][] \OML/cmm/m/it/10 ;
+(./proofs/era-mult2-bound.tex [67])
+Overfull \hbox (119.71567pt too wide) detected at line 71
+\OML/cmm/m/it/10 N[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n; `[]; `[]; ^^N\OT1/cmr/
+m/n/10 ) := [] [][](\OML/cmm/m/it/10 g\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n; `[];
+ `[]; m[]\OT1/cmr/m/n/10 )) \OMS/cmsy/m/n/10 ^^A [] \OML/cmm/m/it/10 :
+[68]
+Overfull \hbox (25.55458pt too wide) detected at line 77
+\OML/cmm/m/it/10 N[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]; `[]; ^^N\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^T \OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]c=r\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^A \OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]c=r\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^A \OT1/cmr/m/n/10 (\OML/cmm/m/it/10 ^^Nn\OT1/cmr/m/n/1
+0 ) \OMS/cmsy/m/n/10 ^^A [][] [] \OML/cmm/m/it/10 ;
+(./proofs/era-perm-max-term.tex (./proofs/era-perm-event-maximize-ell2.tex)
+[69]
+Overfull \hbox (11.61894pt too wide) detected at line 44
+[]
+(./proofs/era-perm-event-maximize-m2.tex
+Overfull \hbox (4.39017pt too wide) detected at line 23
+[]
+[70])
+Overfull \hbox (68.84343pt too wide) detected at line 76
+[]
+[71])
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 94.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\delta' on input line 94.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 94.
+
+(./proofs/era-perm-event-d0-concave.tex [72])
+(./proofs/era-perm-event-d0-exist-root.tex
+Overfull \hbox (87.54593pt too wide) detected at line 6
+[]
+
+Overfull \hbox (91.85593pt too wide) detected at line 10
+[]
+
+Overfull \hbox (6.5227pt too wide) detected at line 15
+[]
+) (./proofs/era-perm-event-delta-monotone-1.tex [73])
+(./proofs/era-perm-event-delta-monotone-2.tex)
+(./proofs/era-perm-event-small-delta.tex
+Overfull \hbox (4.05965pt too wide) in paragraph at lines 2--4
+[]\OT1/ntxtlf/m/n/10 (-20) Using Fact [][]4[][], we com-pute the first deriva-t
+ive of $\OML/cmm/m/it/10 g\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 d[]; ^^N\OT1/cmr/m/
+n/10 ) := \OML/cmm/m/it/10 E[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 d[]\OT1/cmr/m/n
+/10 (\OML/cmm/m/it/10 d[]\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 ; d[]; ^^N\OT1/cmr/m
+/n/10 )\OML/cmm/m/it/10 =n$
+[74]
+Overfull \hbox (29.28561pt too wide) detected at line 17
+[]
+
+Overfull \hbox (51.45566pt too wide) detected at line 37
+[]
+[75]
+Overfull \hbox (22.49742pt too wide) detected at line 43
+[]
+) (./proofs/era-calc-delta-2-largest.tex
+Overfull \hbox (57.74034pt too wide) detected at line 21
+[]
+[76]
+Overfull \hbox (73.29591pt too wide) detected at line 33
+[]
+
+Overfull \hbox (51.63681pt too wide) detected at line 38
+[]\OML/cmm/m/it/10 E[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 d[]; d[]; ^^N[]\OT1/cmr
+/m/n/10 )[][] + []\OML/cmm/m/it/10 E[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 d[]; d[
+]; ^^N[]\OT1/cmr/m/n/10 )[][] \OMS/cmsy/m/n/10 ^^A []\OML/cmm/m/it/10 d[]\OT1/c
+mr/m/n/10 (\OML/cmm/m/it/10 d[]\OT1/cmr/m/n/10 ) = 0\OML/cmm/m/it/10 :
+
+Overfull \hbox (10.77443pt too wide) detected at line 44
+[]
+[77])) [78] (/tmp/agnostir-bolt-max-texbuild/agnostir.aux)
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+ )
+(see the transcript file for additional information)
+pdfTeX warning (dest): name{Hfootnote.11} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.10} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.9} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.8} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.7} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.6} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.5} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.4} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.3} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.2} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist
+, replaced by a fixed one
+
+ </Users/anubhavbaweja/Library/texlive/2024/texmf-var/fonts/pk/ljfour/public/bb
+m/bbmbx7.600pk> </Users/anubhavbaweja/Library/texlive/2024/texmf-var/fonts/pk/l
+jfour/public/bbm/bbm7.600pk> </Users/anubhavbaweja/Library/texlive/2024/texmf-v
+ar/fonts/pk/ljfour/public/bbm/bbmbx10.600pk> </Users/anubhavbaweja/Library/texl
+ive/2024/texmf-var/fonts/pk/ljfour/public/bbm/bbm10.600pk></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/bbold-type1/bbold10.pfb></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/bbold-type1/bbold7.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cm/cmbsy10.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmbsy7.pfb></usr/local/texliv
+e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive
+/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx5.pfb></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb></usr/local/texlive/202
+4/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024
+/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex9.pfb></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2024/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texlive/2024/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/local/texlive/2024/texmf
+-dist/fonts/type1/public/amsfonts/cmextra/cmmib5.pfb></usr/local/texlive/2024/t
+exmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib7.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib9.pfb></usr/local/texliv
+e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/
+2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/202
+4/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmss10.pfb></usr/local/texlive/2024/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmss8.pfb></usr/local/texlive/2024/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmss9.pfb></usr/local/texlive/2024/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/local/texlive/2024/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2024/texmf-dist/fon
+ts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2024/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2024/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmtt8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1
+/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/t
+ype1/public/stmaryrd/stmary10.pfb></usr/local/texlive/2024/texmf-dist/fonts/typ
+e1/public/txfonts/txbtt.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/pub
+lic/txfonts/txtt.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/new
+tx/ztmb.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/newtx/ztmbi.
+pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/newtx/ztmr.pfb></usr
+/local/texlive/2024/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on /tmp/agnostir-bolt-max-texbuild/agnostir.pdf (78 pages, 94831
+3 bytes).
+Transcript written on /tmp/agnostir-bolt-max-texbuild/agnostir.log.

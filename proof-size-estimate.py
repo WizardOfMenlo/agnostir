@@ -300,12 +300,12 @@ def generate_k_exponent_sequences(
     min_k_exp: int,
 ) -> list[tuple[int, ...]]:
     sequences: list[tuple[int, ...]] = []
-    for middle in itertools.combinations_with_replacement(
-        range(min_k_exp, start_k_exp + 1),
+    for middle in itertools.combinations(
+        range(min_k_exp, start_k_exp),
         num_codeswitches,
     ):
         seq = (start_k_exp,) + tuple(reversed(middle))
-        if all(seq[i] >= seq[i + 1] for i in range(len(seq) - 1)):
+        if all(seq[i] > seq[i + 1] for i in range(len(seq) - 1)):
             sequences.append(seq)
     return sequences
 

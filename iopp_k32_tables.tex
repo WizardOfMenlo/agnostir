@@ -1,0 +1,53 @@
+% Requires: \usepackage{booktabs}
+
+\begin{table}[htbp]
+\centering
+\caption{Top-level comparison for $k=2^{32}$ (baseline vs 1 codeswitch).}
+\begin{tabular}{lrr}
+\toprule
+Metric & Baseline & 1 Codeswitch \\
+\midrule
+Total proof size (KB) & 10450.400 & 4077.792 \\
+Total field elements & 101103.000 & 74420.000 \\
+Total hashes & 225472.000 & 53011.000 \\
+Total oracle length & 536854528 & 16106061824 \\
+Improvement (KB) & -- & 6372.608 \\
+Improvement (\%) & -- & 60.98 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Chosen parameters for $k=2^{32}$.}
+\begin{tabular}{lrr}
+\toprule
+Parameter & Baseline & 1 Codeswitch \\
+\midrule
+$\eta$ & 32 & 64 \\
+$k_0$ exponent & 27 & 26 \\
+$k$ exponents chain & (27) & (26, 25) \\
+$k$ values chain & (134217728) & (67108864, 33554432) \\
+$\eta k_0$ & 4294967296 & 4294967296 \\
+Basefold $(d,c,\text{rate},\delta,\text{rounds})$ & (27,2,0.500000,0.152454,15) & (25,8,0.125000,0.742531,13) \\
+ERA stage 0 $(k_{\text{exp}},r,\text{inv\_rate},\text{rate},\delta,\log_2 n)$ & N/A & (26,4,4.840000,0.206612,0.221817,28.275007) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Component contributions for $k=2^{32}$.}
+\begin{tabular}{lrrrrrr}
+\toprule
+Component & Base fld & Base hash & Base oracle & CS fld & CS hash & CS oracle \\
+\midrule
+Starting IOR & 40352.000 & 23527 & 0 & 53216.000 & 16850 & 0 \\
+Codeswitch \#1 & 0 & 0 & 0 & 11063.000 & 6690 & 15569256448 \\
+Basefold IOPP & 60751.000 & 201945 & 536854528 & 10141.000 & 29471 & 536805376 \\
+Starting IOR share & \multicolumn{3}{c}{19.56\% (2044.128 KB)} & \multicolumn{3}{c}{54.98\% (2242.112 KB)} \\
+Oracle split (CS/BF) & \multicolumn{3}{c}{0 / 536854528} & \multicolumn{3}{c}{15569256448 / 536805376} \\
+Component proof size (KB): Starting / CS / Basefold & \multicolumn{3}{c}{2044.128 / 0 / 8406.272} & \multicolumn{3}{c}{2242.112 / 568.096 / 1267.584} \\
+\bottomrule
+\end{tabular}
+\end{table}

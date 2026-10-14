@@ -1,0 +1,126 @@
+{
+  "scope": "Bolt-min ideal-ensemble kernel bound; conditional BaseFold distances; not a full IOPP security certificate",
+  "minimum_message_size": 4096,
+  "supported_row_message_logs": [
+    12,
+    22
+  ],
+  "kernel_weight_cutoff": "m/16",
+  "kernel_graph_failure_bound": "2^-102",
+  "kernel_coefficient_failure_bound": "<2^-263 (for log2(m)<=22 and |F|-1>2^255)",
+  "kernel_certificates": [
+    {
+      "weight": 1,
+      "exact_integer_comparison_passed": true,
+      "approx_log2_union_bound": -107.97932028951314
+    },
+    {
+      "weight": 256,
+      "exact_integer_comparison_passed": true,
+      "approx_log2_union_bound": -1266.7059941153657
+    }
+  ],
+  "outer_formula_field_bits": 255,
+  "outer_formula_setup_bits": 102,
+  "rows": [
+    {
+      "row_message_log": 12,
+      "outer_message_log": 9,
+      "outer_conditional_distance_formula": 0.2463996200566203,
+      "outer_conditional_distance_rounded_down": 0.246,
+      "adapted_conditional_distance": 0.0492,
+      "conditional_100_bit_queries": 4122
+    },
+    {
+      "row_message_log": 13,
+      "outer_message_log": 10,
+      "outer_conditional_distance_formula": 0.2408329670665561,
+      "outer_conditional_distance_rounded_down": 0.24,
+      "adapted_conditional_distance": 0.048,
+      "conditional_100_bit_queries": 4228
+    },
+    {
+      "row_message_log": 14,
+      "outer_message_log": 11,
+      "outer_conditional_distance_formula": 0.23535971859917482,
+      "outer_conditional_distance_rounded_down": 0.235,
+      "adapted_conditional_distance": 0.047,
+      "conditional_100_bit_queries": 4320
+    },
+    {
+      "row_message_log": 15,
+      "outer_message_log": 12,
+      "outer_conditional_distance_formula": 0.22992353270451693,
+      "outer_conditional_distance_rounded_down": 0.229,
+      "adapted_conditional_distance": 0.0458,
+      "conditional_100_bit_queries": 4436
+    },
+    {
+      "row_message_log": 16,
+      "outer_message_log": 13,
+      "outer_conditional_distance_formula": 0.22449571982429783,
+      "outer_conditional_distance_rounded_down": 0.224,
+      "adapted_conditional_distance": 0.0448,
+      "conditional_100_bit_queries": 4537
+    },
+    {
+      "row_message_log": 17,
+      "outer_message_log": 14,
+      "outer_conditional_distance_formula": 0.21906165484919127,
+      "outer_conditional_distance_rounded_down": 0.219,
+      "adapted_conditional_distance": 0.0438,
+      "conditional_100_bit_queries": 4643
+    },
+    {
+      "row_message_log": 18,
+      "outer_message_log": 15,
+      "outer_conditional_distance_formula": 0.21361386393799786,
+      "outer_conditional_distance_rounded_down": 0.213,
+      "adapted_conditional_distance": 0.0426,
+      "conditional_100_bit_queries": 4777
+    },
+    {
+      "row_message_log": 19,
+      "outer_message_log": 16,
+      "outer_conditional_distance_formula": 0.2081485083221678,
+      "outer_conditional_distance_rounded_down": 0.208,
+      "adapted_conditional_distance": 0.0416,
+      "conditional_100_bit_queries": 4894
+    },
+    {
+      "row_message_log": 20,
+      "outer_message_log": 17,
+      "outer_conditional_distance_formula": 0.20266359640520104,
+      "outer_conditional_distance_rounded_down": 0.202,
+      "adapted_conditional_distance": 0.040400000000000005,
+      "conditional_100_bit_queries": 5043
+    },
+    {
+      "row_message_log": 21,
+      "outer_message_log": 18,
+      "outer_conditional_distance_formula": 0.19715807491059,
+      "outer_conditional_distance_rounded_down": 0.197,
+      "adapted_conditional_distance": 0.039400000000000004,
+      "conditional_100_bit_queries": 5174
+    },
+    {
+      "row_message_log": 22,
+      "outer_message_log": 19,
+      "outer_conditional_distance_formula": 0.1916313670045794,
+      "outer_conditional_distance_rounded_down": 0.191,
+      "adapted_conditional_distance": 0.0382,
+      "conditional_100_bit_queries": 5339
+    }
+  ],
+  "bolt_max": {
+    "scope": "conditional experiment only; binary LDPC analysis does not certify prime-field distance",
+    "degree": 8,
+    "coefficients": "all-one (prime-field additions, not XOR)",
+    "assumed_kernel_relative_distance": 0.013,
+    "inverse_rate": 1.25,
+    "assumed_complete_code_relative_distance": 0.0104,
+    "conditional_100_bit_queries": 19891,
+    "prime_field_kernel_distance_certified": false,
+    "setup_failure_certified": false
+  }
+}

@@ -10,23 +10,13 @@ fn merkle_root_sequential(leaves: &[[u8; 32]]) -> [u8; 32] {
 
     let mut level: Vec<[u8; 32]> = leaves
         .chunks_exact(2)
-        .map(|pair| {
-            let mut buf = [0u8; 64];
-            buf[..32].copy_from_slice(&pair[0]);
-            buf[32..].copy_from_slice(&pair[1]);
-            *blake3::hash(&buf).as_bytes()
-        })
+        .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
         .collect();
 
     while level.len() > 1 {
         level = level
             .chunks_exact(2)
-            .map(|pair| {
-                let mut buf = [0u8; 64];
-                buf[..32].copy_from_slice(&pair[0]);
-                buf[32..].copy_from_slice(&pair[1]);
-                *blake3::hash(&buf).as_bytes()
-            })
+            .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
             .collect();
     }
 
@@ -61,10 +51,7 @@ pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
         blake3_merkle_root(&leaves[mid..]),
     );
 
-    let mut buf = [0u8; 64];
-    buf[..32].copy_from_slice(&left);
-    buf[32..].copy_from_slice(&right);
-    *blake3::hash(&buf).as_bytes()
+    hash_merkle_node(&left, &right)
 }
 
 /// Hash a field element's canonical limbs directly into a `blake3::Hasher`,
@@ -73,22 +60,33 @@ pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
 fn hash_field_element<F: PrimeField>(hasher: &mut blake3::Hasher, elem: &F) {
     let bigint = elem.into_bigint();
     let limbs: &[u64] = bigint.as_ref();
-    for &limb in limbs {
-        hasher.update(&limb.to_le_bytes());
+    if limbs.len() <= 8 {
+        let mut bytes = [0u8; 64];
+        for (chunk, &limb) in bytes.chunks_exact_mut(8).zip(limbs) {
+            chunk.copy_from_slice(&limb.to_le_bytes());
+        }
+        hasher.update(&bytes[..8 * limbs.len()]);
+    } else {
+        for &limb in limbs {
+            hasher.update(&limb.to_le_bytes());
+        }
     }
 }
 
 #[inline]
-fn hash_merkle_node(left: &[u8; 32], right: &[u8; 32]) -> [u8; 32] {
-    let mut buf = [0u8; 64];
-    buf[..32].copy_from_slice(left);
-    buf[32..].copy_from_slice(right);
+pub(crate) fn hash_merkle_node(left: &[u8; 32], right: &[u8; 32]) -> [u8; 32] {
+    let mut buf = [0u8; 65];
+    buf[0] = 1; // Domain separator: internal node.
+    buf[1..33].copy_from_slice(left);
+    buf[33..].copy_from_slice(right);
     *blake3::hash(&buf).as_bytes()
 }
 
 #[inline]
 fn hash_interleaved_column<F: PrimeField>(segments: &[Vec<F>], col: usize) -> [u8; 32] {
     let mut hasher = blake3::Hasher::new();
+    hasher.update(&[0]); // Domain separator: leaf.
+    hasher.update(&(segments.len() as u64).to_le_bytes());
     for seg in segments {
         hash_field_element(&mut hasher, &seg[col]);
     }
@@ -96,8 +94,10 @@ fn hash_interleaved_column<F: PrimeField>(segments: &[Vec<F>], col: usize) -> [u
 }
 
 #[inline]
-fn hash_column_values<F: PrimeField>(column_values: &[F]) -> [u8; 32] {
+pub(crate) fn hash_column_values<F: PrimeField>(column_values: &[F]) -> [u8; 32] {
     let mut hasher = blake3::Hasher::new();
+    hasher.update(&[0]);
+    hasher.update(&(column_values.len() as u64).to_le_bytes());
     for value in column_values {
         hash_field_element(&mut hasher, value);
     }
@@ -126,21 +126,28 @@ pub fn blake3_merkle_interleaved_leaves<F: PrimeField>(segments: &[Vec<F>]) -> V
 }
 
 pub fn blake3_merkle_precompute_levels(leaves: &[[u8; 32]]) -> Vec<Vec<[u8; 32]>> {
-    assert!(leaves.len().is_power_of_two());
-    assert!(leaves.len() >= 2);
+    merkle_levels_owned(leaves.to_vec())
+}
 
+pub(crate) fn merkle_levels_owned(leaves: Vec<[u8; 32]>) -> Vec<Vec<[u8; 32]>> {
+    assert!(leaves.len().is_power_of_two() && leaves.len() >= 2);
     let mut levels = Vec::with_capacity(leaves.len().ilog2() as usize + 1);
-    levels.push(leaves.to_vec());
+    levels.push(leaves);
     while levels.last().is_some_and(|level| level.len() > 1) {
-        let next = levels
-            .last()
-            .expect("levels is non-empty")
+        let level = levels.last().unwrap();
+        #[cfg(feature = "parallel")]
+        let next = level
+            .par_chunks_exact(2)
+            .with_min_len(512)
+            .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
+            .collect();
+        #[cfg(not(feature = "parallel"))]
+        let next = level
             .chunks_exact(2)
             .map(|pair| hash_merkle_node(&pair[0], &pair[1]))
             .collect();
         levels.push(next);
     }
-
     levels
 }
 
@@ -158,20 +165,12 @@ pub fn blake3_merkle_commit<F: PrimeField>(codeword: &[F]) -> [u8; 32] {
     #[cfg(feature = "parallel")]
     let mut leaves: Vec<[u8; 32]> = codeword
         .par_iter()
-        .map(|elem| {
-            let mut hasher = blake3::Hasher::new();
-            hash_field_element(&mut hasher, elem);
-            *hasher.finalize().as_bytes()
-        })
+        .map(|elem| hash_column_values(std::slice::from_ref(elem)))
         .collect();
     #[cfg(not(feature = "parallel"))]
     let mut leaves: Vec<[u8; 32]> = codeword
         .iter()
-        .map(|elem| {
-            let mut hasher = blake3::Hasher::new();
-            hash_field_element(&mut hasher, elem);
-            *hasher.finalize().as_bytes()
-        })
+        .map(|elem| hash_column_values(std::slice::from_ref(elem)))
         .collect();
 
     // Pad to the next power of two with zero-hashes

@@ -1,0 +1,2 @@
+code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted
+bolt-min,14,2,2025,32,0,32,5120,2.863958,4.356917,12.248167,2.729500,143464,32,true

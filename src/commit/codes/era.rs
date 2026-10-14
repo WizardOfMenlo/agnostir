@@ -1,8 +1,7 @@
 use std::{sync::OnceLock, time::Instant};
 
+use p3_maybe_rayon::prelude::*;
 use rand_08::SeedableRng as _;
-#[cfg(feature = "parallel")]
-use rayon::{current_num_threads, prelude::*};
 use rip_shuffle::RipShuffleSequential;
 
 use crate::{ErrorCorrectingCode, FieldElement};
@@ -67,6 +66,15 @@ where
     C: ErrorCorrectingCode<Alphabet = F> + Sync,
     F: FieldElement,
 {
+    pub const fn base_code(&self) -> &C {
+        &self.base_code
+    }
+    pub fn permutations(&self) -> (&[usize], &[usize]) {
+        (&self.p1_vector, &self.p2_vector)
+    }
+    pub fn multipliers(&self) -> (&[F], &[F]) {
+        (&self.m1_vector, &self.m2_vector)
+    }
     pub fn new(
         base_code: C,
         repetition_parameter: usize,
@@ -89,7 +97,7 @@ where
             m2_vector,
         };
 
-        debug_assert!(code.validate_parameters());
+        assert!(code.validate_parameters(), "invalid ERA parameters");
         code
     }
 
@@ -109,7 +117,12 @@ where
     }
 
     fn validate_parameters(&self) -> bool {
-        Self::check_permutation(&self.p1_vector)
+        self.repetition_parameter > 0
+            && self.p1_vector.len() == self.block_length
+            && self.p2_vector.len() == self.block_length
+            && self.m1_vector.len() == self.block_length
+            && self.m2_vector.len() == self.block_length
+            && Self::check_permutation(&self.p1_vector)
             && Self::check_permutation(&self.p2_vector)
             && self.base_code.message_size() == self.message_size
             && self.repetition_parameter * self.base_code.block_length() == self.block_length()
@@ -222,66 +235,20 @@ where
             });
     }
 
-    fn prefix_sum_in_place_sequential(values: &mut [F], weights: &[F], chunk_len: usize) {
-        if values.is_empty() {
-            return;
-        }
-        debug_assert_eq!(values.len(), weights.len());
-
-        let mut totals = Vec::with_capacity(values.len().div_ceil(chunk_len));
-        for (chunk, weights_chunk) in values.chunks_mut(chunk_len).zip(weights.chunks(chunk_len)) {
-            let mut acc = F::ZERO;
-            for (value, weight) in chunk.iter_mut().zip(weights_chunk.iter()) {
-                acc += *value * *weight;
-                *value = acc;
-            }
-            totals.push(acc);
-        }
-
-        let mut running = F::ZERO;
-        for total in &mut totals {
-            let tmp = *total;
-            *total = running;
-            running += tmp;
-        }
-
-        for (chunk, offset) in values.chunks_mut(chunk_len).zip(totals.into_iter()) {
-            if !offset.is_zero() {
-                for value in chunk.iter_mut() {
-                    *value += offset;
-                }
-            }
+    fn prefix_sum_in_place_sequential(values: &mut [F], weights: &[F], _chunk_len: usize) {
+        assert_eq!(values.len(), weights.len());
+        let mut acc = F::ZERO;
+        for (value, &weight) in values.iter_mut().zip(weights) {
+            acc += *value * weight;
+            *value = acc;
         }
     }
 
-    fn prefix_sum_add_only_in_place_sequential(values: &mut [F], chunk_len: usize) {
-        if values.is_empty() {
-            return;
-        }
-
-        let mut totals = Vec::with_capacity(values.len().div_ceil(chunk_len));
-        for chunk in values.chunks_mut(chunk_len) {
-            let mut acc = F::ZERO;
-            for value in chunk.iter_mut() {
-                acc += *value;
-                *value = acc;
-            }
-            totals.push(acc);
-        }
-
-        let mut running = F::ZERO;
-        for total in &mut totals {
-            let tmp = *total;
-            *total = running;
-            running += tmp;
-        }
-
-        for (chunk, offset) in values.chunks_mut(chunk_len).zip(totals.into_iter()) {
-            if !offset.is_zero() {
-                for value in chunk.iter_mut() {
-                    *value += offset;
-                }
-            }
+    fn prefix_sum_add_only_in_place_sequential(values: &mut [F], _chunk_len: usize) {
+        let mut acc = F::ZERO;
+        for value in values {
+            acc += *value;
+            *value = acc;
         }
     }
 
@@ -295,8 +262,7 @@ where
 
         // Round 1: fused repetition + permutation gather, then prefix sum
         // SAFETY: every element is written by the gather before being read.
-        let mut w1 = Vec::with_capacity(n);
-        unsafe { w1.set_len(n) };
+        let mut w1 = vec![F::ZERO; n];
         w1.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
@@ -313,8 +279,7 @@ where
         Self::prefix_sum_in_place(&mut w1, &self.m1_vector, chunk_len);
 
         // SAFETY: every element is written by the gather before being read.
-        let mut w2 = Vec::with_capacity(n);
-        unsafe { w2.set_len(n) };
+        let mut w2 = vec![F::ZERO; n];
         w2.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
@@ -340,12 +305,11 @@ where
         debug_assert!(self.validate_parameters());
 
         let n = self.block_length;
-        let base_encoding = self.base_code.encode(msg);
+        let base_encoding = self.base_code.encode_sequential(msg);
         let base_bl = self.base_code.block_length();
         let chunk_len = Self::chunk_len(self.block_length);
 
-        let mut w1 = Vec::with_capacity(n);
-        unsafe { w1.set_len(n) };
+        let mut w1 = vec![F::ZERO; n];
         for (chunk_idx, chunk) in w1.chunks_mut(chunk_len).enumerate() {
             let start = chunk_idx * chunk_len;
             let len = chunk.len();
@@ -359,8 +323,7 @@ where
         }
         Self::prefix_sum_in_place_sequential(&mut w1, &self.m1_vector, chunk_len);
 
-        let mut w2 = Vec::with_capacity(n);
-        unsafe { w2.set_len(n) };
+        let mut w2 = vec![F::ZERO; n];
         for (chunk_idx, chunk) in w2.chunks_mut(chunk_len).enumerate() {
             let start = chunk_idx * chunk_len;
             let len = chunk.len();
@@ -390,8 +353,7 @@ where
         let chunk_len = Self::chunk_len(self.block_length);
 
         // Round 1: fused repetition + permutation gather, then add-only prefix sum
-        let mut w1 = Vec::with_capacity(n);
-        unsafe { w1.set_len(n) };
+        let mut w1 = vec![F::ZERO; n];
         w1.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
@@ -408,8 +370,7 @@ where
         Self::prefix_sum_add_only_in_place(&mut w1, chunk_len);
 
         // Round 2: permutation gather, then add-only prefix sum
-        let mut w2 = Vec::with_capacity(n);
-        unsafe { w2.set_len(n) };
+        let mut w2 = vec![F::ZERO; n];
         w2.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
@@ -435,12 +396,11 @@ where
         debug_assert!(self.validate_parameters());
 
         let n = self.block_length;
-        let base_encoding = self.base_code.encode(msg);
+        let base_encoding = self.base_code.encode_sequential(msg);
         let base_bl = self.base_code.block_length();
         let chunk_len = Self::chunk_len(self.block_length);
 
-        let mut w1 = Vec::with_capacity(n);
-        unsafe { w1.set_len(n) };
+        let mut w1 = vec![F::ZERO; n];
         for (chunk_idx, chunk) in w1.chunks_mut(chunk_len).enumerate() {
             let start = chunk_idx * chunk_len;
             let len = chunk.len();
@@ -454,8 +414,7 @@ where
         }
         Self::prefix_sum_add_only_in_place_sequential(&mut w1, chunk_len);
 
-        let mut w2 = Vec::with_capacity(n);
-        unsafe { w2.set_len(n) };
+        let mut w2 = vec![F::ZERO; n];
         for (chunk_idx, chunk) in w2.chunks_mut(chunk_len).enumerate() {
             let start = chunk_idx * chunk_len;
             let len = chunk.len();
@@ -489,8 +448,7 @@ where
         // Round 1: fused repetition + permutation gather, then add-only prefix sum
         let t0 = Instant::now();
         // SAFETY: every element is written by the gather before being read.
-        let mut w1 = Vec::with_capacity(n);
-        unsafe { w1.set_len(n) };
+        let mut w1 = vec![F::ZERO; n];
         w1.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
@@ -513,8 +471,7 @@ where
         // Round 2: permutation gather, then add-only prefix sum
         let t0 = Instant::now();
         // SAFETY: every element is written by the gather before being read.
-        let mut w2 = Vec::with_capacity(n);
-        unsafe { w2.set_len(n) };
+        let mut w2 = vec![F::ZERO; n];
         w2.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
@@ -721,8 +678,7 @@ where
         // Round 1: fused repetition + permutation gather, then prefix sum
         let t0 = Instant::now();
         // SAFETY: every element is written by the gather before being read.
-        let mut w1 = Vec::with_capacity(n);
-        unsafe { w1.set_len(n) };
+        let mut w1 = vec![F::ZERO; n];
         w1.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {
@@ -745,8 +701,7 @@ where
         // Round 2: permutation, then fused mul + prefix sum
         let t0 = Instant::now();
         // SAFETY: every element is written by the gather before being read.
-        let mut w2 = Vec::with_capacity(n);
-        unsafe { w2.set_len(n) };
+        let mut w2 = vec![F::ZERO; n];
         w2.par_chunks_mut(chunk_len)
             .enumerate()
             .for_each(|(chunk_idx, chunk)| {

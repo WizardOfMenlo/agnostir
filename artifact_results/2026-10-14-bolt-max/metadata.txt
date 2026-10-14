@@ -1,0 +1,79 @@
+started_utc=2026-10-14T17:21:18.854145+00:00
+f50d2d326c6e600cc541b29cbeb34735c0b428b7
+ M .gitignore
+ M Cargo.toml
+ M benches/iopp_bench.rs
+ D benches/iopp_params.rs
+ M proof-size-estimate.py
+ M src/bin/interleaved_iopp.rs
+ M src/commit/codes/basefold.rs
+ M src/commit/codes/brakedown.rs
+ M src/commit/codes/era.rs
+ M src/commit/codes/mod.rs
+ M src/commit/codes/tensor.rs
+ M src/commit/merkle.rs
+ M src/commit/mod.rs
+ M src/interleaved_iopp.rs
+ M src/lib.rs
+ M src/optimized_era.rs
+?? .DS_Store
+?? AI_DISCLOSURE.md
+?? Dockerfile
+?? README.md
+?? __pycache__/
+?? artifact_results/
+?? bench_logs/
+?? comparisons/
+?? distance-analysis/__pycache__/
+?? distance-analysis/precomputed_distances.txt
+?? docs/
+?? iopp_k32_component_breakdown.svg
+?? iopp_k32_detailed_report.md
+?? iopp_k32_tables.tex
+?? iopp_k_sweep_report.md
+?? iopp_k_sweep_summary.csv
+?? iopp_k_sweep_tables.tex
+?? iopp_optimization_results.txt
+?? iopp_optimization_results_k24.txt
+?? iopp_optimization_results_k26.txt
+?? iopp_optimization_results_k28.txt
+?? iopp_optimization_results_k30.txt
+?? iopp_optimization_results_k32.txt
+?? precomputed_distances.txt
+?? proof_size_vs_logk.svg
+?? requirements-analysis.txt
+?? scripts/__pycache__/
+?? scripts/calibrate_bolt.py
+?? scripts/calibrate_custom.py
+?? scripts/reproduce_artifact.sh
+?? scripts/reproduce_bolt.sh
+?? scripts/reproduce_interleaved.sh
+?? scripts/summarize_artifact.py
+?? scripts/summarize_bolt.py
+?? src/.DS_Store
+?? src/basefold_iopp.rs
+?? src/bin/compare_iopps.rs
+?? src/commit/codes/bolt.rs
+?? src/era_iopp.rs
+?? src/interleaved_iopp/
+?? src/iopp_experiment.rs
+?? src/proof.rs
+?? src/proof/
+rustc 1.92.0 (ded5c06cf 2025-12-08)
+binary: rustc
+commit-hash: ded5c06cf21d2b93bffd5d884aa6e96934ee4234
+commit-date: 2025-12-08
+host: aarch64-apple-darwin
+release: 1.92.0
+LLVM version: 21.1.3
+cargo 1.92.0 (344c4567c 2025-10-21)
+Darwin nic-13974.apn.wlan.private.upenn.edu 23.0.0 Darwin Kernel Version 23.0.0: Fri Sep 15 14:42:57 PDT 2023; root:xnu-10002.1.13~1/RELEASE_ARM64_T8112 arm64
+sysctl: sysctl fmt -1 1024 1: Operation not permitted
+message_log=22
+eta=6
+seed=2025
+threads=8
+samples=3
+warmups=1
+RUSTFLAGS=
+completed_measurements_utc=2026-10-14T17:24:59.204356+00:00

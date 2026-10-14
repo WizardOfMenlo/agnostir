@@ -3,21 +3,25 @@ use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use rand::Rng;
 
 mod algebra;
+pub mod basefold_iopp;
 pub mod codeswitching;
 mod commit;
+pub mod era_iopp;
 pub mod interleaved_iopp;
+pub mod iopp_experiment;
 mod optimized_era;
 pub mod poly_utils;
+pub mod proof;
 mod reed_solomon;
 
 pub use codeswitching as codeswitch;
 
 pub use commit::{
-    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
-    IdentityCode, TensorCode, blake3_merkle_commit, blake3_merkle_commit_interleaved,
-    blake3_merkle_interleaved_leaves, blake3_merkle_open_interleaved,
-    blake3_merkle_precompute_levels, blake3_merkle_root_from_levels,
-    blake3_merkle_verify_interleaved_column,
+    BOLT_COMPRESSION, BOLT_DEGREE, BOLT_MAX_DEGREE, BasefoldCode, BasefoldParams, BoltCode,
+    BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode, IdentityCode, TensorCode,
+    blake3_merkle_commit, blake3_merkle_commit_interleaved, blake3_merkle_interleaved_leaves,
+    blake3_merkle_open_interleaved, blake3_merkle_precompute_levels,
+    blake3_merkle_root_from_levels, blake3_merkle_verify_interleaved_column,
 };
 pub use optimized_era::{EncodeNaiveBuffers, OptimizedEraCode, RadixSortBuffers};
 pub use reed_solomon::ReedSolomonCode;
@@ -152,6 +156,10 @@ pub trait ErrorCorrectingCode {
     fn message_size(&self) -> usize;
     fn block_length(&self) -> usize;
     fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet>;
+    /// Avoid nested work stealing when the caller already parallelizes rows.
+    fn encode_sequential(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
+        self.encode(msg)
+    }
 }
 
 /// Encode by interleaving the message into 2^eta segments and concatenating encodings.

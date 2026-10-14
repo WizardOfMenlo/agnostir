@@ -1,0 +1,234 @@
+   Compiling agnostir v0.1.0 (/Users/anubhavbaweja/Desktop/Research/research-git/agnostir)
+warning: unused import: `Field`
+   --> src/lib.rs:575:32
+    |
+575 |         use ark_ff::{FftField, Field};
+    |                                ^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+warning: unreachable `pub` item
+  --> src/commit/merkle.rs:31:1
+   |
+31 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+warning: `agnostir` (lib test) generated 4 warnings (run `cargo fix --lib -p agnostir --tests` to apply 3 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.23s
+     Running unittests src/lib.rs (target/debug/deps/agnostir-ff09cd1e4264d7e8)
+
+running 186 tests
+test codeswitching::claims::tests::test_split_claim_ip_scaffolding ... ok
+test codeswitching::claims::tests::test_split_claim_tip_scaffolding ... ok
+test codeswitching::claims::tests::test_split_claim_ip_panics_on_sigma_mismatch - should panic ... ok
+test codeswitching::codeswitch_claims::tests::test_generate_codeswitch_claims_repeat_step_with_repeat_factor_two ... ok
+test codeswitching::claims::tests::test_split_claim_tip_panics_on_length_mismatch - should panic ... ok
+test codeswitching::codeswitch_claims::tests::test_generate_codeswitch_claims_up_to_base_code_encoding_basic ... ok
+test codeswitching::codeswitch_claims::tests::test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_base_code_generator_matrix - should panic ... ok
+test codeswitching::codeswitch_claims::tests::test_generate_codeswitch_claims_matches_full_helper ... ok
+test codeswitching::codeswitch_claims::tests::test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_permutation_1 - should panic ... ok
+test codeswitching::codeswitch_claims::tests::test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_spotcheck - should panic ... ok
+test codeswitching::oracles::tests::test_build_codeswitch_oracles_panics_on_bad_permutation - should panic ... ok
+test codeswitching::oracles::tests::test_build_codeswitch_oracles_shapes ... ok
+test codeswitching::oracles::tests::test_split_and_encode_with_identity_code ... ok
+test codeswitching::sumcheck::ip::tests::test_compress_tables_interpolates_at_challenge ... ok
+test codeswitching::codeswitch_claims::tests::test_generate_codeswitch_claims_up_to_base_code_encoding_panics_on_bad_multiplier_1_length - should panic ... ok
+test codeswitching::sumcheck::ip::tests::test_compress_tables_panics_on_odd_table_length - should panic ... ok
+test codeswitching::sumcheck::ip::tests::test_compress_tables_respects_endpoints ... ok
+test codeswitching::sumcheck::ip::tests::test_compute_sumcheck_poly_evaluates_midpoint ... ok
+test codeswitching::sumcheck::ip::tests::test_compute_sumcheck_poly_panics_on_odd_table_length - should panic ... ok
+test codeswitching::sumcheck::ip::tests::test_run_sumcheck_protocol_outputs_claim_and_randomness ... ok
+test codeswitching::sumcheck::ip::tests::test_run_sumcheck_protocol_panics_on_non_power_of_two_length - should panic ... ok
+test codeswitching::sumcheck::permutation::tests::test_build_permutation_transition_tables_layout ... ok
+test codeswitching::sumcheck::tip::tests::test_compress_tables_interpolates_at_challenge ... ok
+test codeswitching::sumcheck::permutation::tests::test_run_sumcheck_protocol_outputs_claim_and_randomness ... ok
+test codeswitching::sumcheck::tip::tests::test_compress_tables_respects_endpoints ... ok
+test codeswitching::sumcheck::tip::tests::test_compute_sumcheck_poly_evaluates_midpoint_and_two ... ok
+test codeswitching::sumcheck::tip::tests::test_compress_tables_panics_on_odd_table_length - should panic ... ok
+test codeswitching::sumcheck::tip::tests::test_compute_sumcheck_poly_panics_on_odd_table_length - should panic ... ok
+test codeswitching::sumcheck::tip::tests::test_run_sumcheck_protocol_outputs_claim_and_randomness ... ok
+test codeswitching::sumcheck::tip::tests::test_run_sumcheck_protocol_panics_on_non_power_of_two_length - should panic ... ok
+test commit::merkle::tests::interleaved_open_and_verify_roundtrip ... ok
+test commit::codes::bolt::tests::graph_is_biregular_and_encoder_matches_dense_matrix ... ok
+test interleaved_iopp::tests::challenge_samples_valid_columns_and_requires_nonzero_sizes ... ok
+test commit::codes::brakedown::tests::base_case_extends_a_known_polynomial ... ok
+test commit::codes::bolt::tests::code_is_linear_and_preserves_every_input_coordinate ... ok
+test interleaved_iopp::tests::prover_rejects_bad_dimensions_and_tree_shapes ... ok
+test interleaved_iopp::tests::rejects_invalid_dimensions_and_points_before_calling_encoder ... ok
+test interleaved_iopp::tests::rejects_invalid_query_indices_merkle_depths_and_empty_encoding ... ok
+test interleaved_iopp::tests::rejects_malformed_message_and_opening_shapes_before_calling_encoder ... ok
+test interleaved_iopp::tests::zero_variable_message_roundtrip ... ok
+test iopp_experiment::tests::paper_size_uses_expected_query_counts ... ok
+test interleaved_iopp::tests::era_roundtrip_with_non_power_of_two_blocks_and_boundary_interleavings ... ok
+test iopp_experiment::tests::query_model_and_override_reporting_have_valid_domains ... ok
+test iopp_experiment::tests::unsupported_dimensions_are_rejected_before_setup ... ok
+test poly_utils::coeffs::tests::test_coefficient_list_empty - should panic ... ok
+test interleaved_iopp::tests::rejects_tampered_messages_commitment_and_openings ... ok
+test poly_utils::coeffs::tests::test_coefficient_list_initialization ... ok
+test poly_utils::coeffs::tests::test_coefficient_list_invalid_size - should panic ... ok
+test poly_utils::coeffs::tests::test_coefficient_to_evaluations_conversion ... ok
+test poly_utils::coeffs::tests::test_evaluate_at_extension_single_variable ... ok
+test poly_utils::coeffs::tests::test_evaluate_at_extension_three_variables ... ok
+test poly_utils::coeffs::tests::test_evaluate_at_extension_zero_polynomial ... ok
+test poly_utils::coeffs::tests::test_evaluate_at_extension_two_variables ... ok
+test poly_utils::coeffs::tests::test_evaluate_at_univariate_degree_one ... ok
+test poly_utils::coeffs::tests::test_evaluate_at_univariate_degree_three_multiple_points ... ok
+test poly_utils::coeffs::tests::test_evaluate_at_univariate_equivalence_to_multilinear ... ok
+test poly_utils::coeffs::tests::test_evaluate_multilinear ... ok
+test poly_utils::coeffs::tests::test_evaluation_conversion ... ok
+test poly_utils::coeffs::tests::test_folding ... ok
+test poly_utils::coeffs::tests::test_folding_multiple_variables ... ok
+test poly_utils::coeffs::tests::test_num_variables_and_coeffs ... ok
+test poly_utils::dense::tests::test_constant_polynomial ... ok
+test poly_utils::dense::tests::test_cubic_polynomial ... ok
+test poly_utils::dense::tests::test_is_zero_various_cases ... ok
+test poly_utils::dense::tests::test_leading_zeros_trimmed ... ok
+test poly_utils::dense::tests::test_linear_polynomial ... ok
+test poly_utils::dense::tests::test_quadratic_polynomial ... ok
+test poly_utils::dense::tests::test_zero_polynomial ... ok
+test poly_utils::evals::tests::test_eval_extension_on_hypercube_points ... ok
+test poly_utils::evals::tests::test_eval_extension_on_non_hypercube_points ... ok
+test poly_utils::evals::tests::test_eval_multilinear_1d ... ok
+test poly_utils::evals::tests::test_eval_multilinear_2d ... ok
+test poly_utils::evals::tests::test_eval_multilinear_3d ... ok
+test poly_utils::evals::tests::test_evaluate_edge_cases ... ok
+test poly_utils::evals::tests::test_evaluate_on_hypercube_points ... ok
+test poly_utils::evals::tests::test_evaluate_on_non_hypercube_points ... ok
+test poly_utils::evals::tests::test_eval_multilinear_4d ... ok
+test poly_utils::evals::tests::test_indexing ... ok
+test poly_utils::evals::tests::test_index_out_of_bounds - should panic ... ok
+test poly_utils::evals::tests::test_mutability_of_evals ... ok
+test poly_utils::evals::tests::test_new_evaluations_list ... ok
+test poly_utils::evals::tests::test_num_evals ... ok
+test poly_utils::evals::tests::test_new_evaluations_list_invalid_length - should panic ... ok
+test poly_utils::evals::tests::test_num_variables ... ok
+test poly_utils::fold::tests::test_compute_fold_all_zeros ... ok
+test poly_utils::fold::tests::test_compute_fold_two_layers ... ok
+test poly_utils::fold::tests::test_compute_fold_single_layer ... ok
+test poly_utils::fold::tests::test_compute_fold_with_zero_randomness ... ok
+test poly_utils::fold::tests::test_folding ... ok
+test poly_utils::fold::tests::test_transform_evaluations_invalid_length - should panic ... ok
+test poly_utils::fold::tests::test_transform_evaluations_prover_helps ... ok
+test poly_utils::hypercube::tests::test_binary_hypercube_iterator ... ok
+test poly_utils::hypercube::tests::test_binary_hypercube_large_dimensions ... ok
+test poly_utils::hypercube::tests::test_binary_hypercube_point_order ... ok
+test poly_utils::hypercube::tests::test_binary_hypercube_single_dimension ... ok
+test poly_utils::hypercube::tests::test_binary_hypercube_zero_dimensions ... ok
+test poly_utils::lagrange_iterator::tests::test_blendy ... ok
+test poly_utils::lagrange_iterator::tests::test_blendy_2 ... ok
+test poly_utils::lagrange_iterator::tests::test_blendy_3 ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_all_ones ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_all_zeros ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_correct_order ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_empty ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_four_variables ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_mixed_values ... ok
+test poly_utils::coeffs::tests::test_folding_and_evaluation ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_single_variable ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_output_count ... ok
+test poly_utils::lagrange_iterator::tests::test_lagrange_iterator_two_variables ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_all_ones ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_all_twos ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_all_zeros ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_empty_vector ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_invalid_ternary_value - should panic ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_large_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_mixed_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_large_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_mixed_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_single_variable_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly3_single_variable_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly_all_ones ... ok
+test poly_utils::multilinear::tests::test_eq_poly_all_zeros ... ok
+test poly_utils::multilinear::tests::test_eq_poly_empty_vector ... ok
+test poly_utils::multilinear::tests::test_eq_poly_large_binary_number_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly_large_binary_number_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly_mixed_bits_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly_mixed_bits_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_all_ones ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_all_zeros ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_empty_vector ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_different_lengths - should panic ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_large_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_mixed_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_large_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_mixed_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_single_variable_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly_outside_single_variable_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_poly_single_variable_match ... ok
+test poly_utils::multilinear::tests::test_eq_poly_single_variable_mismatch ... ok
+test poly_utils::multilinear::tests::test_eq_weights_matches_eq_poly_for_all_hypercube_points ... ok
+test poly_utils::multilinear::tests::test_eq_weights_two_variables_binary_tree_formula ... ok
+test poly_utils::multilinear::tests::test_equality ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_empty ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_identity ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_large_variables ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_powers_correctness ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_single_variable ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_three_variables ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_two_variables ... ok
+test poly_utils::multilinear::tests::test_expand_from_univariate_zero ... ok
+test poly_utils::multilinear::tests::test_from_binary_hypercube_point_all_ones ... ok
+test poly_utils::multilinear::tests::test_from_binary_hypercube_point_all_zeros ... ok
+test poly_utils::multilinear::tests::test_from_binary_hypercube_point_expansion ... ok
+test poly_utils::multilinear::tests::test_from_binary_hypercube_point_mixed_bits ... ok
+test poly_utils::multilinear::tests::test_from_binary_hypercube_point_truncation ... ok
+test poly_utils::multilinear::tests::test_multilinear_point_rand_not_all_same ... ok
+test poly_utils::multilinear::tests::test_n_variables ... ok
+test poly_utils::multilinear::tests::test_to_hypercube_all_ones ... ok
+test poly_utils::multilinear::tests::test_to_hypercube_all_zeros ... ok
+test poly_utils::multilinear::tests::test_to_hypercube_empty_vector ... ok
+test poly_utils::multilinear::tests::test_to_hypercube_large_binary_number ... ok
+test poly_utils::multilinear::tests::test_to_hypercube_mixed_bits ... ok
+test poly_utils::multilinear::tests::test_to_hypercube_non_binary_values ... ok
+test poly_utils::multilinear::tests::test_to_hypercube_single_bit ... ok
+test poly_utils::multilinear::tests::test_equality3 ... ok
+test tests::test_era_code_deterministic ... ok
+test tests::test_era_code_different_inputs_different_outputs ... ok
+test tests::test_era_code_output_length ... ok
+test tests::test_era_code_with_various_repetition_parameters ... ok
+test tests::test_era_code_zero_message ... ok
+test tests::test_identity_code_basic ... ok
+test interleaved_iopp::fs::tests::fiat_shamir_roundtrip_and_adversarial_transport ... ok
+test tests::test_optimized_era_code_deterministic ... ok
+test poly_utils::fold::tests::test_folding_optimised ... ok
+test tests::test_optimized_era_code_different_inputs_different_outputs ... ok
+test tests::test_optimized_era_code_output_length ... ok
+test tests::test_optimized_era_code_with_various_repetition_parameters ... ok
+test tests::test_optimized_era_code_zero_message ... ok
+test tests::test_reed_solomon_round_trip_with_intt ... ok
+test interleaved_iopp::fs::tests::adapted_bolt_uses_the_shared_serialized_argument ... ok
+test proof::fractional::tests::fractional_checks_honest_permutations_and_rejects_false_sum ... ok
+test tests::test_optimized_era_code_blocked_reuse ... ok
+test commit::codes::brakedown::tests::linear_systematic_and_input_regular ... ok
+test basefold_iopp::tests::folding_matches_independent_encoding_and_rejects_tampering ... ok
+test era_iopp::tests::full_era_iopp_roundtrip_nonpower_shapes_and_tampering ... ok
+test tests::test_optimized_era_code_matches_naive ... ok
+
+test result: ok. 186 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.14s
+

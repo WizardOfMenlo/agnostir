@@ -1,0 +1,162 @@
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+warning: unreachable `pub` item
+  --> src/commit/merkle.rs:41:1
+   |
+41 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+warning: `agnostir` (lib) generated 3 warnings (run `cargo fix --lib -p agnostir` to apply 3 suggestions)
+   Compiling agnostir v0.1.0 (/Users/anubhavbaweja/Desktop/Research/research-git/agnostir)
+warning: unused variable: `k_log`
+  --> benches/iopp_params.rs:85:39
+   |
+85 | pub(crate) fn era_inner_params_normal(k_log: u32) -> (f64, f64, usize, usize) {
+   |                                       ^^^^^ help: if this is intentional, prefix it with an underscore: `_k_log`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `agnostir` (bench "iopp_bench") generated 1 warning (run `cargo fix --bench "iopp_bench" -p agnostir` to apply 1 suggestion)
+    Finished `bench` profile [optimized + debuginfo] target(s) in 4.08s
+     Running benches/iopp_bench.rs (target/release/deps/iopp_bench-6f732e2f0221e2dc)
+Gnuplot not found, using plotters backend
+  Proof sizes (k=18, eta=5, seg_msg=2^13):
+    Brakedown  delta=0.100  q=1974  proof=2480.0 KiB
+    EA         delta=0.100  q=1974  proof=2480.0 KiB
+    Basefold   delta=0.230  q=796  proof=1185.4 KiB
+    ERA        delta=0.226  q=812  proof=1232.2 KiB
+Benchmarking brakedown_commit
+Benchmarking brakedown_commit: Warming up for 3.0000 s
+Benchmarking brakedown_commit: Collecting 10 samples in estimated 5.2554 s (165 iterations)
+Benchmarking brakedown_commit: Analyzing
+brakedown_commit        time:   [30.881 ms 31.234 ms 31.733 ms]
+                        change: [−75.936% −75.451% −74.947%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking brakedown_eval_prover
+Benchmarking brakedown_eval_prover: Warming up for 3.0000 s
+Benchmarking brakedown_eval_prover: Collecting 10 samples in estimated 5.0400 s (605 iterations)
+Benchmarking brakedown_eval_prover: Analyzing
+brakedown_eval_prover   time:   [8.1830 ms 8.1952 ms 8.2191 ms]
+                        change: [−71.658% −71.503% −71.313%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+
+Benchmarking brakedown_verify
+Benchmarking brakedown_verify: Warming up for 3.0000 s
+Benchmarking brakedown_verify: Collecting 10 samples in estimated 5.3545 s (440 iterations)
+Benchmarking brakedown_verify: Analyzing
+brakedown_verify        time:   [11.982 ms 12.063 ms 12.115 ms]
+                        change: [−27.142% −26.712% −26.280%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking ea_commit
+Benchmarking ea_commit: Warming up for 3.0000 s
+Benchmarking ea_commit: Collecting 10 samples in estimated 6.9374 s (20 iterations)
+Benchmarking ea_commit: Analyzing
+ea_commit               time:   [341.19 ms 345.11 ms 350.50 ms]
+                        change: [−77.106% −76.756% −76.385%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking ea_eval_prover
+Benchmarking ea_eval_prover: Warming up for 3.0000 s
+Benchmarking ea_eval_prover: Collecting 10 samples in estimated 5.4136 s (660 iterations)
+Benchmarking ea_eval_prover: Analyzing
+ea_eval_prover          time:   [8.1669 ms 8.2434 ms 8.3890 ms]
+                        change: [−71.811% −71.624% −71.310%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking ea_verify
+Benchmarking ea_verify: Warming up for 3.0000 s
+Benchmarking ea_verify: Collecting 10 samples in estimated 6.8398 s (110 iterations)
+Benchmarking ea_verify: Analyzing
+ea_verify               time:   [62.020 ms 62.434 ms 63.316 ms]
+                        change: [−73.676% −73.504% −73.255%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking basefold_commit
+Benchmarking basefold_commit: Warming up for 3.0000 s
+Benchmarking basefold_commit: Collecting 10 samples in estimated 6.1258 s (165 iterations)
+Benchmarking basefold_commit: Analyzing
+basefold_commit         time:   [35.990 ms 37.177 ms 38.350 ms]
+                        change: [−87.214% −86.871% −86.524%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking basefold_eval_prover
+Benchmarking basefold_eval_prover: Warming up for 3.0000 s
+Benchmarking basefold_eval_prover: Collecting 10 samples in estimated 5.2340 s (660 iterations)
+Benchmarking basefold_eval_prover: Analyzing
+basefold_eval_prover    time:   [7.8462 ms 7.8544 ms 7.8616 ms]
+                        change: [−73.011% −72.895% −72.762%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high severe
+
+Benchmarking basefold_verify
+Benchmarking basefold_verify: Warming up for 3.0000 s
+Benchmarking basefold_verify: Collecting 10 samples in estimated 5.2414 s (935 iterations)
+Benchmarking basefold_verify: Analyzing
+basefold_verify         time:   [5.5566 ms 5.6257 ms 5.7158 ms]
+                        change: [−52.124% −51.509% −50.813%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 1 outliers among 10 measurements (10.00%)
+  1 (10.00%) high mild
+
+Benchmarking era_commit
+Benchmarking era_commit: Warming up for 3.0000 s
+Benchmarking era_commit: Collecting 10 samples in estimated 6.5952 s (165 iterations)
+Benchmarking era_commit: Analyzing
+era_commit              time:   [40.489 ms 41.265 ms 41.869 ms]
+                        change: [−80.918% −80.685% −80.408%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking era_eval_prover
+Benchmarking era_eval_prover: Warming up for 3.0000 s
+Benchmarking era_eval_prover: Collecting 10 samples in estimated 5.2483 s (660 iterations)
+Benchmarking era_eval_prover: Analyzing
+era_eval_prover         time:   [7.8593 ms 7.8702 ms 7.8904 ms]
+                        change: [−72.866% −72.777% −72.685%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high mild
+
+Benchmarking era_verify
+Benchmarking era_verify: Warming up for 3.0000 s
+Benchmarking era_verify: Collecting 10 samples in estimated 5.0034 s (880 iterations)
+Benchmarking era_verify: Analyzing
+era_verify              time:   [5.6202 ms 5.6378 ms 5.6507 ms]
+                        change: [−30.230% −29.273% −28.621%] (p = 0.00 < 0.05)
+                        Performance has improved.
+

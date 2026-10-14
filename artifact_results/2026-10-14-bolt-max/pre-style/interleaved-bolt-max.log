@@ -1,0 +1,2 @@
+protocol=interleaved-fs-v1 hash=BLAKE3-256 field=secp256k1_scalar threads=8 setup_ms=8.560 assumed_delta=0.0104 query_model=conditional-100-bit (distance/setup bounds require separate certification)
+bolt-max adaptation: kernel_delta=0.013 is an unproved prime-field assumption; full_code_delta=0.0104; no certified setup-failure bound

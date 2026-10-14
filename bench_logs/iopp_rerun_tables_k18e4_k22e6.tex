@@ -1,0 +1,33 @@
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lccccc}
+\hline
+Code & Commit Time & Prover Eval Time & Proof Size (KiB) & Verify Time & Verifier Queries \\
+\hline
+Brakedown & 29.579 ms & 8.1184 ms & 1810.7 & 12.401 ms & 1974 \\
+EA & 351.70 ms & 8.3677 ms & 1810.7 & 116.30 ms & 1974 \\
+Basefold & 31.933 ms & 7.8560 ms & 1083.9 & 11.330 ms & 820 \\
+ERA & 45.289 ms & 7.9392 ms & 1108.0 & 9.1669 ms & 808 \\
+Conjectured ERA & 36.804 ms & 7.8991 ms & 1108.0 & 5.8100 ms & 808 \\
+\hline
+\end{tabular}
+\caption{IOPP benchmark rerun for message length $2^{18}$ and interleaving parameter $\eta=4$ (including Conjectured ERA).}
+\label{tab:iopp-rerun-218-eta4}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lccccc}
+\hline
+Code & Commit Time & Prover Eval Time & Proof Size (KiB) & Verify Time & Verifier Queries \\
+\hline
+Brakedown & 700.33 ms & 122.08 ms & 6431.1 & 46.734 ms & 1974 \\
+EA & 7.6476 s & 116.13 ms & 6431.1 & 525.00 ms & 1974 \\
+Basefold & 564.37 ms & 117.18 ms & 4009.6 & 47.034 ms & 869 \\
+ERA & 789.89 ms & 126.61 ms & 3897.5 & 34.740 ms & 804 \\
+Conjectured ERA & 496.36 ms & 116.08 ms & 3897.5 & 22.770 ms & 804 \\
+\hline
+\end{tabular}
+\caption{IOPP benchmark rerun for message length $2^{22}$ and interleaving parameter $\eta=6$ (including Conjectured ERA).}
+\label{tab:iopp-rerun-222-eta6}
+\end{table}

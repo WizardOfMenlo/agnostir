@@ -80,7 +80,15 @@ impl<F: FieldElement> BasefoldCode<F> {
         let mut table = Vec::with_capacity(log_message_size);
         for i in 0..log_message_size {
             let level_size = rate << i; // rate * 2^i
-            let level: Vec<F> = (0..level_size).map(|_| F::random(rng)).collect();
+            let level: Vec<F> = (0..level_size)
+                .map(|_| {
+                    let mut value = F::random(rng);
+                    while value.is_zero() {
+                        value = F::random(rng);
+                    }
+                    value
+                })
+                .collect();
             table.push(level);
         }
 
@@ -104,6 +112,40 @@ impl<F: FieldElement> BasefoldCode<F> {
     #[must_use]
     pub fn codeword_length(&self) -> usize {
         self.codeword_length
+    }
+
+    /// Encode a message at a lower level using the same nested code family.
+    pub fn encode_lower(&self, message: &[F]) -> Vec<F> {
+        assert!(message.len().is_power_of_two() && message.len() <= self.message_size);
+        let mut word: Vec<F> = message
+            .iter()
+            .flat_map(|&x| std::iter::repeat_n(x, self.rate))
+            .collect();
+        for level in self.table.iter().take(message.len().ilog2() as usize) {
+            let butterfly = |chunk: &mut [F]| {
+                let (a, b) = chunk.split_at_mut(level.len());
+                for ((a, b), &t) in a.iter_mut().zip(b).zip(level) {
+                    let x = *a;
+                    let y = *b * t;
+                    *a = x + y;
+                    *b = x - y;
+                }
+            };
+            #[cfg(feature = "parallel")]
+            word.par_chunks_mut(level.len() * 2).for_each(butterfly);
+            #[cfg(not(feature = "parallel"))]
+            word.chunks_mut(level.len() * 2).for_each(butterfly);
+        }
+        reverse_index_bits_in_place(&mut word);
+        word
+    }
+
+    /// Butterfly coefficients in the adjacent-pair order used by Type-1 words.
+    pub fn folding_table(&self, log_message: usize) -> Vec<F> {
+        assert!(log_message > 0 && log_message <= self.log_message_size);
+        let mut table = self.table[log_message - 1].clone();
+        reverse_index_bits_in_place(&mut table);
+        table
     }
 
     /// Encode a single message (segment).

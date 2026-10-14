@@ -1,0 +1,171 @@
+[
+  {
+    "protocol": "era-corrected",
+    "message_log": "10",
+    "eta": "2",
+    "output_log": "6",
+    "output_log_rate": "3",
+    "terminal_log": "2",
+    "seed": "2025",
+    "threads": "32",
+    "proof_bytes": "232712",
+    "index_rows": "81",
+    "online_rows": "47",
+    "accepted": "true",
+    "samples": 1,
+    "setup_ms": {
+      "median": 3.619167,
+      "min": 3.619167,
+      "max": 3.619167
+    },
+    "commit_ms": {
+      "median": 0.883833,
+      "min": 0.883833,
+      "max": 0.883833
+    },
+    "prove_ms": {
+      "median": 36.180458,
+      "min": 36.180458,
+      "max": 36.180458
+    },
+    "verify_ms": {
+      "median": 3.189,
+      "min": 3.189,
+      "max": 3.189
+    }
+  },
+  {
+    "protocol": "basefold-local",
+    "message_log": "10",
+    "eta": "2",
+    "output_log": "8",
+    "output_log_rate": "1",
+    "terminal_log": "2",
+    "seed": "2025",
+    "threads": "32",
+    "proof_bytes": "17192",
+    "index_rows": "0",
+    "online_rows": "4",
+    "accepted": "true",
+    "samples": 1,
+    "setup_ms": {
+      "median": 0.124125,
+      "min": 0.124125,
+      "max": 0.124125
+    },
+    "commit_ms": {
+      "median": 0.557042,
+      "min": 0.557042,
+      "max": 0.557042
+    },
+    "prove_ms": {
+      "median": 4.580875,
+      "min": 4.580875,
+      "max": 4.580875
+    },
+    "verify_ms": {
+      "median": 0.348667,
+      "min": 0.348667,
+      "max": 0.348667
+    }
+  },
+  {
+    "code": "bolt-max",
+    "message_log": "14",
+    "eta": "2",
+    "seed": "2025",
+    "threads": "32",
+    "queries": "32",
+    "block_length": "5120",
+    "proof_bytes": "143464",
+    "commitment_bytes": "32",
+    "accepted": "true",
+    "samples": 1,
+    "setup_ms": {
+      "median": 0.383625,
+      "min": 0.383625,
+      "max": 0.383625
+    },
+    "commit_ms": {
+      "median": 4.123208,
+      "min": 4.123208,
+      "max": 4.123208
+    },
+    "prove_ms": {
+      "median": 12.542083,
+      "min": 12.542083,
+      "max": 12.542083
+    },
+    "verify_ms": {
+      "median": 2.709625,
+      "min": 2.709625,
+      "max": 2.709625
+    }
+  },
+  {
+    "code": "bolt-min",
+    "message_log": "14",
+    "eta": "2",
+    "seed": "2025",
+    "threads": "32",
+    "queries": "32",
+    "block_length": "5120",
+    "proof_bytes": "143464",
+    "commitment_bytes": "32",
+    "accepted": "true",
+    "samples": 1,
+    "setup_ms": {
+      "median": 2.863958,
+      "min": 2.863958,
+      "max": 2.863958
+    },
+    "commit_ms": {
+      "median": 4.356917,
+      "min": 4.356917,
+      "max": 4.356917
+    },
+    "prove_ms": {
+      "median": 12.248167,
+      "min": 12.248167,
+      "max": 12.248167
+    },
+    "verify_ms": {
+      "median": 2.7295,
+      "min": 2.7295,
+      "max": 2.7295
+    }
+  },
+  {
+    "code": "era",
+    "message_log": "14",
+    "eta": "2",
+    "seed": "2025",
+    "threads": "32",
+    "queries": "32",
+    "block_length": "17200",
+    "proof_bytes": "145000",
+    "commitment_bytes": "32",
+    "accepted": "true",
+    "samples": 1,
+    "setup_ms": {
+      "median": 3211.361125,
+      "min": 3211.361125,
+      "max": 3211.361125
+    },
+    "commit_ms": {
+      "median": 36.836417,
+      "min": 36.836417,
+      "max": 36.836417
+    },
+    "prove_ms": {
+      "median": 10.11575,
+      "min": 10.11575,
+      "max": 10.11575
+    },
+    "verify_ms": {
+      "median": 27.127166,
+      "min": 27.127166,
+      "max": 27.127166
+    }
+  }
+]

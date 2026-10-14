@@ -1,0 +1,279 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\doclearpage
+\section{Implementation and evaluation}
+\label{sec:evaluation}
+
+\parhead{Measuring concrete performance}
+To compare concrete performance with previous work, we compile IOPPs into \emph{multilinear polynomial commitment schemes} (MLPCSs) via Merkle commitments.
+This gives a holistic view of the concrete efficiency of the IOPPs when deployed in practice.
+The proof size of the MLPCS is determined by 
+\begin{enumerate*}[label=(\alph*)]
+    \item the query complexity of the IOPP,
+    \item the communication overhead of the IOPP, and
+    \item the overhead of the Merkle commitment scheme.
+\end{enumerate*}
+Similarly, the prover time of the MLPCS is determined by
+\begin{enumerate*}[label=(\alph*)]
+    \item the prover time of the IOPP,
+    \item the encoding time of the code, and
+    \item the overhead of the Merkle commitment scheme.
+\end{enumerate*}
+In this section, we use the phrase `proof size of IOPP' to refer to the proof size of the resulting MLPCS obtained by compiling the IOPP via Merkle commitments.
+
+In \cref{sec:eval-interleaved-iopp}, we evaluate the performance of $\ERA$ codes by instantiating the Interleaved IOPP of Ligero \cite{AmesHIV17} with it and comparing against the performance of other field-agnostic codes such as Brakedown's code \cite{GolovnevLSTW23}, Expand-Accumulate codes \cite{BlockFKTWZ24}, BaseFold's code \cite{ZeilbergerCF24}.
+We focus on four main metrics: \begin{enumerate*}[label=(\alph*)]
+    \item prover commitment time, \item prover evaluation time, \item total proof size, and \item verifier time.
+\end{enumerate*}
+Then, in \cref{sec:eval-iopp-performance}, we estimate the concrete proof size of the MLPCS obtained from our IOPP for $\ERA$ codes and compare it with the proof sizes of BaseFold \cite{ZeilbergerCF24} and BrakingBase \cite{NairST25} when initialized with suitable parameters.
+
+Our Rust implementation leverages the $\mathsf{arkworks}$ \cite{arkworks} ecosystem.
+We use $\mathsf{Blake3}$ for Merkle tree hashing and $\mathsf{secp256k1}$ for field arithmetic.
+The updated measurements in \cref{tab:iopp-222-eta6} use 8 Rayon threads and report the median of three runs after one warmup.
+We also include \texttt{bolt-min} and \texttt{bolt-max} adapted to the same scalar field and interleaved argument, replacing their binary-field Reed--Solomon syndrome codes with BaseFold's code.
+We benchmarked our implementation on a 2023 MacBook Air with an Apple M2 chip and 16GB of RAM, running macOS Sonoma 14.0.
+Our implementation is available at https://anonymous.4open.science/r/agnostir-F3B4/.
+
+\subsection{The Interleaved IOPP}
+\label{sec:eval-interleaved-iopp}
+
+We briefly recall the Interleaved IOPP of Ligero/Brakedown and explain how the choice of error-correcting code $\Code$ affects the performance of the resulting IOPP.
+We phrase it as an \emph{IOPP for random multilinear evaluation}, where the prover has a message $\msg$ of length $2^k$, and proves to the verifier that $\msgMult(\rB) = y$ for a random point $\rB$, where $\msgMult$ is the multilinear extension of $\msg$.
+We obtain an interactive argument by instantiating the oracles with Merkle commitments; this can then be made non-interactive via Fiat--Shamir.
+
+Let $\eta$ be an interleaving parameter, and let the parameters of $\Code$ be $(\Field, 2^{n-\eta}, 2^{k-\eta}, \FracDistanceOf{\Code})$.
+The resulting interactive argument consists of two algorithms:
+\begin{itemize}
+    \item \textbf{Commitment:} The prover divides $\msg$ into $2^{\eta}$ blocks of length $2^{k - \eta}$ and encodes each block using $\Code$, obtaining $2^{\eta}$ codewords of length $2^{n - \eta}$.
+    We refer to this as an \emph{interleaved encoding} of $\msg$, and the resulting code can be thought of as a code over the extension field $\Field^{2^{\eta}}$, with the same relative distance as $\Code$.
+    The prover then commits to the interleaved encoding via a Merkle commitment.
+    \item \textbf{Evaluation:} Let $\rB = (\rB_1 \Concat \rB_2)$ where $\rB_1 \in \Field^{\eta}$ and $\rB_2 \in \Field^{k - \eta}$.
+    \begin{enumerate}
+        \item The prover ``folds'' the $2^{\eta}$ rows of the message using the multilinear Lagrange coefficients of $\rB_1$, obtains $\msg_{\rB_1}$ of length $2^{k - \eta}$, and sends it to the verifier.
+        \item The verifier computes $\word_{\rB_1}$ as the encoding of $\msg_{\rB_1}$ under $\Code$, samples $\nu$ column indices $\alpha_1, \dots, \alpha_{\nu} \in [2^{n - \eta}]$ uniformly at random, and sends them to the prover.
+        \item The prover replies with the corresponding $\nu$ columns of the interleaved encoding, together with a Merkle opening proof for each column.
+        \item The verifier accepts if the following checks pass, and rejects otherwise:
+        \begin{itemize}
+            \item The Merkle opening proofs are valid.
+            \item For each $i \in [\nu]$, the value of the $\alpha_i$-th column of the interleaved encoding is consistent with $\word_{\rB_1}$.
+            \item $\mH_{\rB_1}(\rB_2) = y$, where $\mH_{\rB_1}$ is the multilinear extension of the folded message $\msg_{\rB_1}$.
+        \end{itemize}
+    \end{enumerate}
+\end{itemize}
+
+\parhead{Parameter choices}
+We consider message length $2^{22}$ and interleaving parameter $\eta = 6$.
+The updated artifact uses a conditional $\SecParam = 100$ query budget based on inherited distance estimates.
+These estimates and the random-setup failure bounds have not yet been revalidated for the corrected encoders; the measurements are not a certified equal-security comparison.
+
+\begin{itemize}[nolistsep]
+    \item \textbf{Brakedown:} We use Brakedown's code with distance 0.1 and inverse rate 2.
+    We use Haböck's \cite{Habock23} improved analysis of Brakedown's code to obtain the hyper-parameters for the code given the target distance, field size, and message length.
+    \item \textbf{Expand-Accumulate:} We use the Expand-Accumulate code with distance 0.1 and inverse rate 2, which is the same code used in \cite{BlockFKTWZ24}.
+    We use the same hyper-parameters for the code as given in \cite{BlockFKTWZ24}.
+    \item \textbf{BaseFold:} We use BaseFold's code with inverse rate 2 and the artifact's inherited distance estimate $0.213$ for row messages of length $2^{16}$, giving 869 queries.
+    The relevant analysis is given in \cite{ZeilbergerCF24}.
+    \item \textbf{ERA:} The measured interleaved preset retains a Brakedown base with target inverse rate $1.05$ and repetition factor $r=4$.
+    Its row codeword length is 275248, and its inherited distance estimate $0.228$ gives 804 queries.
+    This preset differs from the base inverse rate $1.1$ used for the separate code-switching construction.
+    \item \textbf{\texttt{bolt-min} (adapted):} We use the degree-16, compression-8 sketched-code construction from \cite{GurkanNR26}, with independent nonzero secp256k1 scalar coefficients on a biregular configuration-model graph.
+    Its encoding is $x\Concat B(Hx)$, where $B$ is a rate-$1/2$ BaseFold code replacing upstream's binary-field additive Reed--Solomon code.
+    The overall inverse rate remains $1.25$.
+    At row message length $2^{16}$, the syndrome has length $2^{13}$ and the full codeword has length 81920.
+    The artifact uses the conditional outer-code distance estimate $0.224$; since the parity occupies one fifth of the complete word, the resulting distance estimate is $0.0448$, giving 4537 queries.
+    The artifact separately derives a finite-length bound excluding kernel vectors of weight at most $m/16$ for the ideal random sketch ensemble; it does not certify the fixed seeded setup or the composed IOPP security.
+    \item \textbf{\texttt{bolt-max} (adapted):} We use the degree-8, compression-8 all-one sketch from \cite{GurkanNR26}, with the same BaseFold syndrome code and row lengths as adapted \texttt{bolt-min}.
+    Its sketch uses prime-field additions in place of upstream's XOR operations.
+    We explicitly assume kernel relative distance $0.013$, inspired by the upstream binary LDPC parameters; the binary analysis does not certify this distance or a finite-length setup-failure bound over our prime field.
+    Normalizing by the complete codeword gives $\min\{0.013/1.25,0.224/5\}=0.0104$, hence 19891 queries.
+    The random-coefficient kernel bound for \texttt{bolt-min} does not apply to this all-one construction.
+\end{itemize}
+
+The distance analyses for these codes appear in the respective papers, and we additionally provide scripts for computing their concrete distance estimates here: \url{https://anonymous.4open.science/r/era-code-analysis-1DFF}.
+
+\parhead{Results}
+
+We use the results for mutual correlated agreement for arbitrary codes proven in \cite{Zeilberger24,GaoKL24}.
+Given a code with relative distance $\delta$, these results imply that the number of columns queried by the verifier to achieve soundness $2^{-\SecParam}$ is $q(\delta) \define \ceil*{\frac{-\SecParam}{\log_2 (1 - \delta)^{1/3}}} = \ceil*{\frac{-3\SecParam}{\log_2 (1 - \delta)}}$.
+
+% \begin{table}[htbp]
+% \centering
+% \begin{tabular}{lccccc}
+% \hline
+% Code & Commit Time & Prover Eval Time & Proof Size (KiB) & Verify Time & Verifier Queries \\
+% \hline
+% Brakedown & 39.355 ms & 8.9036 ms & 1810.7 & 13.586 ms & 1974 \\
+% EA & 351.70 ms & 8.3677 ms & 1810.7 & 116.30 ms & 1974 \\
+% BaseFold & 40.133 ms & 8.6059 ms & 1083.9 & 11.698 ms & 820 \\
+% ERA & 53.039 ms & 8.4750 ms & 1104.8 & 9.5709 ms & 808 \\
+% Conjectured ERA & 43.466 ms & 8.4656 ms & 1104.8 & 6.8633 ms & 808 \\
+% \hline
+% \end{tabular}
+% \caption{IOPP benchmark for message length $2^{18}$ and interleaving parameter $\eta=4$.}
+% \label{tab:iopp-218-eta4}
+% \end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\hline
+Code & Commit (ms) & Prove (ms) & Proof (KiB) & Verify (ms) & Queries \\
+\hline
+\multicolumn{6}{c}{Serialized Fiat--Shamir interleaved arguments; secp256k1 scalar field, BLAKE3} \\
+Brakedown & 813.373 & 690.072 & 6278.4 & 96.272 & 1974 \\
+Expand-Accumulate & 7473.722 & 690.544 & 6290.7 & 593.401 & 1974 \\
+BaseFold & 526.392 & 677.768 & 3951.8 & 32.901 & 869 \\
+ERA & 677.600 & 689.640 & 3844.0 & 50.081 & 804 \\
+\texttt{bolt-min} (adapted) & 695.659 & 902.238 & 11348.9 & 85.948 & 4537 \\
+\texttt{bolt-max} (adapted)$^\dagger$ & 182.287 & 927.059 & 38202.5 & 255.222 & 19891 \\
+\hline
+\end{tabular}
+\caption{Local CPU measurements for $2^{22}$ elements, $\eta=6$, and 8 workers.
+All rows use the secp256k1 scalar field, BLAKE3, and the same serialized Fiat--Shamir interleaved argument.
+Proof sizes are actual serialized bytes divided by 1024, with the public 32-byte initial root excluded.
+The adapted Bolt rows use a BaseFold syndrome code and do not measure Bolt's separate code-switching PCS.
+Query counts remain conditional on the stated distance estimates; $\dagger$ additionally assumes the unproved prime-field kernel distance $0.013$.}
+\label{tab:iopp-222-eta6}
+\end{table}
+
+The measured Fiat--Shamir arguments additionally use a starting sumcheck to support an arbitrary public evaluation point, followed by a transcript-derived random row fold and column queries.
+Commitment timing includes encoding and the retained Merkle tree; proving includes evaluation, transcript operations, multiproofs, and serialization; verification includes parsing and all checks.
+Setup and input generation are excluded.
+The historical conjectured-ERA row is omitted because it has not been rerun through this serialized path.
+For both adapted Bolt sketches, the graph construction follows \url{https://github.com/bcc-research/bolt-rs} at revision \texttt{3832e47}; the prime-field implementation and the complete interleaved argument run in our common harness.
+The earlier binary-field, commitment-only reference measurements are retained in the artifact separately and are not used in this table.
+
+\begin{remark}[Conjectured ERA]
+\label{rem:conjectured-era}
+We conjecture that the multiplication steps in the definition of $\ERA$ codes are not required to achieve the same (or even better) distance guarantees.
+The only place where we use the multiplication steps in our distance analysis is in the proofs of \cref{lem:event-mult1-bound,lem:event-mult2-bound}: instead of showing that $> (1-c/r)$-fraction of intervals are on-intervals with overwhelming probability over the choice of the multiplication vectors, we believe it is possible to show that $> (1 - 1/r - 1/\chi - o(1))$-fraction of intervals are on-intervals with overwhelming probability over the choice of the random permutations, where $\chi$ is the characteristic of the finite field (this is very large for $\mathsf{secp256k1}$).
+\end{remark}
+
+\begin{remark}[BaseFold's performance]
+\label{rem:basefold-performance}
+Despite BaseFold's encoding time being $O(n \log n)$, its concrete encoding time is still competitive with the linear-time encodable codes we consider.
+This differs from the results reported in \cite{ZeilbergerCF24}, where BaseFold's encoding time is about 3x that of Brakedown.
+We implemented both the Brakedown and BaseFold encoders ourselves, so part of the discrepancy may come from implementation differences.
+A more likely explanation is that, over our choice of field, encoding time is dominated by the number of multiplications performed. For the instance sizes we consider, BaseFold and Brakedown perform a similar number of multiplications, which explains the similar encoding times we observe.
+We expect BaseFold to have worse performance for larger instance sizes, and also worse relative distance guarantees (unlike $\ERA$ codes whose distance guarantees improve with larger instance sizes).
+\end{remark}
+
+
+% \subsection{Comparison with BaseFold}
+% \label{sec:comparison-basefold}
+
+% BaseFold \cite{ZeilbergerCF24} is an IOPP that achieve polylogarithmic proof size with an efficient field-agnostic prover.
+% We compare $\IOPPName$'s performance against BaseFold's performance by instantiating their IOPP with the BaseFold code of rate $1/4$, which achieves a relative distance of $\approx 0.5$.
+
+% \anubhav{add exact numbers here for comparison with BaseFold}
+
+% \begin{remark}[Khatam]
+%     Khatam \cite{Zeilberger24}, a follow-up to BaseFold, proves mutual correlated agreement for arbitrary linear codes up to 1.5 times the Johnson bound.
+%     BaseFold only assumes mutual correlated agreement holds up to $\delta / 3$ (a result of \cite{AmesHIV17}), so this improvement directly leads to a reduction in the number of oracle queries required for the same target failure by the following factor:
+%     \[
+%         \frac{\frac{-\SecParam}{\log_2 (1 - \delta/3)}}{\frac{-\SecParam}{\log_2 (1 - \delta)^{1/3}}} = \frac{\log_2 (1 - \delta)}{3 \cdot \log_2 (1 - \delta / 3)}
+%     \]
+%     For $\delta = 0.5$, this factor is approximately $1.27$.
+%     Since BaseFold uses the same distance throughout its IOPP, this improvement directly translates to a reduction in proof size by the same factor.
+%     However, our proof sizes are still smaller than the ones implied by Khatam.
+% \end{remark}
+
+
+% \subsection{Comparison with linear-prover time IOPPs}
+% \label{sec:comparison-linear}
+
+% \anubhav{compare directly with Brakedown, EA, and BrakingBase here.}
+
+% \subsection{Comparison with Blaze}
+% \label{sec:comparison-blaze}
+
+% \anubhav{dont need experiments for this one I think, just say that our distance is better than Blaze's so can be used as a drop-in-replacement in their IOPP if we wanted}
+
+\subsection{Estimating the performance of our IOPP for \texorpdfstring{$\ERA$}{ERA} codes}
+\label{sec:eval-iopp-performance}
+
+In this section, we estimate the concrete proof size of our IOPP for $\ERA$ codes from \cref{sec:iopp} with $\ell = 1$ and compare it with the proof sizes of BaseFold \cite{ZeilbergerCF24} and BrakingBase \cite{NairST25} under suitable parameter choices.
+
+\parhead{Parameter choices}
+We target $\SecParam = 100$ bits of security (for both soundness and failure probability of the code's distance).
+Let $k$ be the message length, and $\eta$ be the initial interleaving parameter.
+Define $\Code$ as an $\ERA$ code with $r = 4$, message length $k / \eta$, and base code $\CodeB = \CodeB' \otimes \CodeB'$, where $\CodeB'$ is Brakedown's code with distance $0.01$ and inverse rate $1.1$.
+
+For the evaluation proof, we perform one round of $\StartingIOR$ to reduce the initial $\ME^{(\Code^{\eta})}$ claim to an $\ME^{(\Code)}$ claim, and then one round of $\ReduceIOR$ to reduce the $\ME^{(\Code)}$ claim to an $\ME^{(\mathsf{BF})}$ claim, where $\mathsf{BF}$ is BaseFold's code with certain parameters.
+Finally, we invoke BaseFold's IOPP to prove the $\ME^{(\mathsf{BF})}$ claim.
+
+In addition to $\eta$, we need to choose the parameters of $\mathsf{BF}$ to define the protocol, which are its message length $k'$ and its rate $\rho_{\mathsf{BF}}$, and $k_{\mathsf{final}}$, the terminating message length of BaseFold's IOPP (when the message is sent to the verifier in the clear).
+We therefore optimize over the choice of $\eta, k', \rho_{\mathsf{BF}}, k_{\mathsf{final}}$ to minimize the overall proof size.
+Note that the smaller the value of $\rho_{\mathsf{BF}}$, the larger the distance of $\mathsf{BF}$, and thus the smaller the number of queries required by the verifier in BaseFold's IOPP.
+However, we cannot choose $\rho_{\mathsf{BF}}$ arbitrarily small, since doing so would substantially increase the prover time in the evaluation phase of the IOPP.
+Accordingly, we restrict attention to choices of $\eta, k', \rho_{\mathsf{BF}}, k_{\mathsf{final}}$ for which the total oracle size of the evaluation proof is smaller than that of the initial interleaved encoding, ensuring that the overall prover time remains dominated by the initial commitment phase.
+
+\parhead{Proof size estimation example}
+
+As an example, we provide a detailed estimation of the proof size of our IOPP for $\ERA$ codes for a message length of $k = 2^{32}$.
+The optimal choice of parameters for this instance is given in \cref{tab:parameters-iopp}.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Parameter} & \textbf{Optimized BaseFold} & \textbf{IOPP for $\ERA$ codes} \\
+\midrule
+$(\eta, k_{\mathsf{final}})$ & $(2^5, 2^{12})$ & $(2^6, 2^{12})$ \\
+$\ERA$ code parameters & N/A & $\CodeParams{\Field}{2^{26} \cdot 4 \cdot 1.21}{2^{26}}{0.221817}$ \\
+BaseFold code parameters &  $\CodeParams{\Field}{2^{27} \cdot 2}{2^{27}}{0.152454}$ & $\CodeParams{\Field}{2^{25} \cdot 8}{2^{25}}{0.742531}$ \\
+\bottomrule
+\end{tabular}
+\caption{Chosen parameters for message length $k=2^{32}$.}
+\label{tab:parameters-iopp}
+\end{table}
+
+\begin{enumerate}[nolistsep]
+    \item $\StartingIOR$: From \cref{lem:starting-ior}, we get that the proof of $\StartingIOR$ consists of $3 \log k = 96$ field elements.
+    \item $\ReduceIOR$: Looking at \cref{fig:reduce-ior}, there are three stacks of oracles that are queried by $\Verifier$ in $\ReduceIOR$:
+    \begin{enumerate}[nolistsep]
+        \item Output oracle of $\StartingIOR$: this has a stack height of $\eta = 2^6$, and is queried at $q(0.2218) = 830$ indices. 
+        This results in $2^6\cdot 830 = 53120$ field elements and $830$ Merkle paths for a vector of length $2^{29}$ (the smallest power of 2 larger than the block length of $\ERA$).
+        \item Indexer oracles of $\ReduceIOR$: there are $\ell_{\gB} + 3 \cdot \ell_{\ERA} = 33$ many of these, and queried at $q(0.7425) = 154$ many indices.
+        This results in $33 \cdot 154 = 5082$ field elements and $154$ Merkle paths for vectors of length $2^{28}$.
+        \item Online oracles of $\ReduceIOR$: there are $\ell_{\msg} + \ell_{\CodeB} + 2 \cdot \ell_{\ERA} = 25$ many of these, and queried at $q(0.7425) = 154$ many indices.
+        This results in $25 \cdot 154 = 3850$ field elements and $154$ Merkle paths for vectors of length $2^{28}$.
+    \end{enumerate}
+    In addition to the above, by \cref{lem:reduce-ior}, there are an additional $(2\ceil*{\log n_{\ERA}} + 1) \cdot \ceil*{\log n_{\ERA}} + 5 \ell_{\msg} + 4 \ell_{\gB} + 4 \ell_{\CodeB} + 20 \ell_{\ERA} + 8 + 3 \log k + 4 \log k' = 2131$ field elements.
+    \item Proof size of BaseFold's IOPP: We terminate when the message length is $k_{\mathsf{final}} = 2^{12}$.
+    Thus, we engage in $13$ rounds of BaseFold's IOPP, and in each round, the verifier queries $154$ many indices of an oracle (each index reveals 2 field elements), and the prover sends 3 field elements to describe the sumcheck round polynomial.
+    This results in $2^{12} + 154 \cdot 13 \cdot 2 + 13 \cdot 3 = 4096 + 4004 + 39 = 8139$ field elements, and $154$ Merkle paths for vectors of length $2^{28}, 2^{27}, \dots, 2^{16}$ respectively in these $13$ rounds.
+\end{enumerate}
+Overall, the proof size is $\approx 4.014$ MB, which consists of $72418$ field elements and $53011$ hashes.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.6\textwidth]{figures/proof_size_vs_logk.pdf}
+\caption{Estimated proof size of IOPP for $\ERA$ codes and optimized BaseFold for varying message lengths.}
+\label{fig:proof-size-vs-logk}
+\end{figure}
+
+\parhead{Comparison with BaseFold}
+For a fair comparison with BaseFold's IOPP, we optimize BaseFold's parameters for the same target soundness.
+We fix a BaseFold code of rate $1/2$, which results in a similar encoding time as the $\ERA$ code we use in the IOPP.
+The parameters we optimize for BaseFold's IOPP are the initial interleaving parameter $\eta$, and the termination message length $k_{\mathsf{final}}$, which we choose to be $2^5$ and $2^{12}$ respectively to minimize proof size.
+Thus, the initial message length of BaseFold's code for an instance size of $2^{32}$ is $2^{27}$, which results in a relative distance of $\approx 0.1524$ according to the analysis in \cite{ZeilbergerCF24}.
+The resulting proof size of this optimized BaseFold IOPP is $\approx 9.847$ MB, which consists of $82233$ field elements and $225472$ hashes.\footnote{This is significantly smaller than the proof sizes mentioned in \cite{ZeilbergerCF24} (for example, they report a proof size of $\approx 16$ MB for an instance size of $2^{26}$). This is mostly due to optimizing carefully over $\eta$ and $k_{\mathsf{final}}$.}
+The two major reasons for this larger proof size compared to our IOPP for $\ERA$ codes are: 
+\begin{enumerate*}[label=(\alph*)]
+    \item larger number of verifier queries required due to worse distance guarantees at the initial stage, and
+    \item codeswitching to BaseFold's code with smaller rate and better distance guarantees, which results in a much smaller proof size for our final IOPP compared to BaseFold's IOPP.
+\end{enumerate*}
+In \cref{fig:proof-size-vs-logk}, we provide a comparison of the proof size of our IOPP for $\ERA$ codes and optimized BaseFold's IOPP for varying message lengths.
+
+\parhead{Comparison with BrakingBase}
+BrakingBase's IOPP \cite{NairST25} is similar to our IOPP except with two key differences: 
+\begin{enumerate*}[label=(\alph*)]
+    \item it uses Brakedown's code as the initial code for $\StartingIOR$, which has worse distance guarantees than $\ERA$ codes, and
+    \item it codeswitches to BaseFold's code with a large rate, thereby not fully leveraging the benefit of codeswitching.
+\end{enumerate*}
+While BrakingBase reports significantly larger proof sizes than our IOPP (for example, $\approx 16$ MB for a message length of $2^{28}$), part of this gap comes from the second difference above, which could potentially be mitigated.
+However, the initial poor distance of Brakedown's code and the large proof size of their codeswitching protocol are inherent to their approach, and cannot be rectified without changing the underlying techniques.

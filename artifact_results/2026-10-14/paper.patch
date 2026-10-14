@@ -1,0 +1,313 @@
+diff --git a/figures/CodeswitchClaims.tex b/figures/CodeswitchClaims.tex
+index 3c18ea3..3bdd4c2 100644
+--- a/figures/CodeswitchClaims.tex
++++ b/figures/CodeswitchClaims.tex
+@@ -1,6 +1,7 @@
+ \begin{tcolorbox}[breakable, enhanced, colback=white, boxrule=0.65pt]
+     $\mathsf{CodeswitchClaims}:$\\
+     \textbf{Goal: } To prove that for all $j \in [\numSpotChecks]$, $\Enc{\ERA}(\msg)[\alpha_j] = \sigma^{\cs}_j$.\\
++    \textbf{Exceptional case: } Reject if any permutation denominator is zero; its probability is included in the completeness error.\\
+     \textbf{Protocol: } 
+     \begin{enumerate}[nolistsep]
+         \item $\Prover$ computes the intermediate words $\word^{\CodeB} \define \Enc{\CodeB}(\msg)$, $\word^{\rep} \define \RB \cdot \word^{\CodeB}$, $\word^{\perm_1} \define \PB_1 \cdot \word^{\rep}$, $\word^{\mult_1} \define \MB \cdot \word^{\perm_1}$ and $\word^{\acc_1} \define \AB \cdot \word^{\mult_1}$.
+@@ -55,8 +56,8 @@
+         \item $\Prover$ must now convince $\Verifier$ that $\word^{\perm_1}$ is indeed the permuted version of $\word^{\rep}$, which is done via the logUp-based permutation check as follows:
+         \label{item:codeswitch-claims-permutation-challenge}
+         \begin{itemize}[nolistsep]
+-            \item $\Verifier$ samples a random challenge $\alpha \sample \Field$ and sends it to $\Prover$.
+-            \item $\Prover$ defines the permutation witness vectors $\aB, \bB \in \Field^{n_{\ERA}}$ such that $\aB[j] \define (\alpha^2 + \alpha \cdot \piB_1[j] + \word^{\rep}[j])^{-1}$ and $\bB[j] \define (\alpha^2 + \alpha \cdot \idB[j] + \word^{\perm_1}[j])^{-1}$, for all $j \in [n_{\ERA}]$.
++            \item $\Verifier$ samples independent random challenges $\alpha,\tau_1 \sample \Field$ and sends it to $\Prover$.
++            \item $\Prover$ defines the permutation witness vectors $\aB, \bB \in \Field^{n_{\ERA}}$ such that $\aB[j] \define (\alpha + \tau_1 \cdot \piB_1[j] + \word^{\rep}[j])^{-1}$ and $\bB[j] \define (\alpha + \tau_1 \cdot \idB[j] + \word^{\perm_1}[j])^{-1}$, for all $j \in [n_{\ERA}]$.
+             \item $\Prover$ computes $([\aB_i]_{i \in [\ell_{\ERA}]}, [\word^{\aB}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\aB)$ and $([\bB_i]_{i \in [\ell_{\ERA}]}, [\word^{\bB}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\bB)$.
+             \item $\Prover$ sends the oracles $\VectorOracleOf{\word^{\aB}}{\ell_{\ERA}}$ to $\Verifier$, and an out-of-domain sample is performed:
+             \begin{itemize}[nolistsep]
+@@ -70,32 +71,32 @@
+                 \item $\Prover$ sends $\sigma^{\bB}_{\ood} \define \wH^{\bB}(\zB^{\bB}_{\ood})$ to $\Verifier$.
+                 \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\bB}, \eqB(\zB^{\bB}_{\ood}), \sigma^{\bB}_{\ood}, \VectorOracleOf{\word^{\bB}}{\ell_{\ERA}})$.
+             \end{itemize}
+-            \item $\Prover$ and $\Verifier$ run zerochecks to check that $\aB[j] \cdot (\alpha^2 + \alpha \cdot \piB_1[j] + \word^{\rep}[j]) = 1$ and $\bB[j] \cdot (\alpha^2 + \alpha \cdot \idB[j] + \word^{\perm_1}[j]) = 1$ for all $j \in [n_{\ERA}]$ by doing the following:
++            \item $\Prover$ and $\Verifier$ run zerochecks to check that $\aB[j] \cdot (\alpha + \tau_1 \cdot \piB_1[j] + \word^{\rep}[j]) = 1$ and $\bB[j] \cdot (\alpha + \tau_1 \cdot \idB[j] + \word^{\perm_1}[j]) = 1$ for all $j \in [n_{\ERA}]$ by doing the following:
+             \begin{itemize}[nolistsep]
+                 \item $\Verifier$ samples $\rB^{\perm_1} \sample \Field^{\log n_{\ERA}}$ and sends it to $\Prover$.
+                 \item $\Prover$ and $\Verifier$ run sumcheck to reduce checking the claim
+                 \begin{align*}
+-                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \aH(\xB) \cdot \left ( \alpha^2 + \alpha \cdot \piH_1(\xB) + \wH^{\rep}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_1}) = 0
++                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \aH(\xB) \cdot \left ( \alpha + \tau_1 \cdot \piH_1(\xB) + \wH^{\rep}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_1}) = 0
+                 \end{align*}
+                 to checking the following claim at a random point $\rB^{\aB}$ sampled by $\Verifier$:
+                 \begin{align*}
+-                    \left( \aH(\rB^{\aB}) \cdot \left ( \alpha^2 + \alpha \cdot \piH_1(\rB^{\aB}) + \wH^{\rep}(\rB^{\aB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\aB},\rB^{\perm_1}) = \sigma^{\aB}_{\eval} \enspace.
++                    \left( \aH(\rB^{\aB}) \cdot \left ( \alpha + \tau_1 \cdot \piH_1(\rB^{\aB}) + \wH^{\rep}(\rB^{\aB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\aB},\rB^{\perm_1}) = \sigma^{\aB}_{\eval} \enspace.
+                 \end{align*}
+                 \item $\Prover$ sends $\sigma^{\perm_1}_{\aB} \define \aH(\rB^{\aB})$, $\sigma^{\perm_1}_{\piB_1} \define \piH_1(\rB^{\aB})$ and $\sigma^{\perm_1}_{\rep} \define \wH^{\rep}(\rB^{\aB})$ to $\Verifier$, who checks that
+                 \[
+-                    \left( \sigma^{\perm_1}_{\aB} \cdot \left ( \alpha^2 + \alpha \cdot \sigma^{\perm_1}_{\piB_1} + \sigma^{\perm_1}_{\rep} \right ) - 1 \right) \cdot \EqPoly(\rB^{\aB},\rB^{\perm_1}) = \sigma^{\aB}_{\eval} \enspace .
++                    \left( \sigma^{\perm_1}_{\aB} \cdot \left ( \alpha + \tau_1 \cdot \sigma^{\perm_1}_{\piB_1} + \sigma^{\perm_1}_{\rep} \right ) - 1 \right) \cdot \EqPoly(\rB^{\aB},\rB^{\perm_1}) = \sigma^{\aB}_{\eval} \enspace .
+                 \]
+                 \item $\Prover$ and $\Verifier$ run sumcheck to reduce checking the claim
+                 \begin{align*}
+-                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \bH(\xB) \cdot \left ( \alpha^2 + \alpha \cdot \idH(\xB) + \wH^{\perm_1}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_1}) = 0
++                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \bH(\xB) \cdot \left ( \alpha + \tau_1 \cdot \idH(\xB) + \wH^{\perm_1}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_1}) = 0
+                 \end{align*}
+                 to checking the following claim at a random point $\rB^{\bB}$ sampled by $\Verifier$:
+                 \begin{align*}
+-                    \left( \bH(\rB^{\bB}) \cdot \left ( \alpha^2 + \alpha \cdot \idH(\rB^{\bB}) + \wH^{\perm_1}(\rB^{\bB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\bB},\rB^{\perm_1}) = \sigma^{\bB}_{\eval} \enspace.
++                    \left( \bH(\rB^{\bB}) \cdot \left ( \alpha + \tau_1 \cdot \idH(\rB^{\bB}) + \wH^{\perm_1}(\rB^{\bB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\bB},\rB^{\perm_1}) = \sigma^{\bB}_{\eval} \enspace.
+                 \end{align*}
+                 \item $\Prover$ sends $\sigma^{\perm_1}_{\bB} \define \bH(\rB^{\bB})$ and $\sigma^{\perm_1}_{\perm_1} \define \wH^{\perm_1}(\rB^{\bB})$ to $\Verifier$, who checks that
+                 \[
+-                    \left( \sigma^{\perm_1}_{\bB} \cdot \left ( \alpha^2 + \alpha \cdot \idH(\rB^{\bB}) + \sigma^{\perm_1}_{\perm_1} \right ) - 1 \right) \cdot \EqPoly(\rB^{\bB},\rB^{\perm_1}) = \sigma^{\bB}_{\eval} \enspace .
++                    \left( \sigma^{\perm_1}_{\bB} \cdot \left ( \alpha + \tau_1 \cdot \idH(\rB^{\bB}) + \sigma^{\perm_1}_{\perm_1} \right ) - 1 \right) \cdot \EqPoly(\rB^{\bB},\rB^{\perm_1}) = \sigma^{\bB}_{\eval} \enspace .
+                 \]
+             \end{itemize}
+             \item $\Prover$ and $\Verifier$ set up inner product claims corresponding to the zerocheck evaluation claims:
+@@ -106,11 +107,11 @@
+                 \item $\SplitClaimIP(\bB, \eqB(\rB^{\bB}), \sigma^{\perm_1}_{\bB}, \VectorOracleOf{\word^{\bB}}{\ell_{\ERA}})$, and
+                 \item $\SplitClaimIP(\word^{\perm_1}, \eqB(\rB^{\bB}), \sigma^{\perm_1}_{\perm_1}, \VectorOracleOf{\oracle^{\perm_1}}{\ell_{\ERA}})$.
+             \end{itemize}
+-            \item $\Prover$ and $\Verifier$ set up inner product claims that correspond to a zerocheck that enforces that $\aB[j] = \bB[j]$, for all $j \in [n_{\ERA}]$ by doing the following:
++            \item $\Prover$ and $\Verifier$ set up inner product claims that correspond to a sum check that enforces $\sum_{j=1}^{n_{\ERA}}\aB[j] = \sum_{j=1}^{n_{\ERA}}\bB[j]$ by doing the following:
+             \begin{itemize}[nolistsep]
+-                \item $\Prover$ sends $\sigma^{\perm_1}_{\aB,\bB} \define \aH(\rB^{\perm_1})$ to $\Verifier$.
+-                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\aB, \eqB(\rB^{\perm_1}), \sigma^{\perm_1}_{\aB,\bB}, \VectorOracleOf{\word^{\aB}}{\ell_{\ERA}})$.
+-                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\bB, \eqB(\rB^{\perm_1}), \sigma^{\perm_1}_{\aB,\bB}, \VectorOracleOf{\word^{\bB}}{\ell_{\ERA}})$.
++                \item $\Prover$ sends $\sigma^{\perm_1}_{\aB,\bB} \define \sum_{j=1}^{n_{\ERA}}\aB[j]$ to $\Verifier$.
++                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\aB, \mathbf{1}, \sigma^{\perm_1}_{\aB,\bB}, \VectorOracleOf{\word^{\aB}}{\ell_{\ERA}})$.
++                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\bB, \mathbf{1}, \sigma^{\perm_1}_{\aB,\bB}, \VectorOracleOf{\word^{\bB}}{\ell_{\ERA}})$.
+             \end{itemize}
+         \end{itemize}
+ 
+@@ -126,8 +127,8 @@
+         \item $\Prover$ must now convince $\Verifier$ that $\word^{\perm_2}$ is indeed the permuted version of $\word^{\acc_1}$, which is done in a manner analogous to the previous permutation check, with the modification that instead of directly setting up an evaluation claim about $\wH^{\acc_1}(\XB)$ at the end of the check, $\Prover$ and $\Verifier$ must emulate this evaluation claim.
+         In more detail, $\Prover$ and $\Verifier$ do the following:
+         \begin{itemize}[nolistsep]
+-            \item $\Verifier$ samples a random challenge $\beta \sample \Field$ and sends it to $\Prover$.
+-            \item $\Prover$ defines the permutation witness vectors $\cB, \dB \in \Field^{n_{\ERA}}$ such that $\cB[j] \define (\beta^2 + \beta \cdot \piB_2[j] + \word^{\acc_1}[j])^{-1}$ and $\dB[j] \define (\beta^2 + \beta \cdot \idB[j] + \word^{\perm_2}[j])^{-1}$, for all $j \in [n_{\ERA}]$.
++            \item $\Verifier$ samples independent random challenges $\beta,\tau_2 \sample \Field$ and sends it to $\Prover$.
++            \item $\Prover$ defines the permutation witness vectors $\cB, \dB \in \Field^{n_{\ERA}}$ such that $\cB[j] \define (\beta + \tau_2 \cdot \piB_2[j] + \word^{\acc_1}[j])^{-1}$ and $\dB[j] \define (\beta + \tau_2 \cdot \idB[j] + \word^{\perm_2}[j])^{-1}$, for all $j \in [n_{\ERA}]$.
+             \item $\Prover$ computes $([\cB_i]_{i \in [\ell_{\ERA}]}, [\word^{\cB}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\cB)$ and $([\dB_i]_{i \in [\ell_{\ERA}]}, [\word^{\dB}_i]_{i \in [\ell_{\ERA}]}) \gets \SplitAndEncode(\dB)$.
+             \item $\Prover$ sends the oracles $\VectorOracleOf{\word^{\cB}}{\ell_{\ERA}}$ to $\Verifier$, and an out-of-domain sample is performed:
+             \begin{itemize}[nolistsep]
+@@ -141,32 +142,32 @@
+                 \item $\Prover$ sends $\sigma^{\dB}_{\ood} \define \wH^{\dB}(\zB^{\dB}_{\ood})$ to $\Verifier$.
+                 \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\word^{\dB}, \eqB(\zB^{\dB}_{\ood}), \sigma^{\dB}_{\ood}, \VectorOracleOf{\word^{\dB}}{\ell_{\ERA}})$.
+             \end{itemize}
+-            \item $\Prover$ and $\Verifier$ run zerochecks to check that $\cB[j] \cdot (\beta^2 + \beta \cdot \piB_2[j] + \word^{\acc_1}[j]) = 1$ and $\dB[j] \cdot (\beta^2 + \beta \cdot \idB[j] + \word^{\perm_2}[j]) = 1$ for all $j \in [n_{\ERA}]$ by doing the following:
++            \item $\Prover$ and $\Verifier$ run zerochecks to check that $\cB[j] \cdot (\beta + \tau_2 \cdot \piB_2[j] + \word^{\acc_1}[j]) = 1$ and $\dB[j] \cdot (\beta + \tau_2 \cdot \idB[j] + \word^{\perm_2}[j]) = 1$ for all $j \in [n_{\ERA}]$ by doing the following:
+             \begin{itemize}[nolistsep]
+                 \item $\Verifier$ samples $\rB^{\perm_2} \sample \Field^{\log n_{\ERA}}$ and sends it to $\Prover$.
+                 \item $\Prover$ and $\Verifier$ run sumcheck to reduce checking the claim
+                 \begin{align*}
+-                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \cH(\xB) \cdot \left ( \beta^2 + \beta \cdot \piH_2(\xB) + \wH^{\acc_1}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_2}) = 0
++                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \cH(\xB) \cdot \left ( \beta + \tau_2 \cdot \piH_2(\xB) + \wH^{\acc_1}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_2}) = 0
+                 \end{align*}
+                 to checking the following claim at a random point $\rB^{\cB}$ sampled by $\Verifier$:
+                 \begin{align*}
+-                    \left( \cH(\rB^{\cB}) \cdot \left ( \beta^2 + \beta \cdot \piH_2(\rB^{\cB}) + \wH^{\acc_1}(\rB^{\cB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\cB},\rB^{\perm_2}) = \sigma^{\cB}_{\eval} \enspace.
++                    \left( \cH(\rB^{\cB}) \cdot \left ( \beta + \tau_2 \cdot \piH_2(\rB^{\cB}) + \wH^{\acc_1}(\rB^{\cB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\cB},\rB^{\perm_2}) = \sigma^{\cB}_{\eval} \enspace.
+                 \end{align*}
+                 \item $\Prover$ sends $\sigma^{\perm_2}_{\cB} \define \cH(\rB^{\cB})$, $\sigma^{\perm_2}_{\piB_2} \define \piH_2(\rB^{\cB})$ and $\sigma^{\perm_2}_{\acc_1} \define \wH^{\acc_1}(\rB^{\cB})$ to $\Verifier$, who checks that
+                 \[
+-                    \left( \sigma^{\perm_2}_{\cB} \cdot \left ( \beta^2 + \beta \cdot \sigma^{\perm_2}_{\piB_2} + \sigma^{\perm_2}_{\acc_1} \right ) - 1 \right) \cdot \EqPoly(\rB^{\cB},\rB^{\perm_2}) = \sigma^{\cB}_{\eval} \enspace .
++                    \left( \sigma^{\perm_2}_{\cB} \cdot \left ( \beta + \tau_2 \cdot \sigma^{\perm_2}_{\piB_2} + \sigma^{\perm_2}_{\acc_1} \right ) - 1 \right) \cdot \EqPoly(\rB^{\cB},\rB^{\perm_2}) = \sigma^{\cB}_{\eval} \enspace .
+                 \]
+                 \item $\Prover$ and $\Verifier$ run sumcheck to reduce checking the claim
+                 \begin{align*}
+-                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \dH(\xB) \cdot \left ( \beta^2 + \beta \cdot \idH(\xB) + \wH^{\perm_2}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_2}) = 0
++                    \sum_{\xB \in \Bits^{\log n_{\ERA}}} \left( \dH(\xB) \cdot \left ( \beta + \tau_2 \cdot \idH(\xB) + \wH^{\perm_2}(\xB) \right ) - 1 \right) \cdot \EqPoly(\xB,\rB^{\perm_2}) = 0
+                 \end{align*}
+                 to checking the following claim at a random point $\rB^{\dB}$ sampled by $\Verifier$:
+                 \begin{align*}
+-                    \left( \dH(\rB^{\dB}) \cdot \left ( \beta^2 + \beta \cdot \idH(\rB^{\dB}) + \wH^{\perm_2}(\rB^{\dB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\dB},\rB^{\perm_2}) = \sigma^{\dB}_{\eval} \enspace.
++                    \left( \dH(\rB^{\dB}) \cdot \left ( \beta + \tau_2 \cdot \idH(\rB^{\dB}) + \wH^{\perm_2}(\rB^{\dB}) \right ) - 1 \right) \cdot \EqPoly(\rB^{\dB},\rB^{\perm_2}) = \sigma^{\dB}_{\eval} \enspace.
+                 \end{align*}
+                 \item $\Prover$ sends $\sigma^{\perm_2}_{\dB} \define \dH(\rB^{\dB})$ and $\sigma^{\perm_2}_{\perm_2} \define \wH^{\perm_2}(\rB^{\dB})$ to $\Verifier$, who checks that
+                 \[
+-                    \left( \sigma^{\perm_2}_{\dB} \cdot \left ( \beta^2 + \beta \cdot \idH(\rB^{\dB}) + \sigma^{\perm_2}_{\perm_2} \right ) - 1 \right) \cdot \EqPoly(\rB^{\dB},\rB^{\perm_2}) = \sigma^{\dB}_{\eval} \enspace .
++                    \left( \sigma^{\perm_2}_{\dB} \cdot \left ( \beta + \tau_2 \cdot \idH(\rB^{\dB}) + \sigma^{\perm_2}_{\perm_2} \right ) - 1 \right) \cdot \EqPoly(\rB^{\dB},\rB^{\perm_2}) = \sigma^{\dB}_{\eval} \enspace .
+                 \]
+             \end{itemize}
+             \item $\Prover$ and $\Verifier$ set up inner product claims corresponding to the zerocheck evaluation claims:
+@@ -176,11 +177,11 @@
+                 \item $\SplitClaimIP(\dB, \eqB(\rB^{\dB}), \sigma^{\perm_2}_{\dB}, \VectorOracleOf{\word^{\dB}}{\ell_{\ERA}})$, and
+                 \item $\SplitClaimIP(\word^{\perm_2}, \eqB(\rB^{\dB}), \sigma^{\perm_2}_{\perm_2}, \VectorOracleOf{\oracle^{\perm_2}}{\ell_{\ERA}})$.
+             \end{itemize}
+-            \item $\Prover$ and $\Verifier$ set up inner product claims that correspond to a zerocheck that enforces that $\cB[j] = \dB[j]$, for all $j \in [n_{\ERA}]$ by doing the following:
++            \item $\Prover$ and $\Verifier$ set up inner product claims that correspond to a sum check that enforces $\sum_{j=1}^{n_{\ERA}}\cB[j] = \sum_{j=1}^{n_{\ERA}}\dB[j]$ by doing the following:
+             \begin{itemize}[nolistsep]
+-                \item $\Prover$ sends $\sigma^{\perm_2}_{\cB,\dB} \define \cH(\rB^{\perm_2})$ to $\Verifier$.
+-                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\cB, \eqB(\rB^{\perm_2}), \sigma^{\perm_2}_{\cB,\dB}, \VectorOracleOf{\word^{\cB}}{\ell_{\ERA}})$.
+-                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\dB, \eqB(\rB^{\perm_2}), \sigma^{\perm_2}_{\cB,\dB}, \VectorOracleOf{\word^{\dB}}{\ell_{\ERA}})$.
++                \item $\Prover$ sends $\sigma^{\perm_2}_{\cB,\dB} \define \sum_{j=1}^{n_{\ERA}}\cB[j]$ to $\Verifier$.
++                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\cB, \mathbf{1}, \sigma^{\perm_2}_{\cB,\dB}, \VectorOracleOf{\word^{\cB}}{\ell_{\ERA}})$.
++                \item $\Prover$ and $\Verifier$ run $\SplitClaimIP(\dB, \mathbf{1}, \sigma^{\perm_2}_{\cB,\dB}, \VectorOracleOf{\word^{\dB}}{\ell_{\ERA}})$.
+             \end{itemize}
+         \end{itemize}
+ 
+@@ -196,8 +197,8 @@
+ 
+         \item[] \item[] \textbf{Checking the codeswitch claims.}
+         \item $\Verifier$ samples $\gamma \sample \Field$ and sends it to $\Prover$.
+-        \item Define the `codeswitch vector' $\vB^{\cs} \in \Field^{n_{\ERA}}$ to have the entry $\gamma^{\alpha_j - 1}$ at index $\alpha_j$, for each $j \in [\numSpotChecks]$, and $0$ everywhere else.
+-        \item $\Prover$ and $\Verifier$ compute $\sigma^{\cs} \define \sum_{j \in [\nu]} \gamma^{\alpha_{j} - 1} \cdot \sigma^{\cs}_j$.
++        \item Define the `codeswitch vector' $\vB^{\cs} \in \Field^{n_{\ERA}}$ by $\vB^{\cs}[i] = \sum_{j:\alpha_j=i}\gamma^{j-1}$, with an empty sum equal to zero. Thus repeated queries contribute additively.
++        \item $\Prover$ and $\Verifier$ compute $\sigma^{\cs} \define \sum_{j \in [\nu]} \gamma^{j-1} \cdot \sigma^{\cs}_j$.
+         \item $\Prover$ and $\Verifier$ run sumcheck to reduce checking the claim
+         \begin{align*}
+             \sum_{\bB \in \Bits^{\log n_{\ERA}}} \wH^{\acc_2}(\bB) \cdot \vH^{\cs}(\bB) = \sigma^{\cs}
+diff --git a/figures/reduce-ior.tex b/figures/reduce-ior.tex
+index 971bad7..89e6927 100644
+--- a/figures/reduce-ior.tex
++++ b/figures/reduce-ior.tex
+@@ -17,14 +17,14 @@
+         \begin{enumerate}[nolistsep]
+         \item $\Prover$ parses $\msg = (\msg_1, \dotsc, \msg_{\ell_{\msg}})$, such that $\msg_i \in \Field^{k'}$, for each $i \in [\ell_{\msg}]$.
+         \item Let $\zB = (\zB_1, \zB_2)$, where $\zB_1 \in \Field^{\log k - \log k'}$ and $\zB_2 \in \Field^{\log k'}$.
+-        \item For each $i \in [\ell_{\msg}]$, $\Prover$ computes $\word_i \define \Enc{\ERA}(\msg_i)$ and $y^{\eval}_i \define \msgMult_i(\EvalPoint)$. \label{item:reduce-ior-eval-claims}
++        \item For each $i \in [\ell_{\msg}]$, $\Prover$ computes $\word_i \define \Enc{\Code'}(\msg_i)$ and $y^{\eval}_i \define \msgMult_i(\zB_2)$. \label{item:reduce-ior-eval-claims}
+         \item $\Prover$ sends $\VectorOracleOf{\word}{\ell_{\msg}}$ and $[y^{\eval}_i]_{i \in [\ell_{\msg}]}$ to $\Verifier$.
+         \item $\Verifier$ checks that $\sum_{\bB \in \Bits^{\log k - \log k'}} \EqPoly(\zB_1,\bB) \cdot y^{\eval}_i = \EvalValue$.
+         \item $\Verifier$ samples $\zB^{\ood}_i \sample \Field^{\log k'}$ for each $i \in [\ell_{\msg}]$ and sends $[\zB^{\ood}_i]_{i \in [\ell_{\msg}]}$ to $\Prover$.
+         \item $\Prover$ sends $[y^{\ood}_i \define \mH_i(\zB^{\ood}_i)]_{i \in [\ell_{\msg}]}$ to $\Verifier$. \label{item:reduce-ior-ood-claims}
+ 
+         \item[] \item[] \textbf{Generating codeswitch claims}
+-        \item $\Verifier$ samples $\numSpotChecks \define \ceil*{\frac{-\SecParam}{\log (1 - \distIndex)}}$ indices $\alpha_1, \dotsc, \alpha_{\numSpotChecks} \sample \Field^{\log \BlockLength}$ and sends them to $\Prover$.
++        \item $\Verifier$ samples $\numSpotChecks \define \ceil*{\frac{-\SecParam}{\log (1 - \distIndex)}}$ indices $\alpha_1, \dotsc, \alpha_{\numSpotChecks} \sample [\BlockLength]$ and sends them to $\Prover$.
+         \item For each $j \in [\numSpotChecks]$, $\Verifier$ queries $\OracleOf{\word}$ at index $\alpha_j$ to obtain $\sigma^{\cs}_j \define \word[\alpha_j]$.
+         \item $\Prover$ and $\Verifier$ engage in the subprotocol $\CodeswitchClaims$, the details of which are presented in \cref{sec:codeswitch-claims-overview,sec:codeswitch-claims}. At a high-level, $\CodeswitchClaims$ allows $\Prover$ to convince $\Verifier$ that, for the $\msg$ underlying $[\word_i]_{i \in [\ell_{\msg}]}$, the $\alpha_{j}$-th index of $\Enc{\ERA}(\msg)$ is $\sigma^{\cs}_j$, for all $j \in [\numSpotChecks]$.
+         The interaction of $\Prover$ and $\Verifier$ while running $\CodeswitchClaims$ can be summarized as follows:
+@@ -57,7 +57,7 @@
+         \begin{align*}
+             \sigma \define \sum_{i=1}^{\ell_{\msg}} \beta^{i} \cdot y^{\eval}_i + \sum_{i=1}^{\ell_{\msg}} \beta^{\ell_{\msg} + i} \cdot y^{\ood}_i + \sum_{i=1}^{\numIP} \beta^{2\ell_{\msg} + i} \cdot \sigma^{\IP}_i + \sum_{i=1}^{\numTIP} \beta^{2\ell_{\msg} + \numIP + i} \cdot \sigma^{\TIP}_i \enspace .
+         \end{align*}
+-        \item $\Prover$ and $\Verifier$ engage in the sumcheck protocol to prove that $\sum_{\bB \in \Field^{\log k'}} f(\bB) = \sigma$, yielding the value $y_{\rB} \in \Field$ and $\Verifier$'s challenges $\rB \in \Field^{\log k'}$, such that $\Prover$ is just left to convince $\Verifier$ that $f(\rB) = y_{\rB}$.
++        \item $\Prover$ and $\Verifier$ engage in the sumcheck protocol to prove that $\sum_{\bB \in \Bits^{\log k'}} f(\bB) = \sigma$, yielding the value $y_{\rB} \in \Field$ and $\Verifier$'s challenges $\rB \in \Field^{\log k'}$, such that $\Prover$ is just left to convince $\Verifier$ that $f(\rB) = y_{\rB}$.
+ 
+         \item[] \item[] \textbf{Proving the sumcheck evaluation claim via individual evaluation claims}
+         \item $\Prover$ sends the following purported values to $\Verifier$: 
+@@ -69,7 +69,7 @@
+         \item $\Verifier$ defines $[a^{\ood}_i]_{i=1}^{\ell_{\msg}} \define [a^{\eval}_i]_{i=1}^{\ell_{\msg}}$, and checks that
+         \begin{align*}
+             &y_{\rB} = \sum_{i=1}^{\ell_{\msg}} \beta^{i} \cdot a^{\eval}_i \cdot \EqPoly(\zB_2, \rB) + \sum_{i=1}^{\ell_{\msg}} \beta^{\ell_{\msg} + i} \cdot a^{\ood}_i \cdot \EqPoly(\zB^{\ood}_i, \rB) \\
+-            &\quad \; \; + \sum_{i=1}^{\numIP} \beta^{2\ell_{\msg} + i} \cdot a^{\IP}_i \cdot \vH^{\IP}_i(\rB) + \sum_{i=1}^{\numTIP} \beta^{2\ell_{\msg} + \numIP + i} \cdot a^{\TIP}_{i,1} \cdot a^{\TIP}_{i,2} \cdot \vH^{\IP}_i(\rB) \enspace .
++            &\quad \; \; + \sum_{i=1}^{\numIP} \beta^{2\ell_{\msg} + i} \cdot a^{\IP}_i \cdot \vH^{\IP}_i(\rB) + \sum_{i=1}^{\numTIP} \beta^{2\ell_{\msg} + \numIP + i} \cdot a^{\TIP}_{i,1} \cdot a^{\TIP}_{i,2} \cdot \vH^{\TIP}_i(\rB) \enspace .
+         \end{align*}
+ 
+         \item[] \item[] \textbf{Batching the individual evaluation claims}
+@@ -77,12 +77,12 @@
+         \item Define 
+         \begin{align*}
+             &y' \define \sum_{i=1}^{\ell_{\msg}} \gamma^{i} \cdot a^{\eval}_i + \sum_{i=1}^{\ell_{\msg}} \gamma^{\ell_{\msg} + i} \cdot a^{\ood}_i + \sum_{i=1}^{\numIP} \gamma^{2\ell_{\msg} + i} \cdot a^{\IP}_i\\
+-            &\quad \; \; \; + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + i}  \cdot a^{\TIP}_{i,1} + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + i} \cdot a^{\TIP}_{i,2} \enspace .
++            &\quad \; \; \; + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + i}  \cdot a^{\TIP}_{i,1} + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + \numTIP + i} \cdot a^{\TIP}_{i,2} \enspace .
+         \end{align*}
+         \item $\Prover$ and $\Verifier$ define the virtual oracle
+         \begin{align*}
+             &\OracleOf{\word'} \define \sum_{i=1}^{\ell_{\msg}} \gamma^{i} \cdot \OracleOf{\word_i} + \sum_{i=1}^{\ell_{\msg}} \gamma^{\ell_{\msg} + i} \cdot \OracleOf{\word_i} + \sum_{i=1}^{\numIP} \gamma^{2\ell_{\msg} + i} \cdot \OracleOf{\word^{\IP}_i}\\
+-            &\quad \; \; \; + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + i}\cdot \OracleOf{\word^{\TIP}_{i,1}} + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + i} \cdot \OracleOf{\word^{\TIP}_{i,2}} \enspace ,
++            &\quad \; \; \; + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + i}\cdot \OracleOf{\word^{\TIP}_{i,1}} + \sum_{i=1}^{\numTIP} \gamma^{2\ell_{\msg} + \numIP + \numTIP + i} \cdot \OracleOf{\word^{\TIP}_{i,2}} \enspace ,
+         \end{align*}
+         and $\Prover$ defines $\msg'$ to be the underlying message obtained by computing an analogous linear combination of  $\msg_i, \msg^{\IP}_i, \msg^{\TIP}_{i,1}, \msg^{\TIP}_{i,2}$.
+         \item $\Prover$ and $\Verifier$ batch the individual evaluation claims (at the point $\rB$) by defining
+diff --git a/sections/codeswitching.tex b/sections/codeswitching.tex
+index e428269..bbac05e 100644
+--- a/sections/codeswitching.tex
++++ b/sections/codeswitching.tex
+@@ -101,25 +101,25 @@ At a high level, this compilation replaces each multilinear polynomial oracle $\
+ The logUp protocol (which is the unofficial name for the lookup argument from \cite{Habock22}) yields an efficient `permutation check' that we make use of in $\CodeswitchClaims$.
+ In a permutation check, $\Prover$ wants to commit to vectors $\pB, \qB \in \Field^k$ and convince $\Verifier$ that $\qB$ is obtained by permuting $\pB$ with respect to a permutation $\pi : [k] \to [k]$. To commit to $\pB$ and $\qB$, $\Prover$ sends the oracles $\OracleOf{\pH(\XB)}$ and $\OracleOf{\qH(\XB)}$ to $\Verifier$.
+ In order to prove the permutation claim, $\Prover$ and $\Verifier$ define the vectors $\idB, \piB \in \Field^k$ such that for each $i \in [k]$, $\idB[i] \define i - 1 \in \Field$ and $\piB[j] = \pi(j) - 1 \in \Field$, where $i \in \Field$ is obtained by adding $1 \in \Field$ to itself $i$ times.
+-It is easy to see that $\qB$ is obtained by permuting $\pB$ with respect to a permutation $\pi$ if and only if the following polynomials are equal:
++First sample an independent tuple-compression challenge $\tau\sample\Field$ after the vector commitments. Except when distinct labelled values collide under this compression, $\qB$ is obtained by permuting $\pB$ with respect to a permutation $\pi$ if and only if the following polynomials are equal:
+ \[
+-    \prod_{i \in [k]} (X^2 + X \cdot \piB[i] + \pB[i]) = \prod_{i \in [k]} (X^2 + X \cdot \idB[i] + \qB[i]) \enspace.
++    \prod_{i \in [k]} (X + \tau \cdot \piB[i] + \pB[i]) = \prod_{i \in [k]} (X + \tau \cdot \idB[i] + \qB[i]) \enspace.
+ \]
+-It is shown in \cite{Habock22} that these polynomials are equal if and only if their respective logarithmic derivatives are equal, i.e.,
++For characteristic larger than $k$, equality of these monic products of linear factors is equivalent to equality of their logarithmic derivatives, as used in \cite{Habock22}:
+ \[
+-    \sum_{i \in [k]} \frac{1}{X^2 + X \cdot \piB[i] + \pB[i]} = \sum_{i \in [k]} \frac{1}{X^2 + X \cdot \idB[i] + \qB[i]} \enspace.
++    \sum_{i \in [k]} \frac{1}{X + \tau \cdot \piB[i] + \pB[i]} = \sum_{i \in [k]} \frac{1}{X + \tau \cdot \idB[i] + \qB[i]} \enspace.
+ \]
+ It is also shown that this equality can be checked (with overwhelming probability) by having the verifier sample $\alpha \sample \Field$ and checking that
+ \[
+-    \sum_{i \in [k]} \frac{1}{\alpha^2 + \alpha \cdot \piB[i] + \pB[i]} = \sum_{i \in [k]} \frac{1}{\alpha^2 + \alpha \cdot \idB[i] + \qB[i]} \enspace.
++    \sum_{i \in [k]} \frac{1}{\alpha + \tau \cdot \piB[i] + \pB[i]} = \sum_{i \in [k]} \frac{1}{\alpha + \tau \cdot \idB[i] + \qB[i]} \enspace.
+ \]
+ This is essentially a sumcheck claim over \emph{rational polynomials}, which the prover can prove using the fractional sumcheck. In more detail, this can be proved as follows:
+ \begin{itemize}
+-    \item $\Prover$ defines the `permutation witness' vectors $\aB, \bB \in \Field^k$ such that $\aB[i] \define (\alpha^2 + \alpha \cdot \piB[i] + \pB[i])^{-1}$ and $\bB[i] \define (\alpha^2 + \alpha \cdot \idB[i] + \qB[i])^{-1}$, for all $i \in [k]$, and sends the oracles $\OracleOf{\aH(\XB)}$ and $\OracleOf{\bH(\XB)}$ to $\Verifier$.
++    \item $\Prover$ defines the `permutation witness' vectors $\aB, \bB \in \Field^k$ such that $\aB[i] \define (\alpha + \tau \cdot \piB[i] + \pB[i])^{-1}$ and $\bB[i] \define (\alpha + \tau \cdot \idB[i] + \qB[i])^{-1}$, for all $i \in [k]$, and sends the oracles $\OracleOf{\aH(\XB)}$ and $\OracleOf{\bH(\XB)}$ to $\Verifier$.
+     \item $\Prover$ and $\Verifier$ run the zerocheck protocol to verify that the foregoing equalities hold. That is, $\Verifier$ samples $\rB \sample \Field^{\log k}$, and $\Prover$ and $\Verifier$ run the regular multilinear sumcheck protocol to check that
+     \begin{align*}
+-        &\sum_{\xB \in \Bits^{\log k}} \left ( \aH(\xB) \cdot \left ( \alpha^2 + \alpha \cdot \piH(\xB) + \pH(\xB) \right ) - 1 \right ) \cdot \EqPoly(\xB, \rB) = 0, \enspace \text{and} \\
+-        &\sum_{\xB \in \Bits^{\log k}} \left ( \bH(\xB) \cdot \left ( \alpha^2 + \alpha \cdot \idH(\xB) + \qH(\xB) \right ) - 1 \right ) \cdot \EqPoly(\xB, \rB) = 0 \enspace .
++        &\sum_{\xB \in \Bits^{\log k}} \left ( \aH(\xB) \cdot \left ( \alpha + \tau \cdot \piH(\xB) + \pH(\xB) \right ) - 1 \right ) \cdot \EqPoly(\xB, \rB) = 0, \enspace \text{and} \\
++        &\sum_{\xB \in \Bits^{\log k}} \left ( \bH(\xB) \cdot \left ( \alpha + \tau \cdot \idH(\xB) + \qH(\xB) \right ) - 1 \right ) \cdot \EqPoly(\xB, \rB) = 0 \enspace .
+     \end{align*}
+     \item $\Prover$ and $\Verifier$ run the multilinear sumcheck protocol to check that $\sum_{\bB \in \Bits^{\log k}} \aH(\bB) = \sum_{\bB \in \Bits^{\log k}} \bH(\bB)$.
+ \end{itemize}
+@@ -230,7 +230,7 @@ There are two cases to consider now:
+ If $\sigma^{\CodeB}_{\gB,1} = \gH(\rB^{\xB}_1, \rB^{\yB}_1)$, $\sigma^{\CodeB}_{\gB,2} = \gH(\rB^{\xB}_2, \rB^{\yB}_2)$ and $\sigma^{\CodeB}_{\mB} = \mH(\rB^{\yB})$, then $\Verifier$ will reject, otherwise one of these equalities does not hold, and will be checked via a query to the respective oracles.
+ \item $\wH^{\CodeB}(\rB^{\xB}) \neq \sigma^{\CodeB}_{\scsf}$. In this case, this invalid claim is directly checked via a query to $\wH^{\CodeB}(\rB^{\xB})$.
+ \end{itemize}
+-\item Soundness of the permutation check in Step 14 follows directly by the soundness guarantee of the logUp permutation check. At the end of it, either the verifier rejects or one of the following claims are invalid: $\sigma^{\perm_1}_{\aB} = \aH(\rB^{\aB})$, $\sigma^{\perm_1}_{\piB_1} = \piH_1(\rB^{\aB})$, $\sigma^{\perm_1}_{\rep} = \wH^{\rep}(\rB^{\aB})$, $\sigma^{\perm_2}_{\cB} = \cH(\rB^{\cB})$, $\sigma^{\perm_2}_{\piB_2} = \piH_2(\rB^{\cB})$, $\sigma^{\perm_2}_{\acc_1} = \wH^{\acc_1}(\rB^{\cB})$, and $\sigma^{\perm_1}_{\aB,\bB} = \aH(\rB^{\perm_1}) = \bH(\rB^{\perm_1})$. These claims are checked by querying the respective oracles.
++\item Soundness of the permutation check in Step 14 follows directly by the soundness guarantee of the logUp permutation check. At the end of it, either the verifier rejects or one of the following claims are invalid: $\sigma^{\perm_1}_{\aB} = \aH(\rB^{\aB})$, $\sigma^{\perm_1}_{\piB_1} = \piH_1(\rB^{\aB})$, $\sigma^{\perm_1}_{\rep} = \wH^{\rep}(\rB^{\aB})$, $\sigma^{\perm_2}_{\cB} = \cH(\rB^{\cB})$, $\sigma^{\perm_2}_{\piB_2} = \piH_2(\rB^{\cB})$, $\sigma^{\perm_2}_{\acc_1} = \wH^{\acc_1}(\rB^{\cB})$, and $\sigma^{\perm_1}_{\aB,\bB} = \sum_j\aB[j] = \sum_j\bB[j]$. These claims are checked by querying the respective oracles.
+ \item The second permutation check in Step 18 follows by an entirely analogous argument, with the only difference being that, as explained in \Cref{sec:codeswitch-claims-overview}, the query to $\wH^{\acc_1}$ is emulated via a sumcheck (and thus incurs a soundness error of $\frac{3}{|\F|}$ per round).
+ \item Finally, if $\wH^{\acc_2}$ does not satisfy the codeswitch claims, the claim $\sum_{\bB \in \Bits^{\log n_{\ERA}}} \wH^{\acc_2}(\bB) \cdot \vH^{\cs}(\bB) = \sigma^{\cs}$ is invalid (unless with probability at most $\frac{n_{\ERA}}{|\F|}$), and then by the sumcheck protocol guarantee it must be that $\wH^{\acc_2}(\rB^{\cs}) \cdot \vH^{\cs}(\rB^{\cs}) \neq \sigma^{\cs}_{\eval}$. Then, if $\sigma^{\cs}_{\acc_2} = \wH^{\acc_2}(\rB^{\cs})$, the verifier rejects, while if not the final claim is invalid. \iffull\qedhere\fi
+ \end{enumerate}
+@@ -261,14 +261,14 @@ We now describe several optimizations that improve its concrete efficiency:
+     It is well-known how to efficiently run the multivariate sumcheck protocol for such polynomials, and the proof size for the $i$-th multivariate sumcheck protocol with respect to $f_i(\XB)$ is $4 \cdot i$ field elements.
+     Thus the total cost of using the GKR-based fractional sumcheck is $4 \cdot \left ( \sum_{i=1}^{\log n_{\ERA} - 1} i \right ) = 2 \cdot (\log n_{\ERA} - 1) \cdot \log n_{\ERA}$ and one evaluation claim each about $p(\XB)$ and $q(\XB)$.
+ 
+-    In $\CodeswitchClaims$, we would run such a GKR-based fractional sumcheck $4$-times, where each time we set $p(\XB) = 1$ and we set $q(\XB)$ to be $\alpha^2 + \alpha \cdot \piH(\XB) + \aH(\XB)$, $\alpha^2 + \alpha \cdot \idH(\XB) + \bH(\XB)$, $\beta^2 + \beta \cdot \piH(\XB) + \cH(\XB)$ and $\beta^2 + \beta \cdot \idH(\XB) + \dH(\XB)$ respectively.
++    In $\CodeswitchClaims$, we would run such a GKR-based fractional sumcheck $4$-times, where each time we set $p(\XB) = 1$ and we set $q(\XB)$ to be $\alpha + \tau_1 \cdot \piH_1(\XB) + \wH^{\rep}(\XB)$, $\alpha + \tau_1 \cdot \idH(\XB) + \wH^{\perm_1}(\XB)$, $\beta + \tau_2 \cdot \piH_2(\XB) + \wH^{\acc_1}(\XB)$ and $\beta + \tau_2 \cdot \idH(\XB) + \wH^{\perm_2}(\XB)$ respectively.
+     This would require us to run $4$ copies of GKR-based fractional sumcheck instances, each with an $i$-th multivariate sumcheck claim  of the form
+     \[
+         \sum_{\bB \in \Bits^{i}} f^1_i(\bB) = \sigma^1_i , \sum_{\bB \in \Bits^{i}} f^2_i(\bB) = \sigma^2_i , \sum_{\bB \in \Bits^{i}} f^3_i(\bB) = \sigma^3_i \text{ and } \sum_{\bB \in \Bits^{i}} f^4_i(\bB) = \sigma^4_i ,
+     \]
+     for each $i \in [\log n_{\ERA} - 1]$. 
+     However, we can batch the $i$-th multivariate sumcheck claims from the $4$ GKR-based fractional sumcheck instances together, for each $i \in [\log n_{\ERA} - 1]$.
+-    This allows us to perform both permutation checks by just communicating $2 \cdot (\log n_{\ERA} - 1) \cdot \log n_{\ERA}$ field elements, and proving one evaluation claim about each of the four choices of $q(\XB)$.
++    This batches the sumcheck-polynomial portion of both permutation checks into $2 \cdot (\log n_{\ERA} - 1) \cdot \log n_{\ERA}$ field elements. A complete GKR transcript must additionally transmit and authenticate the child evaluations at each layer, then sample fresh folding challenges. These messages are not included in this polynomial-only count; the concrete communication estimates below require revision for the full transcript.
+ 
+ 
+     \item \textbf{Stacking oracles. } 
+@@ -278,7 +278,7 @@ We now describe several optimizations that improve its concrete efficiency:
+         \VectorOracleOf{\word}{\ell_{\msg}}, \VectorOracleOf{\word^{\IP}}{\numIP}, (\OracleOf{\word^{\TIP}_{i,1}})_{i \in [\numTIP]} \text{ and } (\OracleOf{\word^{\TIP}_{i,2}})_{i \in [\numTIP]}
+     \] 
+     at the same index $\alpha$, and performing the appropriate linear combination of the obtained values.
+-    Therefore, instead of sending these oracles separately as vectors in $\Field^{n_{\Code'}}$, $\Prover$ can instead send a single `stacked' oracle $\OracleOf{\word^{\stacked}} \in (\Field^{\ell_{\msg} + \numIP + 2\numTIP})^{n_{\Code'}}$ at the end of the protocol.
++    Therefore, instead of sending these oracles separately as vectors in $\Field^{n_{\Code'}}$, $\Prover$ can instead send a single `stacked' oracle $\OracleOf{\word^{\stacked}} \in (\Field^{\ell_{\msg} + \numIP + 2\numTIP})^{n_{\Code'}}$ before sampling any out-of-domain, spot-check, or permutation challenges that depend on these oracles.
+     This can be interpreted as increasing the alphabet size of the IOR, so that in a single query, $\Verifier$ can obtain the values of all the component oracles at the queried index.
+ 
+     This is not just a syntactic optimization, but also translates to a significant improvement in the proof size of the multilinear polynomial commitment scheme (MLPCS) obtained by applying the BCS transform to our IOPP.
+diff --git a/sections/evaluation.tex b/sections/evaluation.tex
+index 7e0bd4e..3e59360 100644
+--- a/sections/evaluation.tex
++++ b/sections/evaluation.tex
+@@ -57,7 +57,7 @@ The resulting interactive argument consists of two algorithms:
+         \begin{itemize}
+             \item The Merkle opening proofs are valid.
+             \item For each $i \in [\nu]$, the value of the $\alpha_i$-th column of the interleaved encoding is consistent with $\word_{\rB_1}$.
+-            \item $\wH_{\rB_1}(\rB_2) = y$, where $\wH_{\rB_1}$ is the multilinear extension of $\word_{\rB_1}$.
++            \item $\mH_{\rB_1}(\rB_2) = y$, where $\mH_{\rB_1}$ is the multilinear extension of the folded message $\msg_{\rB_1}$.
+         \end{itemize}
+     \end{enumerate}
+ \end{itemize}
+diff --git a/sections/iopp.tex b/sections/iopp.tex
+index 0a84fc5..c2835cc 100644
+--- a/sections/iopp.tex
++++ b/sections/iopp.tex
+@@ -160,9 +160,9 @@ where $\ErrorMutualCA(\ERA^{t_0}, t_0, \distIndex_0)$ is the mutual correlated a
+         \begin{enumerate}[nolistsep]
+         \item $\Prover$ and $\Verifier$ parse the oracle $\Oracle{\word}$ as consisting of $t_0$ many oracles $\Oracle{\Word[1, \cdot]}, \dotsc, \Oracle{\Word[t_0, \cdot]}$, consisting of the rows of the matrix $\Word \in \Field^{t_0 \times n}$.
+         \item $\Prover$ parses $\msg = (\msg_1, \dotsc, \msg_{t_0})$, where $\msg_i \in \Field^{\MesLength}$ for each $i \in [t_0]$.
+-        \item $\Prover$ and $\Verifier$ `randomize' the evaluation point $\zB$ by engaging in the sumcheck protocol to reduce checking that $\sum_{\bB \in \Field^{\log t_0 + \log \MesLength}} \EqPoly(\zB, \bB) \cdot \mH(\bB) = y$ to checking that $\EqPoly(\zB, \rB) \cdot \mH(\rB) = y_{\rB}$.
++        \item $\Prover$ and $\Verifier$ `randomize' the evaluation point $\zB$ by engaging in the sumcheck protocol to reduce checking that $\sum_{\bB \in \Bits^{\log t_0 + \log \MesLength}} \EqPoly(\zB, \bB) \cdot \mH(\bB) = y$ to checking that $\EqPoly(\zB, \rB) \cdot \mH(\rB) = y_{\rB}$.
+         \item $\Prover$ and $\Verifier$ parse $\rB = (\rB_1, \rB_2)$, where $\rB_1 \in \Field^{\log t_0}$ and $\rB_2 \in \Field^{\log \MesLength}$.
+-        \item Define
++        \item If $\EqPoly(\zB, \rB)=0$, $\Verifier$ rejects. Otherwise define
+         \begin{align*}
+             \Instance' &\define (\rB_2, y' \define y_{\rB} \cdot \EqPoly(\zB, \rB)^{-1}), \\
+             \InstanceOracle' &\define \sum_{i=1}^{t_0} \EqPoly(\rB_1, \BinaryRep{i-1}) \cdot \OracleOf{\Word[i,\cdot]}, \\

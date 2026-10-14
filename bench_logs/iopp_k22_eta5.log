@@ -1,0 +1,171 @@
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+warning: unreachable `pub` item
+  --> src/commit/merkle.rs:41:1
+   |
+41 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+warning: `agnostir` (lib) generated 3 warnings (run `cargo fix --lib -p agnostir` to apply 3 suggestions)
+warning: unused variable: `k_log`
+  --> benches/iopp_params.rs:85:39
+   |
+85 | pub(crate) fn era_inner_params_normal(k_log: u32) -> (f64, f64, usize, usize) {
+   |                                       ^^^^^ help: if this is intentional, prefix it with an underscore: `_k_log`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `agnostir` (bench "iopp_bench") generated 1 warning (run `cargo fix --bench "iopp_bench" -p agnostir` to apply 1 suggestion)
+    Finished `bench` profile [optimized + debuginfo] target(s) in 0.33s
+     Running benches/iopp_bench.rs (target/release/deps/iopp_bench-6f732e2f0221e2dc)
+Gnuplot not found, using plotters backend
+  Proof sizes (k=22, eta=5, seg_msg=2^17):
+    Brakedown  delta=0.100  q=1974  proof=6566.7 KiB
+    EA         delta=0.100  q=1974  proof=6566.7 KiB
+    Basefold   delta=0.208  q=892  proof=5244.4 KiB
+    ERA        delta=0.228  q=804  proof=5163.4 KiB
+Benchmarking brakedown_commit
+Benchmarking brakedown_commit: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.4s.
+Benchmarking brakedown_commit: Collecting 10 samples in estimated 6.3516 s (10 iterations)
+Benchmarking brakedown_commit: Analyzing
+brakedown_commit        time:   [576.80 ms 591.28 ms 605.80 ms]
+                        change: [+13.810% +16.652% +19.692%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking brakedown_eval_prover
+Benchmarking brakedown_eval_prover: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.6s or enable flat sampling.
+Benchmarking brakedown_eval_prover: Collecting 10 samples in estimated 6.6300 s (55 iterations)
+Benchmarking brakedown_eval_prover: Analyzing
+brakedown_eval_prover   time:   [122.11 ms 126.39 ms 134.25 ms]
+                        change: [+3.0626% +7.0774% +10.792%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking brakedown_verify
+Benchmarking brakedown_verify: Warming up for 3.0000 s
+Benchmarking brakedown_verify: Collecting 10 samples in estimated 8.0711 s (110 iterations)
+Benchmarking brakedown_verify: Analyzing
+brakedown_verify        time:   [71.015 ms 71.505 ms 72.579 ms]
+                        change: [+25.277% +28.847% +32.381%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high mild
+
+Benchmarking ea_commit
+Benchmarking ea_commit: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 111.3s.
+Benchmarking ea_commit: Collecting 10 samples in estimated 111.28 s (10 iterations)
+Benchmarking ea_commit: Analyzing
+ea_commit               time:   [12.117 s 12.787 s 13.364 s]
+                        change: [+103.59% +114.67% +123.76%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking ea_eval_prover
+Benchmarking ea_eval_prover: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.8s or enable flat sampling.
+Benchmarking ea_eval_prover: Collecting 10 samples in estimated 6.7831 s (55 iterations)
+Benchmarking ea_eval_prover: Analyzing
+ea_eval_prover          time:   [123.22 ms 124.24 ms 126.07 ms]
+                        change: [+2.1958% +3.5355% +5.0440%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+
+Benchmarking ea_verify
+Benchmarking ea_verify: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 11.7s.
+Benchmarking ea_verify: Collecting 10 samples in estimated 11.688 s (10 iterations)
+Benchmarking ea_verify: Analyzing
+ea_verify               time:   [1.1574 s 1.2104 s 1.2920 s]
+                        change: [+597.32% +629.23% +692.84%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+
+Benchmarking basefold_commit
+Benchmarking basefold_commit: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 7.3s.
+Benchmarking basefold_commit: Collecting 10 samples in estimated 7.3207 s (10 iterations)
+Benchmarking basefold_commit: Analyzing
+basefold_commit         time:   [704.19 ms 714.90 ms 726.38 ms]
+                        change: [+15.034% +17.747% +20.158%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking basefold_eval_prover
+Benchmarking basefold_eval_prover: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.8s or enable flat sampling.
+Benchmarking basefold_eval_prover: Collecting 10 samples in estimated 6.7791 s (55 iterations)
+Benchmarking basefold_eval_prover: Analyzing
+basefold_eval_prover    time:   [122.90 ms 123.80 ms 125.16 ms]
+                        change: [+5.0483% +5.7129% +6.4355%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 2 outliers among 10 measurements (20.00%)
+  2 (20.00%) high severe
+
+Benchmarking basefold_verify
+Benchmarking basefold_verify: Warming up for 3.0000 s
+Benchmarking basefold_verify: Collecting 10 samples in estimated 5.5543 s (165 iterations)
+Benchmarking basefold_verify: Analyzing
+basefold_verify         time:   [33.407 ms 33.937 ms 34.318 ms]
+                        change: [+31.225% +34.912% +37.868%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking era_commit
+Benchmarking era_commit: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 7.8s.
+Benchmarking era_commit: Collecting 10 samples in estimated 7.8197 s (10 iterations)
+Benchmarking era_commit: Analyzing
+era_commit              time:   [715.25 ms 728.08 ms 740.72 ms]
+                        change: [+2.2742% +5.3617% +8.0690%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking era_eval_prover
+Benchmarking era_eval_prover: Warming up for 3.0000 s
+
+Warning: Unable to complete 10 samples in 5.0s. You may wish to increase target time to 6.8s or enable flat sampling.
+Benchmarking era_eval_prover: Collecting 10 samples in estimated 6.7685 s (55 iterations)
+Benchmarking era_eval_prover: Analyzing
+era_eval_prover         time:   [121.97 ms 122.43 ms 122.74 ms]
+                        change: [+5.3221% +5.6540% +5.9483%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+Benchmarking era_verify
+Benchmarking era_verify: Warming up for 3.0000 s
+Benchmarking era_verify: Collecting 10 samples in estimated 5.6045 s (165 iterations)
+Benchmarking era_verify: Analyzing
+era_verify              time:   [33.645 ms 34.098 ms 34.517 ms]
+                        change: [+39.497% +40.934% +42.302%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+

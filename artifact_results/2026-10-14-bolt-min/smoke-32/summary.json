@@ -1,0 +1,106 @@
+[
+  {
+    "code": "bolt-min",
+    "scope": "commitment-only",
+    "field": "GF(2^32)",
+    "hash": "sha256",
+    "message_log": "14",
+    "eta": "2",
+    "seed": "2025",
+    "threads": "32",
+    "degree": "16",
+    "compression": "8",
+    "block_length": "5120",
+    "commitment_bytes": "32",
+    "root_hex": "000cad0426c154db0275c1454212c9e7823e5a5d0c58bca359d4829fd8079e5e",
+    "encoder_checked": "true",
+    "merkle_checked": "true",
+    "samples": 1,
+    "setup_ms": {
+      "median": 3.291875,
+      "min": 3.291875,
+      "max": 3.291875
+    },
+    "buffer_ms": {
+      "median": 0.003708,
+      "min": 0.003708,
+      "max": 0.003708
+    },
+    "expander_ms": {
+      "median": 0.335792,
+      "min": 0.335792,
+      "max": 0.335792
+    },
+    "rs_ms": {
+      "median": 0.067875,
+      "min": 0.067875,
+      "max": 0.067875
+    },
+    "merkle_ms": {
+      "median": 1.149625,
+      "min": 1.149625,
+      "max": 1.149625
+    },
+    "commit_ms": {
+      "median": 1.557,
+      "min": 1.557,
+      "max": 1.557
+    },
+    "prove_ms": null,
+    "verify_ms": null,
+    "proof_bytes": null,
+    "queries": null
+  },
+  {
+    "code": "bolt-min",
+    "scope": "commitment-only",
+    "field": "GF(2^32)",
+    "hash": "blake3",
+    "message_log": "14",
+    "eta": "2",
+    "seed": "2025",
+    "threads": "32",
+    "degree": "16",
+    "compression": "8",
+    "block_length": "5120",
+    "commitment_bytes": "32",
+    "root_hex": "cf7179cbf1394b0b1072323a179ae2829579c84cc793b1d4024a3fde088485da",
+    "encoder_checked": "true",
+    "merkle_checked": "true",
+    "samples": 1,
+    "setup_ms": {
+      "median": 2.348416,
+      "min": 2.348416,
+      "max": 2.348416
+    },
+    "buffer_ms": {
+      "median": 0.012333,
+      "min": 0.012333,
+      "max": 0.012333
+    },
+    "expander_ms": {
+      "median": 0.317209,
+      "min": 0.317209,
+      "max": 0.317209
+    },
+    "rs_ms": {
+      "median": 0.056416,
+      "min": 0.056416,
+      "max": 0.056416
+    },
+    "merkle_ms": {
+      "median": 1.409542,
+      "min": 1.409542,
+      "max": 1.409542
+    },
+    "commit_ms": {
+      "median": 1.7955,
+      "min": 1.7955,
+      "max": 1.7955
+    },
+    "prove_ms": null,
+    "verify_ms": null,
+    "proof_bytes": null,
+    "queries": null
+  }
+]

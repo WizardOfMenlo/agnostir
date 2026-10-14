@@ -1,0 +1,4 @@
+code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted
+basefold,22,6,2025,8,0,869,131072,12.856958,531.025000,688.863458,32.264833,4046664,32,true
+basefold,22,6,2025,8,1,869,131072,12.856958,526.391625,677.768209,32.975834,4046664,32,true
+basefold,22,6,2025,8,2,869,131072,12.856958,513.422500,677.523750,32.900750,4046664,32,true

@@ -1,0 +1,48 @@
+Distance table written to: precomputed_distances.txt
+Precomputed ERA entries: 364
+Precomputed Basefold entries: 112
+Fixed ERA stage 0 repetition: r=4
+Conjecture mode: OFF
+Eta exponent range: [4, 14] (eta in [2^4, 2^14])
+Feasible (k0_exp, eta_exp) pairs: (36, 14), (37, 13), (38, 12), (39, 11), (40, 10), (41, 9), (42, 8), (43, 7), (44, 6), (45, 5), (46, 4)
+k0 optimization: ON (constraint eta*k0 = 2^50)
+Derived oracle budget = budget_scale * (eta*k0) * era0_inv_rate = 1.000 * 1125899906842624 * 4.840000 = 5449355549118300.000 (using floor -> 5449355549118300)
+
+=== Optimization Results ===
+Oracle budget <= 5449355549118300 (~2^52.275) field elements
+  proof size: 8621.312 KB (8.621312 MB)
+  field elements in proof: 90039.000
+  hashes in proof: 179377.000
+  starting IOR contribution: field_elements=53206.000, hashes=31753, size=2718.688 KB (31.53% of proof)
+  total oracle length: 4222124650594304 (codeswitch=4081387162304512, basefold=140737488289792)
+  num codeswitches: 1
+  eta: 64
+  k exponents: (44, 43)
+  k values: (17592186044416, 8796093022208)
+  eta * k0: 1125899906842624
+  basefold code: d=43, c=8, rate=0.125000, delta=0.679922, rounds=31
+  era stages:
+    stage 0: k=2^44, r=4, inv_rate=4.840000, rate=0.206612, delta=0.221860, log_block_length=46.275007
+  codeswitch contributions:
+    codeswitch 1: field_elements=15625.000, hashes=14448, oracle_length=4081387162304512
+  basefold IOPP contribution: field_elements=21208.000, hashes=133176, oracle_length=140737488289792, queries=183, rounds=31
+
+=== Baseline (No Codeswitch) ===
+Oracle budget <= 5449355549118300 (~2^52.275) field elements
+  baseline proof size: 86735.488 KB (86.735488 MB)
+  field elements in proof: 762148.000
+  hashes in proof: 1948336.000
+  starting IOR contribution: field_elements=439062.000, hashes=114035, size=17699.104 KB (20.41% of proof)
+  total oracle length: 35184372072448 (basefold only)
+  eta: 128
+  k0 exponent: 43
+  k0 value: 8796093022208
+  eta * k0: 1125899906842624
+  basefold code: d=43, c=2, rate=0.500000, delta=0.058849, rounds=31
+  basefold IOPP contribution: field_elements=323086.000, hashes=1834301, oracle_length=35184372072448
+
+=== Best Params By Codeswitch Count ===
+Oracle budget <= 5449355549118300 (~2^52.275) field elements
+  codeswitches=1: proof=8621.312 KB, oracle=4222124650594304
+  codeswitches=2: proof=10606.496 KB, oracle=5408277794573608
+  codeswitches=3: proof=12413.888 KB, oracle=5361790442951268

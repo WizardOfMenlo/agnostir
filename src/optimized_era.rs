@@ -568,7 +568,10 @@ where
             entries.push(Entry { key, value });
         }
 
+        #[cfg(feature = "parallel")]
         entries.par_sort_unstable_by_key(|entry| entry.key);
+        #[cfg(not(feature = "parallel"))]
+        entries.sort_unstable_by_key(|entry| entry.key);
 
         entries.into_iter().map(|entry| entry.value).collect()
     }

@@ -70,8 +70,8 @@ thiserror = { version = "2.0", default-features = false }
 tracing = { version = "0.1.37", default-features = false, features = [
     "attributes",
 ] }
-rand = { version = "0.9", default-features = false, features = ["small_rng"] }
-rand_08 = { package = "rand", version = "0.8", default-features = false, features = ["small_rng"] }
+rand = { version = "0.9", default-features = false, features = ["small_rng", "alloc"] }
+rand_08 = { package = "rand", version = "0.8", default-features = false, features = ["small_rng", "alloc"] }
 rip_shuffle = "0.2"
 voracious_radix_sort = { version = "1.2.0", features = ["voracious_multithread"] }
 
@@ -108,3 +108,11 @@ harness = false
 [[bench]]
 name = "iopp_bench"
 harness = false
+
+[[bin]]
+name = "interleaved_iopp"
+required-features = ["cli", "parallel"]
+
+[[bin]]
+name = "compare_iopps"
+required-features = ["cli", "parallel"]

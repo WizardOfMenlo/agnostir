@@ -1,0 +1,58 @@
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+warning: unreachable `pub` item
+  --> src/commit/merkle.rs:41:1
+   |
+41 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+warning: `agnostir` (lib) generated 3 warnings (run `cargo fix --lib -p agnostir` to apply 3 suggestions)
+   Compiling agnostir v0.1.0 (/Users/anubhavbaweja/Desktop/Research/research-git/agnostir)
+warning: unused import: `Rng`
+ --> src/bin/profile_era_commit_split.rs:9:12
+  |
+9 | use rand::{Rng, SeedableRng, rngs::SmallRng};
+  |            ^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `agnostir` (bin "profile_era_commit_split") generated 1 warning
+    Finished `release` profile [optimized + debuginfo] target(s) in 1.94s
+     Running `target/release/profile_era_commit_split`
+=== ERA commit split profile ===
+k=2^18, eta=4, message_size=262144, seg_count=16, seg_msg=2^14
+ERA params: alpha=0.12, inverse_rate=1.2, cn=6, dn=19, repetition=4
+Runs: 10 (warmups: 2)
+
+Average times over 10 runs:
+  encode segments:   19.366 ms ( 49.5%)
+  merkle commit:     19.790 ms ( 50.5%)
+  total:             39.156 ms
+
+Median times over 10 runs:
+  encode segments:   19.022 ms ( 48.8%)
+  merkle commit:     19.773 ms ( 50.7%)
+  total:             38.989 ms

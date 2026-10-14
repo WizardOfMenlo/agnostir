@@ -1,0 +1,31 @@
+    Checking cfg-if v1.0.5
+    Checking typenum v1.20.1
+    Checking libc v0.2.190
+    Checking crossbeam-utils v0.8.23
+    Checking subtle v2.6.1
+    Checking rand_core v0.10.1
+    Checking either v1.19.0
+    Checking untrusted v0.9.0
+    Checking constant_time_eq v0.4.2
+    Checking arrayvec v0.7.8
+    Checking chacha20 v0.10.2
+    Checking blake3 v1.8.7
+    Checking crossbeam-epoch v0.9.21
+    Checking crossbeam-deque v0.8.8
+    Checking generic-array v0.14.7
+    Checking rayon-core v1.13.0
+    Checking cpufeatures v0.2.17
+    Checking getrandom v0.2.17
+    Checking getrandom v0.4.3
+    Checking keccak v0.1.6
+    Checking ring v0.17.14
+    Checking rand v0.10.3
+    Checking rayon v1.12.0
+    Checking crypto-common v0.1.7
+    Checking block-buffer v0.10.4
+    Checking digest v0.10.7
+    Checking sha3 v0.10.9
+    Checking blake2 v0.10.6
+    Checking bolt-rs v0.1.0 (https://github.com/bcc-research/bolt-rs?rev=3832e47b24e7b3e10525c9c5bcfc1cfe66d525f2#3832e47b)
+    Checking agnostir-bolt-min-comparison v0.1.0 (/Users/anubhavbaweja/Desktop/Research/research-git/agnostir/comparisons/bolt-min)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.78s

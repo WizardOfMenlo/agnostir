@@ -1,0 +1,12 @@
+PASS cargo fmt --all --check
+PASS cargo test --locked --offline --lib: 189 tests
+PASS cargo test --locked --offline --lib --no-default-features: 188 tests
+PASS cargo clippy --locked --offline --all-targets (existing repository warnings)
+PASS cargo build --locked --offline --release --bins
+PASS scripts/calibrate_bolt.py (Bolt-max assumptions explicitly uncertified)
+PASS full-size 1-, 8-, and 32-worker proofs are identical
+PASS prior Bolt-min full proof exactly reproduced after shared encoder refactor
+PASS main artifact 32-worker smoke script includes both Bolt profiles
+Bolt-max proof SHA256: 625e2063b2b2b730f9608e6ea60d3346fc649873ef96b12642534c90c0d963d8
+Bolt-min proof SHA256: 4ceab30943c4ecce499f151695ba8ce05febe4e353fd5d74b3375207f4e06c67
+PASS paper compiled in an isolated output directory; revised parameter and table pages visually checked

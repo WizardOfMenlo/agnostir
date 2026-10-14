@@ -1,0 +1,31 @@
+=== ERA Step Profile (message_size=2^14) ===
+message_size=16384, repetition=4, block_length=72088
+params: alpha=0.05, inverse_rate=1.1, cn=6, dn=40
+
+--- Current ERA (with multiplication in prefix rounds) ---
+
+┌──────────────────────────┬────────────┬─────────┐
+│ Step                     │       Time │   % Tot │
+├──────────────────────────┼────────────┼─────────┤
+│ 1. Base-code encode      │    1.150 ms │  42.2 % │
+│ 2a. Rep+Perm   (round 1) │    0.284 ms │  10.4 % │
+│ 2b. Prefix sum (round 1) │    0.538 ms │  19.7 % │
+│ 3a. Perm       (round 2) │    0.142 ms │   5.2 % │
+│ 3b. Prefix sum (round 2) │    0.611 ms │  22.4 % │
+├──────────────────────────┼────────────┼─────────┤
+│ Total                    │    2.725 ms │ 100.0 % │
+└──────────────────────────┴────────────┴─────────┘
+
+--- Conjectured ERA (no multiplication in prefix rounds) ---
+
+┌──────────────────────────┬────────────┬─────────┐
+│ Step                     │       Time │   % Tot │
+├──────────────────────────┼────────────┼─────────┤
+│ 1. Base-code encode      │    1.108 ms │  54.9 % │
+│ 2a. Rep+Perm   (round 1) │    0.168 ms │   8.3 % │
+│ 2b. Prefix sum (round 1) │    0.267 ms │  13.2 % │
+│ 3a. Perm       (round 2) │    0.209 ms │  10.4 % │
+│ 3b. Prefix sum (round 2) │    0.265 ms │  13.2 % │
+├──────────────────────────┼────────────┼─────────┤
+│ Total                    │    2.017 ms │ 100.0 % │
+└──────────────────────────┴────────────┴─────────┘

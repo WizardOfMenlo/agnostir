@@ -1,0 +1,1839 @@
+perl: warning: Setting locale failed.
+perl: warning: Please check that your locale settings:
+	LC_ALL = "C.UTF-8",
+	LC_CTYPE = "C.UTF-8",
+	LANG = "C.UTF-8"
+    are supported and installed on your system.
+perl: warning: Falling back to the standard locale ("C").
+Rc files read:
+  .latexmkrc
+Latexmk: This is Latexmk, John Collins, 31 Jan. 2024. Version 4.83.
+Latexmk: making output directory '/tmp/agnostir-paper-check'
+No existing .aux file, so I'll make a simple one, and require run of *latex.
+Latexmk: applying rule 'pdflatex'...
+Rule 'pdflatex':  Reasons for rerun
+Category 'other':
+  Rerun of 'pdflatex' forced or previously required:
+    Reason or flag: 'Initial setup'
+
+------------
+Run number 1 of rule 'pdflatex'
+------------
+------------
+Running 'pdflatex  -interaction=nonstopmode -halt-on-error -recorder -output-directory="/private/tmp/agnostir-paper-check"  "agnostir.tex"'
+------------
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./agnostir.tex
+LaTeX2e <2023-11-01> patch level 1
+L3 programming layer <2024-02-20>
+(/usr/local/texlive/2024/texmf-dist/tex/latex/llncs/llncs.cls
+Document Class: llncs 2024/01/29 v2.24 
+ LaTeX document class for Lecture Notes in Computer Science
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2023/05/17 v1.4n Standard LaTeX document class
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/size10.clo))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/multicol.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/oberdiek/aliascnt.sty))
+(./lib/dtrt.sty
+
+LaTeX Warning: You have requested package `lib/dtrt',
+               but the package provides `dtrt'.
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amssymb.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/amsfonts.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/ifpdf.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/iftex/iftex.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/url/url.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/ifthen.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/etoolbox/etoolbox.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xpatch/xpatch.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3kernel/expl3.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3packages/xparse/xparse.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xcolor/xcolor.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/color.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-def/pdftex.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/mathcolor.ltx))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/hyperref.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/infwarerr/infwarerr.sty)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hycolor/hycolor.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/auxhook/auxhook.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/nameref.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/refcount/refcount.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/gettitlestring/gettitlestring.s
+ty (/usr/local/texlive/2024/texmf-dist/tex/latex/kvoptions/kvoptions.sty)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/pd1enc.def)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/intcalc/intcalc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/puenc.def)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/bitset/bitset.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/atbegshi-ltx.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/hyperref/hpdftex.def
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/atveryend-ltx.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
+))) (/usr/local/texlive/2024/texmf-dist/tex/latex/marginnote/marginnote.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/morefloats/morefloats.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/silence/silence.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/pifont.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/upzd.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/psnfss/upsy.fd))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/relsize/relsize.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/framed/framed.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amstext.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsgen.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsbsy.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsmath/amsopn.sty)
+
+Package amsmath Warning: Unable to redefine math accent \vec.
+
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/newtxtext.sty
+`newtxtext' v1.738, 2024/02/08 Text macros taking advantage of TeXGyre Termes a
+nd its extensions (msharpe)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xkeyval/xkeyval.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xkeyval/xkeyval.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xkeyval/xkvutils.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/textcomp.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xstring/xstring.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/xstring/xstring.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/carlisle/scalefnt.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/kastrup/binhex.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/fontaxes/fontaxes.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/microtype.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/microtype-pdftex.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/microtype.cfg))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/braket/braket.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/basiclayer/pgf.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfutil-common.te
+x)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfutil-latex.def
+) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfrcs.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/pgf.revision.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/basiclayer/pgfcore.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/systemlayer/pgfsys.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsys.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeyslibraryfil
+tered.code.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-pdftex.d
+ef
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-common-p
+df.def)))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsyssoftpath.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/systemlayer/pgfsysprotocol.
+code.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcore.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathparser.code.tex
+)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.code.
+tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.basic
+.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.trigo
+nometric.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.rando
+m.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.compa
+rison.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.base.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.round
+.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.misc.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.integ
+erarithmetics.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathcalc.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.tex)
+) (/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfint.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoints.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathconst
+ruct.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathusage
+.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorescopes.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraphicst
+ate.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretransform
+ations.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorequick.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreobjects.c
+ode.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathproce
+ssing.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorearrows.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreexternal.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorelayers.co
+de.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretranspare
+ncy.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepatterns.
+code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/basiclayer/pgfcorerdf.code.
+tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmoduleshapes.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmoduleplot.code.
+tex)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version
+-0-65.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version
+-1-18.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/utilities/pgffor.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/utilities/pgfkeys.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex)
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/pgf/math/pgfmath.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/utilities/pgffor.code.tex))
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz.cod
+e.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryplothan
+dlers.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix.cod
+e.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
+s/tikzlibrarytopaths.code.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/xurl/xurl.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
+s/tikzlibrarymatrix.code.tex)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/verbatim.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/array.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/cleveref/cleveref.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/multirow/multirow.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/paralist/paralist.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/enumitem/enumitem.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/doublestroke/dsfont.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-restate.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thmtools.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-patch.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/parseargs.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-kv.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-autoref.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/aliasctr.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-listof.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/thmtools/thm-llncs.sty
+
+Package thmtools Warning: LLNCS support disables automatic casing of theorem na
+mes .
+
+))) (/usr/local/texlive/2024/texmf-dist/tex/latex/jknapltx/mathrsfs.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/jknapltx/mathbbol.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/soul/soul.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/soul/soul-ori.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/generic/etexcmds/etexcmds.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mdframed/mdframed.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/zref/zref-abspage.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/zref/zref-base.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/needspace/needspace.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mdframed/md-frame-1.mdf))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mathtools/mathtools.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/calc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/mathtools/mhsetup.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/bbm-macros/bbm.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/caption/subcaption.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/caption/caption3.sty)
+
+Package caption Warning: Unknown document class (or package),
+(caption)                standard defaults will be used.
+See the caption package documentation for explanation.
+
+)) (/usr/local/texlive/2024/texmf-dist/tex/latex/setspace/setspace.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tabu/tabu.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/varwidth/varwidth.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/colortbl/colortbl.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/adjustbox.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/adjcalc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/trimclip.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/collectbox/collectbox.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/adjustbox/tc-pdftex.def))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/ifoddpage/ifoddpage.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/booktabs/booktabs.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/siunitx/siunitx.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations.sty)
+
+Package siunitx Warning: Option "binary-units" has been removed in this
+(siunitx)                release.
+
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/oberdiek/centernot.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/bm.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/environ/environ.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/trimspaces/trimspaces.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/stmaryrd/stmaryrd.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tools/xspace.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/algorithms/algorithm.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/float/float.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/nicematrix/nicematrix.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/l3packages/l3keys2e/l3keys2e.sty)
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcolorbox.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbraster.code.tex
+Library (tcolorbox): 'tcbraster.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbskins.code.tex
+Library (tcolorbox): 'tcbskins.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tikzfill/tikzfill.image.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tikzfill/tikzfill-common.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tikzfill/tikzlibraryfill.image.co
+de.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbskinsjigsaw.code.tex
+Library (tcolorbox): 'tcbskinsjigsaw.code.tex' version '6.2.0'
+))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbbreakable.code.tex
+Library (tcolorbox): 'tcbbreakable.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/pdfcol/pdfcol.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbhooks.code.tex
+Library (tcolorbox): 'tcbhooks.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbtheorems.code.tex
+Library (tcolorbox): 'tcbtheorems.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbfitting.code.tex
+Library (tcolorbox): 'tcbfitting.code.tex' version '6.2.0'
+)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcblistingsutf8.code.te
+x
+Library (tcolorbox): 'tcblistingsutf8.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcblistings.code.tex
+Library (tcolorbox): 'tcblistings.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/listings.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstpatch.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/lstmisc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/listings/listings.cfg))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcblistingscore.code.te
+x
+Library (tcolorbox): 'tcblistingscore.code.tex' version '6.2.0'
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbprocessing.code.tex
+Library (tcolorbox): 'tcbprocessing.code.tex' version '6.2.0'
+))) (/usr/local/texlive/2024/texmf-dist/tex/latex/listingsutf8/listingsutf8.sty
+(/usr/local/texlive/2024/texmf-dist/tex/generic/stringenc/stringenc.sty)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbexternal.code.tex
+Library (tcolorbox): 'tcbexternal.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbmagazine.code.tex
+Library (tcolorbox): 'tcbmagazine.code.tex' version '6.2.0'
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbvignette.code.tex
+Library (tcolorbox): 'tcbvignette.code.tex' version '6.2.0'
+
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/frontendlayer/tikz/librarie
+s/tikzlibraryfadings.code.tex
+(/usr/local/texlive/2024/texmf-dist/tex/generic/pgf/libraries/pgflibraryfadings
+.code.tex)))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/tcolorbox/tcbposter.code.tex
+Library (tcolorbox): 'tcbposter.code.tex' version '6.2.0'
+)) (/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/ot1minntx.fd)
+(./lib/macros.tex (./lib/modifier-shortcuts.tex) (./lib/snark-shortcuts.tex)
+(./lib/paper_specific.tex))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/biblatex.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/logreq/logreq.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/logreq/logreq.def))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/blx-dm.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/blx-compat.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/biblatex.def)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/bbx/alphabetic.bbx
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/bbx/standard.bbx))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/cbx/alphabetic.cbx)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/biblatex.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/blx-case-expl3.sty))
+(/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/ot1ntxtlf.fd)
+(/private/tmp/agnostir-paper-check/agnostir.aux)
+(/usr/local/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+) (/usr/local/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+(/usr/local/texlive/2024/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg))
+(./agnostir.out) (./agnostir.out)
+
+Package microtype Warning: Unable to apply patch `footnote' on input line 199.
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-ptm.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/translations/translations-basic-d
+ictionary-english.trsl)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/base/inputenc.sty)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/biblatex/lbx/english.lbx)
+(./agnostir.bbl)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-cmr.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsa.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-msa.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/amsfonts/umsb.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/microtype/mt-msb.cfg)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/jknapltx/ursfs.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/bbold/Ubbold.fd)
+(/usr/local/texlive/2024/texmf-dist/tex/latex/stmaryrd/Ustmry.fd)
+
+LaTeX Font Warning: Font shape `U/stmry/b/n' undefined
+(Font)              using `U/stmry/m/n' instead on input line 217.
+
+Title too long for running head. Please supply
+a shorter form with \titlerunning prior to \maketitle
+(./sections/abstract.tex) (./sections/intro.tex [1{/usr/local/texlive/2024/texm
+f-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/texlive/2024/texmf-dist/fo
+nts/enc/dvips/newtx/ntx-ot1-tlf.enc}] [2]
+
+LaTeX Warning: Reference `sec:intro-era' on page 1 undefined on input line 123.
+
+
+
+LaTeX Warning: Reference `sec:intro-iopp' on page 1 undefined on input line 132
+.
+
+[3]
+
+LaTeX Warning: Reference `thm:era' on page 1 undefined on input line 165.
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/newtx/ot1ntxtt.fd)
+
+LaTeX Warning: Reference `tab:era-distance' on page 1 undefined on input line 1
+75.
+
+
+Underfull \hbox (badness 7631) in paragraph at lines 183--183
+[]\OT1/ntxtlf/m/n/10 (+20) base code
+
+LaTeX Warning: Reference `sec:intro-iopp' on page 1 undefined on input line 199
+.
+
+
+LaTeX Warning: Reference `sec:related-work' on page 1 undefined on input line 2
+01.
+
+[4]
+
+LaTeX Warning: Reference `sec:eval-interleaved-iopp' on page 1 undefined on inp
+ut line 222.
+
+[5]
+
+LaTeX Warning: Reference `tab:codeswitching-iopp-efficiency' on page 1 undefine
+d on input line 275.
+
+
+LaTeX Warning: Reference `sec:tech-iopp' on page 1 undefined on input line 277.
+
+
+
+LaTeX Warning: Reference `sec:reduce-ior' on page 1 undefined on input line 277
+.
+
+
+LaTeX Warning: Reference `sec:iopp' on page 1 undefined on input line 277.
+
+
+LaTeX Warning: Reference `lem:reduce-ior' on page 1 undefined on input line 298
+.
+
+
+Underfull \vbox (badness 1205) has occurred while \output is active [6]
+
+LaTeX Warning: Reference `thm-inf:codeswitch' on page 1 undefined on input line
+ 304.
+
+
+LaTeX Warning: Reference `tab:codeswitching-iopp-efficiency' on page 1 undefine
+d on input line 311.
+
+
+LaTeX Warning: Reference `thm-inf:codeswitch' on page 1 undefined on input line
+ 312.
+
+
+LaTeX Warning: Reference `sec:eval-iopp-performance' on page 1 undefined on inp
+ut line 351.
+
+[7]
+Overfull \hbox (12.35652pt too wide) in paragraph at lines 422--426
+\OT1/ntxtlf/b/n/10 (-20) Expand-Accumulate codes. \OT1/ntxtlf/m/n/10 (-20) Expa
+nd-Accumulate (EA) codes were in-tro-duced in [[][]BCG+22[][]]
+[8] (./sections/tech-overview/tech-future.tex))
+(./sections/tech-overview/tech-main.tex (./sections/tech-overview/tech-era.tex
+
+LaTeX Warning: Reference `sec:era-analysis' on page 1 undefined on input line 4
+.
+
+
+LaTeX Warning: Reference `def:on-intervals' on page 1 undefined on input line 1
+1.
+
+
+LaTeX Warning: Reference `def:intervals' on page 1 undefined on input line 11.
+
+[9]
+
+LaTeX Warning: Reference `thm:era' on page 1 undefined on input line 39.
+
+[10]
+Overfull \hbox (4.29962pt too wide) detected at line 93
+[]
+
+Package amsmath Warning: Foreign command \atopwithdelims;
+(amsmath)                \frac or \genfrac should be used instead
+(amsmath)                 on input line 104.
+
+
+Overfull \hbox (47.80998pt too wide) detected at line 104
+[]
+
+LaTeX Warning: Reference `claim:tech-event-1-bound' on page 1 undefined on inpu
+t line 112.
+
+[11]
+
+LaTeX Warning: Reference `claim:tech-event-2-bound' on page 1 undefined on inpu
+t line 137.
+
+
+LaTeX Warning: Reference `sec:era-bad-permutations-2' on page 1 undefined on in
+put line 137.
+
+
+LaTeX Warning: Reference `lem:event-4-bound-small-weight' on page 1 undefined o
+n input line 137.
+
+
+LaTeX Warning: Reference `sec:era-bad-permutations-2' on page 1 undefined on in
+put line 145.
+
+
+LaTeX Warning: Reference `sec:era-computing-delta' on page 1 undefined on input
+ line 145.
+
+
+LaTeX Warning: Reference `lem:tech-era-distance-informal' on page 1 undefined o
+n input line 155.
+
+) (./sections/tech-overview/tech-iopp.tex
+
+LaTeX Warning: Reference `sec:intro-iopp' on page 1 undefined on input line 4.
+
+(/usr/local/texlive/2024/texmf-dist/tex/latex/bbm-macros/ubbm.fd)
+
+LaTeX Warning: Reference `sec:defs-ior' on page 1 undefined on input line 11.
+
+[12]
+
+LaTeX Warning: Reference `sec:intro' on page 1 undefined on input line 17.
+
+[13]
+Overfull \hbox (0.84926pt too wide) in paragraph at lines 89--90
+\OML/cmm/b/it/10 o[] \OT1/cmr/m/n/10 := [][](\OML/cmm/b/it/10 w[]\OT1/cmr/m/n/1
+0 )$ \OT1/ntxtlf/m/n/10 (-20) for each $\OML/cmm/m/it/10 i \OMS/cmsy/m/n/10 2 \
+OT1/cmr/m/n/10 [\OML/cmm/m/it/10 `[]\OT1/cmr/m/n/10 ]$\OT1/ntxtlf/m/n/10 (-20) 
+, and send-ing the or-a-cles $\OT1/cmr/m/n/10 [ [\OML/cmm/b/it/10 o[]\OT1/cmr/m
+/n/10 ] ]\OML/cmm/m/it/10 ; [] ; \OT1/cmr/m/n/10 [ [\OML/cmm/b/it/10 o[]\OT1/cm
+r/m/n/10 ] ]$
+[14]
+
+LaTeX Warning: Reference `sec:codeswitch-claims-overview' on page 1 undefined o
+n input line 101.
+
+
+LaTeX Warning: Reference `sec:intro-iopp' on page 1 undefined on input line 112
+.
+
+
+LaTeX Warning: Reference `sec:reduce-ior' on page 1 undefined on input line 115
+.
+
+)) (./sections/era-analysis/era-main.tex [15]
+Overfull \hbox (10.57658pt too wide) detected at line 19
+[]
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 21.
+
+(./sections/era-analysis/era-prelims.tex
+
+LaTeX Warning: Reference `sec:intro-era' on page 1 undefined on input line 6.
+
+[16]
+
+LaTeX Warning: Reference `def:intervals' on page 1 undefined on input line 48.
+
+[17]) (./sections/era-analysis/era-first-mult.tex
+
+LaTeX Warning: Reference `def:on-intervals' on page 1 undefined on input line 1
+7.
+
+
+Overfull \hbox (38.14755pt too wide) detected at line 49
+[]
+[18]
+
+LaTeX Warning: Reference `lem:large-fraction-intervals-on' on page 1 undefined 
+on input line 71.
+
+
+LaTeX Warning: Reference `lem:event-mult1-bound' on page 1 undefined on input l
+ine 91.
+
+) (./sections/era-analysis/era-second-mult.tex
+
+LaTeX Warning: Reference `lem:event-mult1-bound' on page 1 undefined on input l
+ine 3.
+
+
+LaTeX Warning: Reference `lem:large-fraction-intervals-on' on page 1 undefined 
+on input line 7.
+
+[19]
+
+LaTeX Warning: Reference `lem:event-mult1-bound' on page 1 undefined on input l
+ine 11.
+
+
+LaTeX Warning: Reference `lem:large-fraction-intervals-on' on page 1 undefined 
+on input line 38.
+
+[20]
+Overfull \hbox (7.73944pt too wide) detected at line 56
+[][][]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 
+1)[] \OMS/cmsy/m/n/10 ^^U \OT1/cmr/m/n/10 2[] \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/i
+t/10 n[] \OMS/cmsy/m/n/10 ^^A [][] ^^A [][] \OML/cmm/m/it/10 :
+
+LaTeX Warning: Reference `sec:appendix-era-second-mult' on page 1 undefined on 
+input line 61.
+
+
+LaTeX Warning: Reference `eq:shrinking-messages-q-bound' on page 21 undefined o
+n input line 67.
+
+
+LaTeX Warning: Reference `eq:shrinking-messages-intermediate' on page 21 undefi
+ned on input line 67.
+
+
+LaTeX Warning: Reference `lem:shriking-messages' on page 1 undefined on input l
+ine 74.
+
+
+LaTeX Warning: Reference `lem:event-mult2-bound' on page 1 undefined on input l
+ine 77.
+
+
+LaTeX Warning: Reference `sec:appendix-era-second-mult' on page 1 undefined on 
+input line 77.
+
+
+Overfull \hbox (23.3544pt too wide) detected at line 87
+\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 1 \OMS/cmsy/m/n/10 ^^U 
+[][] \OML/cmm/m/it/10 ;
+) (./sections/era-analysis/era-perms.tex
+
+LaTeX Warning: Reference `lem:event-4-bound-large-input-weight' on page 1 undef
+ined on input line 34.
+
+[21]
+
+LaTeX Warning: Reference `def:viable-sets' on page 1 undefined on input line 44
+.
+
+(./sections/era-analysis/era-iowe-lemma.tex
+
+LaTeX Warning: Reference `lem:era-iowe' on page 1 undefined on input line 33.
+
+
+Overfull \hbox (44.61676pt too wide) in paragraph at lines 33--35
+[]\OT1/ntxtlf/m/it/10 (-20) Let $\OML/cmm/m/it/10 A[] \OMS/cmsy/m/n/10 ^^R \OML
+/cmm/m/it/10 C[]$ \OT1/ntxtlf/m/it/10 (-20) be as de-fined in |[][]. Then, $\OM
+S/cmsy/m/n/10 j\OML/cmm/m/it/10 A[]\OMS/cmsy/m/n/10 j ^^T [][]\OT1/cmr/m/n/10 (
+\OML/cmm/m/it/10 g\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n; `[]; `[]; m\OT1/cmr/m/n/
+10 ))$
+[22]
+
+LaTeX Warning: Reference `lem:era-iowe' on page 1 undefined on input line 41.
+
+
+LaTeX Warning: Reference `fact:entropy-bound' on page 1 undefined on input line
+ 41.
+
+)
+Overfull \hbox (21.00774pt too wide) detected at line 68
+[]
+
+Overfull \hbox (9.9996pt too wide) in paragraph at lines 68--70
+\OT1/ntxtlf/m/it/10 (-20) Then, we have $[]\OT1/cmr/m/n/10 (\OMS/cmsy/m/n/10 F[
+]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]; `[]; ^^N\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n
+/10 j :F[]\OML/cmm/m/it/10 ; \OMS/cmsy/m/n/10 :F[]\OT1/cmr/m/n/10 ) \OMS/cmsy/m
+/n/10 ^^T \OML/cmm/m/it/10 P[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 ^^N\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^A [][]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 E[]\OT1/cmr/m/
+n/10 (\OML/cmm/m/it/10 d[]; d[]; ^^N\OT1/cmr/m/n/10 ))$\OT1/ntxtlf/m/it/10 (-20
+) . 
+
+LaTeX Warning: Reference `def:viable-sets' on page 1 undefined on input line 93
+.
+
+[23]
+
+LaTeX Warning: Reference `lem:era-iowe' on page 1 undefined on input line 105.
+
+
+LaTeX Warning: Reference `lem:era-iowe' on page 1 undefined on input line 107.
+
+
+LaTeX Warning: Reference `cor:era-iowe-entropy-bound' on page 1 undefined on in
+put line 111.
+
+
+Overfull \hbox (52.35199pt too wide) detected at line 151
+[]
+
+LaTeX Warning: Reference `eq:define-g' on page 24 undefined on input line 153.
+
+
+LaTeX Warning: Reference `lem:era-perm-max-term' on page 1 undefined on input l
+ine 164.
+
+
+LaTeX Warning: Reference `sec:appendix-era-perm' on page 1 undefined on input l
+ine 164.
+
+
+LaTeX Warning: Reference `lem:era-perm-max-term' on page 1 undefined on input l
+ine 165.
+
+
+Overfull \hbox (5.77061pt too wide) detected at line 202
+[]
+
+LaTeX Warning: Reference `eq:event-4-exp-term' on page 24 undefined on input li
+ne 205.
+
+
+LaTeX Warning: Reference `fact:entropy-bound' on page 1 undefined on input line
+ 205.
+
+[24]) (./sections/era-analysis/era-calc-delta.tex
+
+LaTeX Warning: Reference `lem:event-4-bound-small-weight' on page 1 undefined o
+n input line 4.
+
+
+LaTeX Warning: Reference `lem:event-4-bound-large-intermediate-weight' on page 
+1 undefined on input line 6.
+
+
+LaTeX Warning: Reference `lem:event-4-bound-large-input-weight' on page 1 undef
+ined on input line 6.
+
+
+LaTeX Warning: Reference `eq:event-4-exp-term' on page 25 undefined on input li
+ne 9.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 11.
+
+(./figures/era-compute-delta.tex
+Overfull \hbox (1.08873pt too wide) detected at line 17
+[][]
+
+LaTeX Warning: Reference `eq:event-4-exp-term' on page 25 undefined on input li
+ne 30.
+
+[25])
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 19.
+
+
+LaTeX Warning: Reference `eq:era-n-bound' on page 26 undefined on input line 24
+.
+
+
+LaTeX Warning: Reference `eq:era-q-bound' on page 26 undefined on input line 24
+.
+
+
+LaTeX Warning: Reference `lem:event-mult2-bound' on page 1 undefined on input l
+ine 24.
+
+
+LaTeX Warning: Reference `lem:event-mult1-bound' on page 1 undefined on input l
+ine 24.
+
+
+LaTeX Warning: Reference `lem:event-4-bound-large-input-weight' on page 1 undef
+ined on input line 30.
+
+
+LaTeX Warning: Reference `lem:event-4-bound-large-intermediate-weight' on page 
+1 undefined on input line 31.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 34.
+
+
+Overfull \hbox (26.59515pt too wide) in paragraph at lines 29--35
+[]\OT1/ntxtlf/m/n/10 (-20) We first dis-cuss the triv-ial cases. If $\OML/cmm/m
+/it/10 `[] \OMS/cmsy/m/n/10 ^^U [][]$\OT1/ntxtlf/m/n/10 (-20) , then by |[][] w
+e have $[]\OT1/cmr/m/n/10 (\OMS/cmsy/m/n/10 F[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/1
+0 `[]; `[]; ^^N[]\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10 j
+
+LaTeX Warning: Reference `lem:event-4-bound-small-weight' on page 1 undefined o
+n input line 39.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 46.
+
+
+LaTeX Warning: Reference `eq:event-4-poly-term' on page 26 undefined on input l
+ine 46.
+
+
+LaTeX Warning: Reference `eq:era-n-bound' on page 26 undefined on input line 46
+.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 46.
+
+
+LaTeX Warning: Reference `eq:event-4-poly-term' on page 26 undefined on input l
+ine 46.
+
+
+LaTeX Warning: Reference `eq:era-n-bound' on page 26 undefined on input line 46
+.
+
+[26]
+
+LaTeX Warning: Reference `eq:era-calc-delta-goal' on page 27 undefined on input
+ line 48.
+
+
+LaTeX Warning: Reference `sec:appendix-era-perm' on page 1 undefined on input l
+ine 52.
+
+
+LaTeX Warning: Reference `eq:era-g-delta' on page 27 undefined on input line 13
+1.
+
+
+LaTeX Warning: Reference `eq:era-calc-delta-goal' on page 27 undefined on input
+ line 133.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-exist-root' on page 1 undefin
+ed on input line 134.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-concave' on page 1 undefined 
+on input line 138.
+
+
+LaTeX Warning: Reference `eq:era-g-delta' on page 27 undefined on input line 14
+3.
+
+
+LaTeX Warning: Reference `eq:era-calc-delta-goal' on page 27 undefined on input
+ line 145.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-concave' on page 1 undefined 
+on input line 150.
+
+[27]
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-1' on page 1 unde
+fined on input line 157.
+
+
+LaTeX Warning: Reference `step:compute-delta1' on page 1 undefined on input lin
+e 157.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 157.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 157.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-1' on page 1 unde
+fined on input line 157.
+
+
+LaTeX Warning: Reference `step:compute-delta1' on page 1 undefined on input lin
+e 157.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 157.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 157.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-exist-root' on page 1 undefin
+ed on input line 161.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-1' on page 1 unde
+fined on input line 173.
+
+
+LaTeX Warning: Reference `step:compute-delta1' on page 1 undefined on input lin
+e 173.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 173.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 173.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-1' on page 1 unde
+fined on input line 173.
+
+
+LaTeX Warning: Reference `step:compute-delta1' on page 1 undefined on input lin
+e 173.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 173.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 173.
+
+
+Overfull \hbox (1.01881pt too wide) detected at line 173
+[]
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 28 undefined on input l
+ine 237.
+
+
+LaTeX Warning: Reference `sec:appendix-era-calc-delta' on page 1 undefined on i
+nput line 237.
+
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 28 undefined on input l
+ine 242.
+
+
+LaTeX Warning: Reference `step:compute-delta2' on page 1 undefined on input lin
+e 242.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 242.
+
+
+LaTeX Warning: Reference `eq:era-calc-delta-goal' on page 28 undefined on input
+ line 247.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 251.
+
+)) (./sections/ai-use.tex
+
+LaTeX Warning: Reference `sec:appendix-era-calc-delta' on page 1 undefined on i
+nput line 6.
+
+
+LaTeX Warning: Reference `sec:appendix-era-perm' on page 1 undefined on input l
+ine 6.
+
+) [28] [29{/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/newtx/ntx-ot1-tlf
+-pc.enc}] [30]
+Overfull \hbox (0.1837pt too wide) in paragraph at lines 255--255
+[]\OT1/ntxtlf/m/n/9 (-20) J. Thaler. ``Time-Optimal In-ter-ac-tive Proofs for C
+ir-cuit Eval-u-a-tion''. In: CRYPTO '13. 
+[31] [32] (./sections/preliminaries.tex (./sections/defs/defs-notation.tex
+Overfull \hbox (10.79869pt too wide) in paragraph at lines 33--37
+\OT1/ntxtlf/b/n/10 (-20) Lagrange ba-sis poly-no-mial. \OT1/ntxtlf/m/n/10 (-20)
+ The \OT1/ntxtlf/m/it/10 (-20) La-grange ba-sis poly-no-mial $[][]\OT1/cmr/m/n/
+10 (\OML/cmm/b/it/10 X\OML/cmm/m/it/10 ; \OML/cmm/b/it/10 Y\OT1/cmr/m/n/10 ) :=
+ [][](\OML/cmm/m/it/10 X[]Y[] \OT1/cmr/m/n/10 +
+) (./sections/defs/defs-coding-theory.tex [33] [34]
+Overfull \hbox (3.4239pt too wide) detected at line 82
+[] [] \OMS/cmsy/m/n/10 ^^T \OML/cmm/m/it/10 "[]\OT1/cmr/m/n/10 (\OMS/cmsy/m/n/1
+0 C\OML/cmm/m/it/10 ; `; ^^N\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 :
+
+Overfull \hbox (5.1616pt too wide) in paragraph at lines 105--109
+[]\OT1/ntxtlf/b/n/10 (-20) (Ore-DeMillo-Lipton-Schwartz-Zippel lemma). [][] \OT
+1/ntxtlf/m/it/10 (-20) Let $\OML/cmm/m/it/10 f \OMS/cmsy/m/n/10 2 \U/bbold/m/n/
+10 F[]\OT1/cmr/m/n/10 [\OML/cmm/m/it/10 X[]; [] ; X[]\OT1/cmr/m/n/10 ]$
+
+LaTeX Warning: Reference `lem:sz-lemma' on page 1 undefined on input line 132.
+
+) (./sections/defs/defs-ior.tex [35] [36]
+Overfull \hbox (27.85841pt too wide) detected at line 79
+[] [] \OT1/cmr/m/n/10 = 1\OML/cmm/m/it/10 :
+
+Overfull \hbox (17.48576pt too wide) in paragraph at lines 106--107
+[]\OT1/ntxtlf/m/it/10 (-20) Prover moves: if $[]$ is a tran-script where the pr
+over is about to move and $[]\OT1/cmr/m/n/10 (\U/bbold/m/n/10 x\OML/cmm/m/it/10
+ ; \U/bbold/m/n/10 y\OML/cmm/m/it/10 ; []; \OT1/cmss/m/n/10 w\OT1/cmr/m/n/10 ) 
+=
+
+Overfull \hbox (5.31703pt too wide) in paragraph at lines 108--109
+[]\OT1/ntxtlf/m/it/10 (-20) Full tran-script: if $[] \OT1/cmr/m/n/10 = (\OML/cm
+m/m/it/10 ^^Y[]; []; [] ; ^^Y[]; []\OT1/cmr/m/n/10 )$ \OT1/ntxtlf/m/it/10 (-2
+0) is a full tran-script, then $[]\OT1/cmr/m/n/10 (\U/bbold/m/n/10 x\OML/cmm/m/
+it/10 ; \U/bbold/m/n/10 y\OML/cmm/m/it/10 ; []; \OT1/cmss/m/n/10 w\OT1/cmr/m/n/
+10 ) =
+[37]) (./sections/defs/defs-relations.tex [38])) (./sections/iopp.tex
+
+LaTeX Warning: Reference `def:interleaved-codes' on page 1 undefined on input l
+ine 17.
+
+
+Overfull \hbox (3.49762pt too wide) in paragraph at lines 22--23
+[]\OT1/ntxtlf/m/it/10 (-20) A \OT1/ntxtlf/m/n/10 (-20) mul-ti-lin-ear
+[39]
+
+LaTeX Warning: Reference `alg:iopp' on page 1 undefined on input line 59.
+
+
+LaTeX Warning: Reference `sec:starting-ior' on page 1 undefined on input line 5
+9.
+
+
+LaTeX Warning: Reference `sec:reduce-ior' on page 1 undefined on input line 59.
+
+
+[40]
+
+LaTeX Warning: Reference `alg:iopp' on page 1 undefined on input line 95.
+
+
+LaTeX Warning: Reference `lem:starting-ior' on page 1 undefined on input line 1
+18.
+
+
+LaTeX Warning: Reference `lem:reduce-ior' on page 1 undefined on input line 118
+.
+
+
+LaTeX Warning: Reference `alg:starting-ior' on page 1 undefined on input line 1
+25.
+
+
+LaTeX Warning: Reference `alg:starting-ior' on page 1 undefined on input line 1
+34.
+
+
+LaTeX Warning: Reference `rem:virtual-oracles' on page 1 undefined on input lin
+e 135.
+
+[41]
+
+LaTeX Warning: Reference `def:mutual-correlated-agreement' on page 1 undefined 
+on input line 142.
+
+) (./sections/codeswitching.tex [42]
+
+LaTeX Warning: Reference `fig:reduce-ior' on page 1 undefined on input line 20.
+
+
+(./figures/reduce-ior.tex
+
+LaTeX Warning: Reference `fig:codeswitch-oracles' on page 1 undefined on input 
+line 3.
+
+
+LaTeX Warning: Reference `rem:virtual-oracles' on page 1 undefined on input lin
+e 9.
+
+
+LaTeX Warning: Reference `sec:codeswitch-claims' on page 1 undefined on input l
+ine 29.
+
+
+LaTeX Warning: Reference `sec:codeswitch-claims-overview' on page 1 undefined o
+n input line 29.
+
+
+LaTeX Warning: Reference `fig:codeswitch-claims' on page 1 undefined on input l
+ine 33.
+
+
+Overfull \hbox (81.15982pt too wide) detected at line 54
+[]
+
+Overfull \hbox (62.80147pt too wide) detected at line 59
+[]
+
+Overfull \hbox (4.66599pt too wide) detected at line 67
+[]
+
+Overfull \hbox (20.64021pt too wide) detected at line 73
+[]
+
+Overfull \hbox (16.76575pt too wide) detected at line 86
+[]
+[43] [44]) [45]
+Overfull \hbox (64.93909pt too wide) in paragraph at lines 32--32
+ [] 
+
+LaTeX Warning: Reference `fig:reduce-ior' on page 1 undefined on input line 35.
+
+
+
+LaTeX Warning: Reference `item:reduce-ior-sumcheck-polynomial' on page 1 undefi
+ned on input line 38.
+
+
+LaTeX Warning: Reference `item:reduce-ior-eval-claims' on page 1 undefined on i
+nput line 39.
+
+
+LaTeX Warning: Reference `item:reduce-ior-ood-claims' on page 1 undefined on in
+put line 40.
+
+
+LaTeX Warning: Reference `item:reduce-ior-sumcheck-eval-claims' on page 1 undef
+ined on input line 41.
+
+
+LaTeX Warning: Reference `sec:codeswitch-claims' on page 1 undefined on input l
+ine 45.
+
+
+LaTeX Warning: Reference `sec:codeswitch-efficiency' on page 1 undefined on inp
+ut line 46.
+
+
+LaTeX Warning: Reference `sec:codeswitch-efficiency' on page 1 undefined on inp
+ut line 47.
+
+
+LaTeX Warning: Reference `sec:codeswitch-claims' on page 1 undefined on input l
+ine 61.
+
+[46]
+
+LaTeX Warning: Reference `fig:reduce-ior' on page 1 undefined on input line 92.
+
+
+[47] [48] [49]
+
+LaTeX Warning: Reference `fig:codeswitch-oracles' on page 1 undefined on input 
+line 204.
+
+
+LaTeX Warning: Reference `fig:codeswitch-claims' on page 1 undefined on input l
+ine 204.
+
+
+Overfull \hbox (22.82213pt too wide) in paragraph at lines 204--206
+\OT1/ntxtlf/m/n/10 (-20) We present the helper func-tion $[]$ in |[][] and the 
+sub-pro-to-col $[]$
+
+LaTeX Warning: Reference `sec:codeswitch-efficiency' on page 1 undefined on inp
+ut line 207.
+
+(./figures/CodeswitchOracles.tex [50]) (./figures/CodeswitchClaims.tex
+Underfull \hbox (badness 1389) in paragraph at lines 61--62
+[]$\OT1/cmr/bx/n/10 P$ \OT1/ntxtlf/m/n/10 (+20) com-putes $\OT1/cmr/m/n/10 ([\O
+ML/cmm/b/it/10 a[]\OT1/cmr/m/n/10 ][]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10 [\OML/c
+mm/b/it/10 w[]\OT1/cmr/m/n/10 ][]) \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OML/c
+mm/b/it/10 a\OT1/cmr/m/n/10 )$ \OT1/ntxtlf/m/n/10 (+20) and
+
+Overfull \hbox (14.63733pt too wide) detected at line 80
+[]
+
+Overfull \hbox (29.36131pt too wide) detected at line 92
+[]
+
+Overfull \hbox (8.44225pt too wide) detected at line 96
+[]
+
+Underfull \hbox (badness 1953) in paragraph at lines 132--133
+[]$\OT1/cmr/bx/n/10 P$ \OT1/ntxtlf/m/n/10 (+20) com-putes $\OT1/cmr/m/n/10 ([\O
+ML/cmm/b/it/10 c[]\OT1/cmr/m/n/10 ][]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10 [\OML/c
+mm/b/it/10 w[]\OT1/cmr/m/n/10 ][]) \OMS/cmsy/m/n/10   []\OT1/cmr/m/n/10 (\OML/c
+mm/b/it/10 c\OT1/cmr/m/n/10 )$ \OT1/ntxtlf/m/n/10 (+20) and
+
+Overfull \hbox (17.8301pt too wide) detected at line 151
+[]
+
+Overfull \hbox (30.0245pt too wide) detected at line 163
+[]
+
+Overfull \hbox (11.92587pt too wide) detected at line 167
+[]
+
+LaTeX Warning: Reference `sec:codeswitch-claims-overview' on page 1 undefined o
+n input line 191.
+
+
+Overfull \hbox (11.39326pt too wide) detected at line 194
+[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 w[]\OML/cmm/m/it/10 ; \OML/cmm/b/it/10 v\OM
+L/cmm/m/it/10 ; \OML/cmm/b/it/10 A[]\OML/cmm/m/it/10 ; ^^[[]; \OT1/cmr/m/n/10 (
+[ [\OT1/cmr/bx/n/10 o[]\OT1/cmr/m/n/10 ] ])[]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10
+ ([ [\OML/cmm/b/it/10 w[]\OT1/cmr/m/n/10 ] ])[])\OML/cmm/m/it/10 ;
+
+Overfull \hbox (6.28513pt too wide) detected at line 222
+[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 w[]\OML/cmm/m/it/10 ; \OML/cmm/b/it/10 v\OM
+L/cmm/m/it/10 ; \OML/cmm/b/it/10 A[]\OML/cmm/m/it/10 ; ^^[[]; \OT1/cmr/m/n/10 (
+[ [\OT1/cmr/bx/n/10 o[]\OT1/cmr/m/n/10 ] ])[]\OML/cmm/m/it/10 ; \OT1/cmr/m/n/10
+ ([ [\OML/cmm/b/it/10 w[]\OT1/cmr/m/n/10 ] ])[])\OML/cmm/m/it/10 ;
+
+Underfull \vbox (badness 10000) has occurred while \output is active [51]
+[52] [53] [54] [55])
+Underfull \vbox (badness 10000) has occurred while \output is active [56]
+
+LaTeX Warning: Reference `sec:codeswitch-claims-overview' on page 1 undefined o
+n input line 234.
+
+
+Overfull \hbox (17.06786pt too wide) in paragraph at lines 235--236
+[]\OT1/ntxtlf/m/n/10 (-20) Finally, if $[]$ does not sat-isfy the codeswitch cl
+aims, the claim $[][] []\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/m/n/10 ) \O
+MS/cmsy/m/n/10 ^^A
+
+LaTeX Warning: Reference `fig:reduce-ior' on page 1 undefined on input line 240
+.
+
+
+LaTeX Warning: Reference `sec:codeswitch-prerequisites' on page 1 undefined on 
+input line 244.
+
+[57]
+Overfull \hbox (16.46263pt too wide) detected at line 268
+[] \OML/cmm/m/it/10 f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/m/n/10 ) = \
+OML/cmm/m/it/10 ^^[[]; [] f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/m/n/10
+ ) = \OML/cmm/m/it/10 ^^[[]; [] f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\OT1/cmr/
+m/n/10 ) = \OML/cmm/m/it/10 ^^[[][] [] f[]\OT1/cmr/m/n/10 (\OML/cmm/b/it/10 b\O
+T1/cmr/m/n/10 ) = \OML/cmm/m/it/10 ^^[[];
+[58]
+Overfull \hbox (2.65863pt too wide) in paragraph at lines 305--306
+[]\OT1/ntxtlf/m/n/10 (-20) Firstly, re-call that $\OML/cmm/m/it/10 `[] \OT1/cmr
+/m/n/10 = [][]\OML/cmm/m/it/10 ; `[] \OT1/cmr/m/n/10 = [][]\OML/cmm/m/it/10 ; `
+[] \OT1/cmr/m/n/10 = [][]\OML/cmm/m/it/10 ; `[] \OT1/cmr/m/n/10 = [][]$\OT1/ntx
+tlf/m/n/10 (-20) . 
+[59]
+
+LaTeX Warning: Reference `rem:virtual-oracles' on page 1 undefined on input lin
+e 318.
+
+
+LaTeX Warning: Reference `fig:reduce-ior' on page 1 undefined on input line 325
+.
+
+
+LaTeX Warning: Reference `fig:codeswitch-oracles' on page 1 undefined on input 
+line 325.
+
+
+LaTeX Warning: Reference `fig:codeswitch-claims' on page 1 undefined on input l
+ine 325.
+
+
+LaTeX Warning: Reference `lem:reduce-ior' on page 1 undefined on input line 356
+.
+
+
+Overfull \hbox (75.6265pt too wide) detected at line 361
+[]
+) (./sections/evaluation.tex [60]
+
+LaTeX Warning: Reference `sec:eval-interleaved-iopp' on page 1 undefined on inp
+ut line 25.
+
+
+LaTeX Warning: Reference `sec:eval-iopp-performance' on page 1 undefined on inp
+ut line 29.
+
+[61]
+Overfull \hbox (58.35635pt too wide) in paragraph at lines 106--117
+ [][] 
+
+LaTeX Warning: Reference `lem:event-mult2-bound' on page 1 undefined on input l
+ine 124.
+
+
+LaTeX Warning: Reference `lem:event-mult1-bound' on page 1 undefined on input l
+ine 124.
+
+[62]
+Overfull \hbox (8.50328pt too wide) in paragraph at lines 127--134
+[]\OT1/ntxtlf/m/it/10 (-20) (BaseFold's per-for-mance). [][] \OT1/ntxtlf/m/n/10
+ (-20) De-spite Base-Fold's en-cod-ing time be-ing $\OML/cmm/m/it/10 O\OT1/cmr/
+m/n/10 (\OML/cmm/m/it/10 n [] n\OT1/cmr/m/n/10 )$\OT1/ntxtlf/m/n/10 (-20) ,
+
+LaTeX Warning: Reference `sec:iopp' on page 1 undefined on input line 170.
+
+
+LaTeX Warning: Reference `tab:parameters-iopp' on page 1 undefined on input lin
+e 189.
+
+[63]
+
+LaTeX Warning: Reference `lem:starting-ior' on page 1 undefined on input line 2
+07.
+
+
+LaTeX Warning: Reference `fig:reduce-ior' on page 1 undefined on input line 208
+.
+
+
+LaTeX Warning: Reference `lem:reduce-ior' on page 1 undefined on input line 217
+.
+
+
+LaTeX Warning: Reference `fig:proof-size-vs-logk' on page 1 undefined on input 
+line 242.
+
+[64]) (./sections/appendix/era-mult-appendix.tex)
+(./sections/appendix/era-appendix.tex [65 <./figures/proof_size_vs_logk.pdf>]
+
+LaTeX Warning: Reference `eq:shrinking-messages-q-bound' on page 66 undefined o
+n input line 48.
+
+
+LaTeX Warning: Reference `eq:shrinking-messages-intermediate' on page 66 undefi
+ned on input line 48.
+
+(./proofs/era-mult2-gfunctionmax.tex
+
+LaTeX Warning: Reference `eq:shrinking-messages-intermediate' on page 66 undefi
+ned on input line 11.
+
+
+Overfull \hbox (17.09612pt too wide) detected at line 14
+\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 1)[] \
+OMS/cmsy/m/n/10 ^^U \OT1/cmr/m/n/10 2[] \OMS/cmsy/m/n/10 ^^A \OML/cmm/m/it/10 n
+[] \OMS/cmsy/m/n/10 ^^A [][] ^^A [][] \OML/cmm/m/it/10 :
+
+LaTeX Warning: Reference `eq:shrinking-messages-q-bound' on page 66 undefined o
+n input line 19.
+
+
+LaTeX Warning: Reference `eq:shrinking-messages-intermediate' on page 66 undefi
+ned on input line 19.
+
+)
+Overfull \hbox (23.3544pt too wide) detected at line 51
+\OML/cmm/m/it/10 q \OMS/cmsy/m/n/10 ^^@ \OT1/cmr/m/n/10 1 \OMS/cmsy/m/n/10 ^^U 
+[][] \OML/cmm/m/it/10 ;
+[66] (./proofs/era-mult2-bound.tex
+
+LaTeX Warning: Reference `lem:event-mult1-bound' on page 1 undefined on input l
+ine 9.
+
+
+LaTeX Warning: Reference `lem:large-fraction-intervals-on' on page 1 undefined 
+on input line 10.
+
+
+LaTeX Warning: Reference `lem:event-mult1-bound' on page 1 undefined on input l
+ine 19.
+
+
+LaTeX Warning: Reference `lem:shriking-messages' on page 1 undefined on input l
+ine 27.
+
+
+LaTeX Warning: Reference `eq:shrinking-messages-q-bound' on page 67 undefined o
+n input line 27.
+
+
+LaTeX Warning: Reference `lem:large-fraction-intervals-on' on page 1 undefined 
+on input line 28.
+
+
+LaTeX Warning: Reference `eq:shrinking-messages-q-bound' on page 67 undefined o
+n input line 35.
+
+[67])
+
+LaTeX Warning: Reference `eq:define-g' on page 68 undefined on input line 60.
+
+
+Overfull \hbox (119.71567pt too wide) detected at line 71
+\OML/cmm/m/it/10 N[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n; `[]; `[]; ^^N\OT1/cmr/
+m/n/10 ) := [] [][](\OML/cmm/m/it/10 g\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 n; `[];
+ `[]; m[]\OT1/cmr/m/n/10 )) \OMS/cmsy/m/n/10 ^^A [] \OML/cmm/m/it/10 :
+
+Overfull \hbox (25.55458pt too wide) detected at line 77
+\OML/cmm/m/it/10 N[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]; `[]; ^^N\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^T \OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]c=r\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^A \OT1/cmr/m/n/10 (\OML/cmm/m/it/10 `[]c=r\OT1/cmr/m/n
+/10 ) \OMS/cmsy/m/n/10 ^^A \OT1/cmr/m/n/10 (\OML/cmm/m/it/10 ^^Nn\OT1/cmr/m/n/1
+0 ) \OMS/cmsy/m/n/10 ^^A [][] [] \OML/cmm/m/it/10 ;
+
+LaTeX Warning: Reference `eq:define-f-outer' on page 68 undefined on input line
+ 78.
+
+
+LaTeX Warning: Reference `eq:define-f-middle' on page 68 undefined on input lin
+e 78.
+
+(./proofs/era-perm-max-term.tex (./proofs/era-perm-event-maximize-ell2.tex
+
+LaTeX Warning: Reference `fact:derivatives' on page 1 undefined on input line 2
+.
+
+[68])
+
+LaTeX Warning: Reference `claim:era-perm-event-maximize-ell-two' on page 1 unde
+fined on input line 34.
+
+
+Overfull \hbox (11.61894pt too wide) detected at line 44
+[]
+(./proofs/era-perm-event-maximize-m2.tex [69]
+Overfull \hbox (4.39017pt too wide) detected at line 23
+[]
+
+LaTeX Warning: Reference `eq:c-upper-bound' on page 70 undefined on input line 
+41.
+
+)
+
+LaTeX Warning: Reference `claim:era-perm-event-maximize-m-two' on page 1 undefi
+ned on input line 72.
+
+
+Overfull \hbox (68.84343pt too wide) detected at line 76
+[]
+[70]
+
+LaTeX Warning: Reference `cor:era-iowe-entropy-bound' on page 1 undefined on in
+put line 85.
+
+
+LaTeX Warning: Reference `eq:c-upper-bound' on page 71 undefined on input line 
+95.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-maximize-m-two' on page 1 undefi
+ned on input line 95.
+
+)
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 94.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\delta' on input line 94.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 94.
+
+(./proofs/era-perm-event-d0-concave.tex
+
+LaTeX Warning: Reference `fact:jensens-inequality' on page 1 undefined on input
+ line 12.
+
+
+LaTeX Warning: Reference `eq:era-perm-event-d0-concave-2nd-deriv' on page 71 un
+defined on input line 17.
+
+
+LaTeX Warning: Reference `eq:era-perm-event-d0-concave-2nd-deriv' on page 71 un
+defined on input line 17.
+
+[71]
+
+LaTeX Warning: Reference `fact:titus-lemma' on page 1 undefined on input line 1
+8.
+
+) (./proofs/era-perm-event-d0-exist-root.tex
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-concave' on page 1 undefined 
+on input line 3.
+
+
+Overfull \hbox (87.54593pt too wide) detected at line 6
+[]
+
+Overfull \hbox (91.85593pt too wide) detected at line 10
+[]
+
+Overfull \hbox (6.5227pt too wide) detected at line 15
+[]
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-concave' on page 1 undefined 
+on input line 22.
+
+[72]) (./proofs/era-perm-event-delta-monotone-1.tex
+
+LaTeX Warning: Reference `fact:derivatives' on page 1 undefined on input line 6
+.
+
+) (./proofs/era-perm-event-delta-monotone-2.tex
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-exist-root' on page 1 undefin
+ed on input line 3.
+
+
+LaTeX Warning: Reference `eq:era-perm-event-delta-monotone-1-derivative' on pag
+e 73 undefined on input line 7.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-1' on page 1 unde
+fined on input line 7.
+
+
+LaTeX Warning: Reference `eq:era-perm-event-delta-monotone-1-derivative' on pag
+e 73 undefined on input line 7.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-1' on page 1 unde
+fined on input line 7.
+
+[73])
+
+LaTeX Warning: Reference `eq:era-g-delta' on page 74 undefined on input line 11
+2.
+
+(./proofs/era-perm-event-small-delta.tex
+
+LaTeX Warning: Reference `fact:derivatives' on page 1 undefined on input line 2
+.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-exist-root' on page 1 undefin
+ed on input line 2.
+
+
+Overfull \hbox (29.28561pt too wide) detected at line 17
+[]
+[74]
+
+LaTeX Warning: Reference `fact:titus-lemma' on page 1 undefined on input line 2
+3.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-concave' on page 1 undefined 
+on input line 34.
+
+
+Overfull \hbox (51.45566pt too wide) detected at line 37
+[]
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-concave' on page 1 undefined 
+on input line 38.
+
+
+Overfull \hbox (22.49742pt too wide) detected at line 43
+[]
+)
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 75 undefined on input l
+ine 117.
+
+
+LaTeX Warning: Reference `step:compute-delta2' on page 1 undefined on input lin
+e 117.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 117.
+
+(./proofs/era-calc-delta-2-largest.tex
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-2' on page 1 unde
+fined on input line 6.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-small-delta' on page 1 undefined
+ on input line 8.
+
+[75]
+pdfTeX warning (ext4): destination with the same identifier (name{equation.A.5.
+18}) has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.10 \begin{eqnarray}
+                     
+pdfTeX warning (ext4): destination with the same identifier (name{equation.A.5.
+18}) has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.10 \begin{eqnarray}
+                     
+pdfTeX warning (ext4): destination with the same identifier (name{equation.A.5.
+18}) has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.10 \begin{eqnarray}
+                     
+pdfTeX warning (ext4): destination with the same identifier (name{equation.A.5.
+18}) has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.10 \begin{eqnarray}
+                     
+
+LaTeX Warning: Reference `eq:era-delta-second-cond' on page 76 undefined on inp
+ut line 16.
+
+
+Overfull \hbox (57.74034pt too wide) detected at line 21
+[]
+
+LaTeX Warning: Reference `eq:era-delta-second-cond' on page 76 undefined on inp
+ut line 23.
+
+
+LaTeX Warning: Reference `eq:era-delta-third-cond' on page 76 undefined on inpu
+t line 28.
+
+
+Overfull \hbox (73.29591pt too wide) detected at line 33
+[]
+
+Overfull \hbox (51.63681pt too wide) detected at line 38
+[]\OML/cmm/m/it/10 E[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 d[]; d[]; ^^N[]\OT1/cmr
+/m/n/10 )[][] + []\OML/cmm/m/it/10 E[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 d[]; d[
+]; ^^N[]\OT1/cmr/m/n/10 )[][] \OMS/cmsy/m/n/10 ^^A []\OML/cmm/m/it/10 d[]\OT1/c
+mr/m/n/10 (\OML/cmm/m/it/10 d[]\OT1/cmr/m/n/10 ) = 0\OML/cmm/m/it/10 :
+
+Overfull \hbox (10.77443pt too wide) detected at line 44
+[]
+[76]
+
+LaTeX Warning: Reference `claim:era-perm-event-d0-concave' on page 1 undefined 
+on input line 46.
+
+
+LaTeX Warning: Reference `eq:era-delta-third-cond' on page 77 undefined on inpu
+t line 47.
+
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 77 undefined on input l
+ine 52.
+
+
+LaTeX Warning: Reference `eq:era-delta-second-cond-final' on page 77 undefined 
+on input line 52.
+
+
+LaTeX Warning: Reference `eq:era-delta-third-cond-final' on page 77 undefined o
+n input line 52.
+
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 77 undefined on input l
+ine 53.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-small-delta' on page 1 undefined
+ on input line 53.
+
+
+LaTeX Warning: Reference `step:compute-delta2' on page 1 undefined on input lin
+e 53.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 53.
+
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 77 undefined on input l
+ine 53.
+
+
+LaTeX Warning: Reference `fig:compute-delta-2' on page 1 undefined on input lin
+e 54.
+
+
+LaTeX Warning: Reference `step:compute-delta2' on page 1 undefined on input lin
+e 54.
+
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 77 undefined on input l
+ine 56.
+
+
+LaTeX Warning: Reference `claim:era-perm-event-delta-monotone-2' on page 1 unde
+fined on input line 56.
+
+
+LaTeX Warning: Reference `eq:era-calc-new-goal' on page 77 undefined on input l
+ine 56.
+
+)) [77] (/private/tmp/agnostir-paper-check/agnostir.aux)
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+
+Package biblatex Warning: Please (re)run Biber on the file:
+(biblatex)                agnostir
+(biblatex)                and rerun LaTeX afterwards.
+
+ )
+(see the transcript file for additional information)
+pdfTeX warning (dest): name{Hfootnote.11} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.10} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.9} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.8} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.7} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.6} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.5} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.4} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.3} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.2} has been referenced but does not exist
+, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist
+, replaced by a fixed one
+
+ </Users/anubhavbaweja/Library/texlive/2024/texmf-var/fonts/pk/ljfour/public/bb
+m/bbmbx7.600pk> </Users/anubhavbaweja/Library/texlive/2024/texmf-var/fonts/pk/l
+jfour/public/bbm/bbm7.600pk> </Users/anubhavbaweja/Library/texlive/2024/texmf-v
+ar/fonts/pk/ljfour/public/bbm/bbmbx10.600pk> </Users/anubhavbaweja/Library/texl
+ive/2024/texmf-var/fonts/pk/ljfour/public/bbm/bbm10.600pk></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/bbold-type1/bbold10.pfb></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/bbold-type1/bbold7.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cm/cmbsy10.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmbsy7.pfb></usr/local/texliv
+e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive
+/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx5.pfb></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb></usr/local/texlive/202
+4/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024
+/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex9.pfb></usr/local/texlive/2
+024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2024/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texlive/2024/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/local/texlive/2024/texmf
+-dist/fonts/type1/public/amsfonts/cmextra/cmmib5.pfb></usr/local/texlive/2024/t
+exmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib7.pfb></usr/local/texlive/20
+24/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmmib9.pfb></usr/local/texliv
+e/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/
+2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/202
+4/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmss10.pfb></usr/local/texlive/2024/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmss8.pfb></usr/local/texlive/2024/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmss9.pfb></usr/local/texlive/2024/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmssbx10.pfb></usr/local/texlive/2024/texmf-dist/
+fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2024/texmf-dist/fon
+ts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2024/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2024/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmtt8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1
+/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/t
+ype1/public/stmaryrd/stmary10.pfb></usr/local/texlive/2024/texmf-dist/fonts/typ
+e1/public/txfonts/txtt.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/publ
+ic/newtx/ztmb.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/newtx/
+ztmbi.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/newtx/ztmr.pfb
+></usr/local/texlive/2024/texmf-dist/fonts/type1/public/newtx/ztmri.pfb>
+Output written on /private/tmp/agnostir-paper-check/agnostir.pdf (77 pages, 934
+576 bytes).
+Transcript written on /private/tmp/agnostir-paper-check/agnostir.log.
+Latexmk: Getting log file '/private/tmp/agnostir-paper-check/agnostir.log'
+Latexmk: Examining '/private/tmp/agnostir-paper-check/agnostir.fls'
+Latexmk: Examining '/private/tmp/agnostir-paper-check/agnostir.log'
+Latexmk: Found input bbl file 'agnostir.bbl'
+Latexmk: References changed.
+Latexmk: Log file says output to '/private/tmp/agnostir-paper-check/agnostir.pdf'
+Latexmk: Log file says output to '/private/tmp/agnostir-paper-check/agnostir.pdf'
+Latexmk: No .bib files listed in .aux file 'agnostir.aux'
+Latexmk: applying rule 'bibtex agnostir'...
+Rule 'bibtex agnostir':  Reasons for rerun
+Category 'other':
+  Rerun of 'bibtex agnostir' forced or previously required:
+    Reason or flag: 'Initial set up of rule'
+
+------------
+Run number 1 of rule 'bibtex agnostir'
+------------
+------------
+Running 'bibtex  "agnostir.aux"'
+------------
+This is BibTeX, Version 0.99d (TeX Live 2024)
+The top-level auxiliary file: agnostir.aux
+I found no \citation commands---while reading file agnostir.aux
+I found no \bibdata command---while reading file agnostir.aux
+I found no \bibstyle command---while reading file agnostir.aux
+(There were 3 error messages)
+Latexmk: ====Undefined refs and citations with line #s in .tex file:
+  Reference `sec:intro-era' on page 1 undefined on input line 123
+  Reference `sec:intro-era' on page 1 undefined on input line 123
+  Reference `sec:intro-iopp' on page 1 undefined on input line 132
+  Reference `thm:era' on page 1 undefined on input line 165
+  Reference `tab:era-distance' on page 1 undefined on input line 175
+  Reference `sec:intro-iopp' on page 1 undefined on input line 199
+  Reference `sec:related-work' on page 1 undefined on input line 201
+ And 232 more --- see log file '/private/tmp/agnostir-paper-check/agnostir.log'
+Latexmk: Sometimes, the -f option can be used to get latexmk
+  to try to force complete processing.
+  But normally, you will need to correct the file(s) that caused the
+  error, and then rerun latexmk.
+  In some cases, it is best to clean out generated files before rerunning
+  latexmk after you've corrected the files.
+Latexmk: Summary of warnings from last run of *latex:
+  Latex failed to resolve 239 reference(s)
+Latexmk: Errors, so I did not complete making targets
+Collected error summary (may duplicate other messages):
+  bibtex agnostir: Bibtex errors: See file 'agnostir.blg'
+

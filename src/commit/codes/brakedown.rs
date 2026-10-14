@@ -1,307 +1,256 @@
-//! Brakedown linear-code encoding.
-//!
-//! This module contains only the encoding logic from the Brakedown polynomial
-//! commitment scheme, ported to work over any `p3_field::Field`.
+//! Systematic Brakedown encoder with input-regular expanders and a systematic
+//! Reed–Solomon base case. Setup stores edges by output for cache-friendly gathers.
+use crate::{ErrorCorrectingCode, FieldElement};
+use rand::{Rng, seq::index::sample};
 
-use std::time::Duration;
-
-use rand::Rng;
-
-use crate::{ErrorCorrectingCode, FieldElement, SparseMatEntry, sparse_mat_vec};
-
-/// Parameters that control the Brakedown code construction.
 #[derive(Debug, Clone, Copy)]
 pub struct BrakedownParams {
-    /// Fraction of the message length used for the intermediate vector y.
     pub alpha: f64,
-    /// Codeword-length / message-length ratio.
     pub inverse_rate: f64,
-    /// Column-degree multiplier for the E1 sparse matrix.
     pub cn: usize,
-    /// Column-degree multiplier for the E2 sparse matrix.
     pub dn: usize,
 }
 
-/// Pre-computed code description for Brakedown (all sparse matrices at every
-/// recursion level).
 #[derive(Debug)]
-pub struct BrakedownCode<F> {
-    /// Message length (number of field elements in one row).
-    message_size: usize,
-    /// Code parameters.
-    params: BrakedownParams,
-    /// Sparse matrices E1 at each recursion depth.
-    e1: Vec<Vec<SparseMatEntry<F>>>,
-    /// Sparse matrices E2 at each recursion depth.
-    e2: Vec<Vec<SparseMatEntry<F>>>,
-    /// Cached "tail" constants for the base-case (depth where y_length < 1).
-    base_vals: Vec<F>,
+struct Expander<F> {
+    offsets: Vec<usize>,
+    edges: Vec<(usize, F)>,
 }
 
-/// Compute the derived lengths for a given message length and parameters.
-fn brakedown_code_lengths(
-    cur_msg_length: usize,
-    params: &BrakedownParams,
-) -> (usize, usize, usize, usize) {
-    let cur_codeword_length = (cur_msg_length as f64 * params.inverse_rate) as usize;
-    let cur_y_length = (cur_msg_length as f64 * params.alpha) as usize;
-    let cur_z_length = if cur_y_length >= 1 {
-        (cur_y_length as f64 * params.inverse_rate) as usize
-    } else {
-        0
-    };
-    let cur_v_length = cur_codeword_length - cur_msg_length - cur_z_length;
-    (
-        cur_codeword_length,
-        cur_y_length,
-        cur_z_length,
-        cur_v_length,
-    )
+impl<F: FieldElement> Expander<F> {
+    fn new(input: usize, output: usize, degree: usize, rng: &mut impl Rng) -> Self {
+        assert!(degree <= output && degree > 0);
+        let mut columns = vec![Vec::new(); output];
+        for i in 0..input {
+            // Distinct neighbours for every input, as in the expansion analysis.
+            for j in sample(rng, output, degree) {
+                let mut value = F::random(rng);
+                while value.is_zero() {
+                    value = F::random(rng);
+                }
+                columns[j].push((i, value));
+            }
+        }
+        let mut offsets = Vec::with_capacity(output + 1);
+        let mut edges = Vec::with_capacity(input * degree);
+        offsets.push(0);
+        for column in columns {
+            edges.extend(column);
+            offsets.push(edges.len());
+        }
+        Self { offsets, edges }
+    }
+
+    fn apply(&self, message: &[F]) -> Vec<F> {
+        self.offsets
+            .windows(2)
+            .map(|range| {
+                self.edges[range[0]..range[1]]
+                    .iter()
+                    .map(|&(i, weight)| message[i] * weight)
+                    .fold(F::ZERO, |a, b| a + b)
+            })
+            .collect()
+    }
+}
+
+#[derive(Debug)]
+enum Layer<F> {
+    Recursive {
+        a: Expander<F>,
+        b: Expander<F>,
+        child: Box<BrakedownCode<F>>,
+    },
+    /// Row-major parity part of a systematic RS generator matrix.
+    Base { parity: Vec<Vec<F>> },
+}
+
+#[derive(Debug)]
+pub struct BrakedownCode<F> {
+    message_size: usize,
+    codeword_length: usize,
+    layer: Layer<F>,
 }
 
 impl<F: FieldElement> BrakedownCode<F> {
-    /// Build a new Brakedown code for a given `message_size` and `params`.
-    ///
-    /// This pre-generates all the random sparse matrices needed at every
-    /// recursion level.
     pub fn new(message_size: usize, params: BrakedownParams, rng: &mut impl Rng) -> Self {
-        let mut e1 = Vec::new();
-        let mut e2 = Vec::new();
-        let mut base_vals = Vec::new();
-        let mut cur_msg_length = message_size;
-
-        loop {
-            let (_cw_len, cur_y_length, cur_z_length, cur_v_length) =
-                brakedown_code_lengths(cur_msg_length, &params);
-
-            let mut level_e1 = Vec::new();
-            let mut level_e2 = Vec::new();
-
-            if cur_y_length >= 1 {
-                // E1: maps msg -> y
-                for i in 0..cur_y_length {
-                    let nnz = params.cn;
-                    for _ in 0..nnz {
-                        level_e1.push(SparseMatEntry {
-                            row: rng.random_range(0..cur_msg_length),
-                            col: i,
-                            val: F::random(rng),
-                        });
-                    }
-                }
-
-                // E2: maps z -> v
-                for i in 0..cur_v_length {
-                    let nnz = params.dn;
-                    for _ in 0..nnz {
-                        level_e2.push(SparseMatEntry {
-                            row: rng.random_range(0..cur_z_length),
-                            col: i,
-                            val: F::random(rng),
-                        });
-                    }
-                }
-            } else {
-                // Base case: just store random values
-                for _ in 0..cur_v_length {
-                    base_vals.push(F::random(rng));
-                }
+        assert!(message_size > 0 && u32::try_from(message_size).is_ok());
+        assert!(params.alpha > 0.0 && params.alpha < 1.0 && params.inverse_rate > 1.0);
+        let codeword_length = (message_size as f64 * params.inverse_rate) as usize;
+        let y = (message_size as f64 * params.alpha).ceil() as usize;
+        let z = (y as f64 * params.inverse_rate) as usize;
+        let v = codeword_length
+            .checked_sub(message_size + z)
+            .expect("invalid Brakedown rate/alpha");
+        let layer = if y >= params.cn && v >= params.dn && message_size > 32 {
+            Layer::Recursive {
+                a: Expander::new(message_size, y, params.cn, rng),
+                b: Expander::new(z, v, params.dn, rng),
+                child: Box::new(Self::new(y, params, rng)),
             }
-
-            e1.push(level_e1);
-            e2.push(level_e2);
-
-            if cur_y_length < 1 {
-                break;
+        } else {
+            // Messages are evaluations at 0,...,k-1. Interpolate them at k,...,n-1.
+            // This preserves the systematic layout and gives an MDS base code.
+            assert!(u32::try_from(codeword_length).is_ok());
+            let mut barycentric = Vec::with_capacity(message_size);
+            for i in 0..message_size {
+                let xi = F::from_u32(i as u32);
+                let denominator = (0..message_size)
+                    .filter(|&j| j != i)
+                    .map(|j| xi - F::from_u32(j as u32))
+                    .fold(F::ONE, |a, b| a * b);
+                barycentric.push(
+                    denominator
+                        .inverse()
+                        .expect("field too small for base code"),
+                );
             }
-            cur_msg_length = cur_y_length;
-        }
-
+            let parity = (message_size..codeword_length)
+                .map(|j| {
+                    let x = F::from_u32(j as u32);
+                    let product = (0..message_size)
+                        .map(|i| x - F::from_u32(i as u32))
+                        .fold(F::ONE, |a, b| a * b);
+                    (0..message_size)
+                        .map(|i| {
+                            product
+                                * barycentric[i]
+                                * (x - F::from_u32(i as u32)).inverse().unwrap()
+                        })
+                        .collect()
+                })
+                .collect();
+            Layer::Base { parity }
+        };
         Self {
             message_size,
-            params,
-            e1,
-            e2,
-            base_vals,
+            codeword_length,
+            layer,
         }
     }
 
-    /// Returns the message size this code was built for.
     #[must_use]
-    pub fn message_size(&self) -> usize {
+    pub const fn message_size(&self) -> usize {
         self.message_size
     }
-
-    /// Returns the codeword length for this code.
     #[must_use]
-    pub fn codeword_length(&self) -> usize {
-        let (codeword_length, _, _, _) = brakedown_code_lengths(self.message_size, &self.params);
-        codeword_length
+    pub const fn codeword_length(&self) -> usize {
+        self.codeword_length
     }
 
-    /// Encode a single message (row).
-    pub fn encode(&self, msg: &[F]) -> Vec<F> {
-        assert_eq!(msg.len(), self.message_size);
-        self.encode_recursive(msg, 0)
-    }
-
-    // ── private helpers ──────────────────────────────────────────────────
-
-    fn encode_recursive(&self, msg: &[F], depth: usize) -> Vec<F> {
-        let cur_msg_length = msg.len();
-        let (_cw_len, cur_y_length, _cur_z_length, cur_v_length) =
-            brakedown_code_lengths(cur_msg_length, &self.params);
-
-        let mut x = msg.to_vec();
-
-        if cur_y_length >= 1 {
-            let nnz_e1 = self.params.cn;
-            let y = sparse_mat_vec(msg, &self.e1[depth], cur_y_length, nnz_e1);
-
-            let z = self.encode_recursive(&y, depth + 1);
-
-            let nnz_e2 = self.params.dn;
-            let v = sparse_mat_vec(&z, &self.e2[depth], cur_v_length, nnz_e2);
-
-            x.extend_from_slice(&z);
-            x.extend_from_slice(&v);
-        } else {
-            x.extend_from_slice(&self.base_vals);
+    pub fn encode(&self, message: &[F]) -> Vec<F> {
+        assert_eq!(message.len(), self.message_size);
+        let mut result = Vec::with_capacity(self.codeword_length);
+        result.extend_from_slice(message);
+        match &self.layer {
+            Layer::Recursive { a, b, child } => {
+                let z = child.encode(&a.apply(message));
+                let v = b.apply(&z);
+                result.extend(z);
+                result.extend(v);
+            }
+            Layer::Base { parity } => {
+                result.extend(parity.iter().map(|row| {
+                    row.iter()
+                        .zip(message)
+                        .map(|(&a, &b)| a * b)
+                        .fold(F::ZERO, |a, b| a + b)
+                }));
+            }
         }
-
-        x
-    }
-
-    /// Like [`Self::encode`] but prints per-depth nnz and sparse_mat_vec timings.
-    pub fn encode_profiled(&self, msg: &[F]) -> Vec<F> {
-        assert_eq!(msg.len(), self.message_size);
-        let mut stats = Vec::new();
-        let result = self.encode_recursive_profiled(msg, 0, &mut stats);
-
-        eprintln!();
-        eprintln!(
-            "┌───────┬──────────┬──────────┬──────────┬──────────┬────────────┬────────────┐"
-        );
-        eprintln!(
-            "│ Depth │  msg_len │   y_len  │   z_len  │   v_len  │  E1 spmv   │  E2 spmv   │"
-        );
-        eprintln!(
-            "├───────┼──────────┼──────────┼──────────┼──────────┼────────────┼────────────┤"
-        );
-        for s in &stats {
-            eprintln!(
-                "│ {:>5} │ {:>8} │ {:>8} │ {:>8} │ {:>8} │{:>5}×{:<5} {:>7.3}ms │{:>5}×{:<5} {:>7.3}ms │",
-                s.depth,
-                s.msg_len,
-                s.y_len,
-                s.z_len,
-                s.v_len,
-                s.nnz_e1,
-                s.y_len,
-                s.t_e1.as_secs_f64() * 1e3,
-                s.nnz_e2,
-                s.v_len,
-                s.t_e2.as_secs_f64() * 1e3,
-            );
-        }
-        eprintln!(
-            "└───────┴──────────┴──────────┴──────────┴──────────┴────────────┴────────────┘"
-        );
-
-        let total_e1: Duration = stats.iter().map(|s| s.t_e1).sum();
-        let total_e2: Duration = stats.iter().map(|s| s.t_e2).sum();
-        eprintln!(
-            "  Totals: E1 spmv = {:.3} ms, E2 spmv = {:.3} ms, combined = {:.3} ms",
-            total_e1.as_secs_f64() * 1e3,
-            total_e2.as_secs_f64() * 1e3,
-            (total_e1 + total_e2).as_secs_f64() * 1e3,
-        );
-
+        debug_assert_eq!(result.len(), self.codeword_length);
         result
     }
 
-    fn encode_recursive_profiled(
-        &self,
-        msg: &[F],
-        depth: usize,
-        stats: &mut Vec<BrakedownDepthStats>,
-    ) -> Vec<F> {
-        let cur_msg_length = msg.len();
-        let (_cw_len, cur_y_length, cur_z_length, cur_v_length) =
-            brakedown_code_lengths(cur_msg_length, &self.params);
-
-        let mut x = msg.to_vec();
-
-        if cur_y_length >= 1 {
-            let nnz_e1 = self.params.cn;
-            let t0 = std::time::Instant::now();
-            let y = sparse_mat_vec(msg, &self.e1[depth], cur_y_length, nnz_e1);
-            let t_e1 = t0.elapsed();
-
-            let z = self.encode_recursive_profiled(&y, depth + 1, stats);
-
-            let nnz_e2 = self.params.dn;
-            let t0 = std::time::Instant::now();
-            let v = sparse_mat_vec(&z, &self.e2[depth], cur_v_length, nnz_e2);
-            let t_e2 = t0.elapsed();
-
-            stats.push(BrakedownDepthStats {
-                depth,
-                msg_len: cur_msg_length,
-                y_len: cur_y_length,
-                z_len: cur_z_length,
-                v_len: cur_v_length,
-                nnz_e1,
-                nnz_e2,
-                t_e1,
-                t_e2,
-            });
-
-            x.extend_from_slice(&z);
-            x.extend_from_slice(&v);
-        } else {
-            stats.push(BrakedownDepthStats {
-                depth,
-                msg_len: cur_msg_length,
-                y_len: 0,
-                z_len: 0,
-                v_len: cur_v_length,
-                nnz_e1: 0,
-                nnz_e2: 0,
-                t_e1: Duration::ZERO,
-                t_e2: Duration::ZERO,
-            });
-            x.extend_from_slice(&self.base_vals);
-        }
-
-        x
+    pub fn encode_profiled(&self, message: &[F]) -> Vec<F> {
+        let start = std::time::Instant::now();
+        let codeword = self.encode(message);
+        eprintln!("Brakedown encoding: {:?}", start.elapsed());
+        codeword
     }
-}
-
-struct BrakedownDepthStats {
-    depth: usize,
-    msg_len: usize,
-    y_len: usize,
-    z_len: usize,
-    v_len: usize,
-    nnz_e1: usize,
-    nnz_e2: usize,
-    t_e1: Duration,
-    t_e2: Duration,
 }
 
 impl<F: FieldElement> ErrorCorrectingCode for BrakedownCode<F> {
     type Alphabet = F;
-
     fn message_size(&self) -> usize {
         self.message_size
     }
-
     fn block_length(&self) -> usize {
-        self.codeword_length()
+        self.codeword_length
+    }
+    fn encode(&self, message: &[F]) -> Vec<F> {
+        self.encode(message)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ark_secp256k1::Fr as F;
+    use rand::{SeedableRng, rngs::SmallRng};
+
+    #[test]
+    fn linear_systematic_and_input_regular() {
+        let code = BrakedownCode::<F>::new(
+            128,
+            BrakedownParams {
+                alpha: 0.3,
+                inverse_rate: 2.0,
+                cn: 10,
+                dn: 20,
+            },
+            &mut SmallRng::seed_from_u64(2025),
+        );
+        assert!(
+            code.encode(&vec![F::ZERO; 128])
+                .iter()
+                .all(FieldElement::is_zero)
+        );
+        let a: Vec<_> = (1..=128).map(F::from).collect();
+        let b: Vec<_> = a.iter().map(|&x| x * x).collect();
+        let combined: Vec<_> = a
+            .iter()
+            .zip(&b)
+            .map(|(&x, &y)| x * F::from(7) + y * F::from(9))
+            .collect();
+        let ea = code.encode(&a);
+        let eb = code.encode(&b);
+        assert_eq!(&ea[..128], &a);
+        assert_eq!(
+            code.encode(&combined),
+            ea.iter()
+                .zip(&eb)
+                .map(|(&x, &y)| x * F::from(7) + y * F::from(9))
+                .collect::<Vec<_>>()
+        );
+        if let Layer::Recursive { a, .. } = &code.layer {
+            let mut degrees = vec![0; 128];
+            for &(i, _) in &a.edges {
+                degrees[i] += 1;
+            }
+            assert!(degrees.iter().all(|&degree| degree == 10));
+        } else {
+            panic!("expected recursive test fixture");
+        }
     }
 
-    fn encode(&self, msg: &[Self::Alphabet]) -> Vec<Self::Alphabet> {
-        self.encode(msg)
+    #[test]
+    fn base_case_extends_a_known_polynomial() {
+        let code = BrakedownCode::<F>::new(
+            8,
+            BrakedownParams {
+                alpha: 0.3,
+                inverse_rate: 2.0,
+                cn: 10,
+                dn: 20,
+            },
+            &mut SmallRng::seed_from_u64(1),
+        );
+        let polynomial = |x: F| x * x + F::from(3) * x + F::ONE;
+        let msg: Vec<_> = (0..8).map(|i| polynomial(F::from(i))).collect();
+        assert_eq!(
+            code.encode(&msg),
+            (0..16).map(|i| polynomial(F::from(i))).collect::<Vec<_>>()
+        );
     }
 }

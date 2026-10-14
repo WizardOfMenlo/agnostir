@@ -1,0 +1,39 @@
+perl: warning: Setting locale failed.
+perl: warning: Please check that your locale settings:
+	LC_ALL = "C.UTF-8",
+	LC_CTYPE = "C.UTF-8",
+	LANG = "C.UTF-8"
+    are supported and installed on your system.
+perl: warning: Falling back to the standard locale ("C").
+INFO - This is Biber 2.19
+INFO - Logfile is '/tmp/agnostir-paper-check/agnostir.blg'
+INFO - Reading '/tmp/agnostir-paper-check/agnostir.bcf'
+INFO - Found 44 citekeys in bib section 0
+INFO - Processing section 0
+INFO - Looking for bibtex file 'title-short.bib' for section 0
+INFO - LaTeX decoding ...
+INFO - Found BibTeX data source 'title-short.bib'
+INFO - Looking for bibtex file 'references.bib' for section 0
+INFO - LaTeX decoding ...
+INFO - Found BibTeX data source 'references.bib'
+INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+INFO - Sorting list 'anyt/global//global/global' of type 'entry' with template 'anyt' and locale 'en-US'
+INFO - No sort tailoring available for locale 'en-US'
+INFO - Writing '/tmp/agnostir-paper-check/agnostir.bbl' with encoding 'UTF-8'
+INFO - Output to /tmp/agnostir-paper-check/agnostir.bbl
+WARN - Duplicate entry key: 'GoldreichMW87' in file 'references.bib', skipping ...
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 136, warning: undefined macro "jnt"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 253, warning: undefined macro "cacm"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 577, warning: undefined macro "tcs"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 768, warning: undefined macro "tcs"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 1057, warning: undefined macro "tcs"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 1167, warning: undefined macro "tcs"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 1292, warning: undefined macro "jnt"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 2397, warning: undefined macro "toc"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 4007, warning: undefined macro "jnt"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 4897, warning: undefined macro "cacm"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 5153, warning: undefined macro "cacm"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 5181, warning: undefined macro "tcs"
+WARN - BibTeX subsystem: /var/folders/t_/7nkswy511h9f7ptjn8zsp6xr0000gn/T/biber_tmp_OURa/33e59b5ca9ec342068223d604c3f8d55_70920.utf8, line 5821, warning: undefined macro "toc"
+INFO - WARNINGS: 14
