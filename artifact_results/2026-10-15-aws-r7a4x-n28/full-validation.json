@@ -1,0 +1,80 @@
+[
+  {
+    "protocol": "interleaved-era",
+    "message_log": 28,
+    "eta": 8,
+    "proof_bytes": 40541384,
+    "peak_rss_gib": 58.81653594970703,
+    "setup_seconds": 4.1636183419999995,
+    "commit_seconds": 29.574649361,
+    "evaluation_prover_seconds": 18.131908697,
+    "total_prover_seconds": 47.70655805799999,
+    "verifier_seconds": 1.0461569039999998,
+    "estimated_proof_relative_error": 1.3761056665284599e-05
+  },
+  {
+    "protocol": "interleaved-basefold",
+    "message_log": 28,
+    "eta": 9,
+    "proof_bytes": 33989320,
+    "peak_rss_gib": 40.15424346923828,
+    "setup_seconds": 0.193036096,
+    "commit_seconds": 17.192985125,
+    "evaluation_prover_seconds": 18.089127463,
+    "total_prover_seconds": 35.282112588000004,
+    "verifier_seconds": 0.23244681499999997,
+    "estimated_proof_relative_error": 0.0002284010640443146
+  },
+  {
+    "protocol": "interleaved-brakedown",
+    "message_log": 28,
+    "eta": 9,
+    "proof_bytes": 49624040,
+    "peak_rss_gib": 41.14860153198242,
+    "setup_seconds": 8.54825799,
+    "commit_seconds": 86.29656631900001,
+    "evaluation_prover_seconds": 18.199710203,
+    "total_prover_seconds": 104.496276522,
+    "verifier_seconds": 1.367456387,
+    "estimated_proof_relative_error": -0.00033540049005276185
+  },
+  {
+    "protocol": "interleaved-ea",
+    "message_log": 28,
+    "eta": 9,
+    "proof_bytes": 49622792,
+    "peak_rss_gib": 48.56040954589844,
+    "setup_seconds": 36.257038886000004,
+    "commit_seconds": 937.551700193,
+    "evaluation_prover_seconds": 18.171614771,
+    "total_prover_seconds": 955.723314964,
+    "verifier_seconds": 10.610486717,
+    "estimated_proof_relative_error": -0.0003102591916713804
+  },
+  {
+    "protocol": "era-codeswitch",
+    "message_log": 28,
+    "eta": 10,
+    "proof_bytes": 30348584,
+    "peak_rss_gib": 65.8478889465332,
+    "setup_seconds": 1.896586624,
+    "commit_seconds": 69.689729331,
+    "evaluation_prover_seconds": 18.960244178,
+    "total_prover_seconds": 88.649973509,
+    "verifier_seconds": 0.49871788,
+    "estimated_proof_relative_error": -0.00041730423734109845
+  },
+  {
+    "protocol": "basefold-local",
+    "message_log": 28,
+    "eta": 4,
+    "proof_bytes": 6004040,
+    "peak_rss_gib": 44.276893615722656,
+    "setup_seconds": 9.620743012999998,
+    "commit_seconds": 18.822486376,
+    "evaluation_prover_seconds": 18.706418057,
+    "total_prover_seconds": 37.528904433,
+    "verifier_seconds": 0.056933118,
+    "estimated_proof_relative_error": -0.00471932186268853
+  }
+]

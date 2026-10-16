@@ -1,0 +1,3 @@
+Custom numerical parameters: distance and composed soundness require separate review.
+ERA base parameters: BrakedownParams { alpha: 0.058, inverse_rate: 1.09, cn: 7, dn: 16 }; terminal code: ZeroPadding
+ERA setup complete: 7626.331 ms, inner (1116,1024), ERA length 4981824, index rows 647

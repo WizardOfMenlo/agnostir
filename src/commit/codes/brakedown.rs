@@ -1,7 +1,22 @@
 //! Systematic Brakedown encoder with input-regular expanders and a systematic
-//! Reed–Solomon base case. Setup stores edges by output for cache-friendly gathers.
+//! Reed–Solomon or zero-padding base case. Setup stores edges by output for gathers.
 use crate::{ErrorCorrectingCode, FieldElement};
 use rand::{Rng, seq::index::sample};
+
+fn invert_nonzero<F: FieldElement>(values: &mut [F]) {
+    let mut prefixes = Vec::with_capacity(values.len());
+    let mut product = F::ONE;
+    for &value in values.iter() {
+        prefixes.push(product);
+        product *= value;
+    }
+    let mut inverse = product.inverse().expect("distinct RS evaluation points");
+    for (value, prefix) in values.iter_mut().zip(prefixes).rev() {
+        let original = *value;
+        *value = inverse * prefix;
+        inverse *= original;
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct BrakedownParams {
@@ -9,6 +24,14 @@ pub struct BrakedownParams {
     pub inverse_rate: f64,
     pub cn: usize,
     pub dn: usize,
+}
+
+/// Terminal code for the recursive encoder. Distance analysis must use the
+/// selected code: zero padding has absolute distance one, not the RS distance.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BrakedownBaseCase {
+    ReedSolomon,
+    ZeroPadding,
 }
 
 #[derive(Debug)]
@@ -62,7 +85,10 @@ enum Layer<F> {
         child: Box<BrakedownCode<F>>,
     },
     /// Row-major parity part of a systematic RS generator matrix.
-    Base { parity: Vec<Vec<F>> },
+    Base {
+        parity: Vec<Vec<F>>,
+    },
+    ZeroPadding,
 }
 
 #[derive(Debug)]
@@ -74,6 +100,15 @@ pub struct BrakedownCode<F> {
 
 impl<F: FieldElement> BrakedownCode<F> {
     pub fn new(message_size: usize, params: BrakedownParams, rng: &mut impl Rng) -> Self {
+        Self::new_with_base_case(message_size, params, BrakedownBaseCase::ReedSolomon, rng)
+    }
+
+    pub fn new_with_base_case(
+        message_size: usize,
+        params: BrakedownParams,
+        base_case: BrakedownBaseCase,
+        rng: &mut impl Rng,
+    ) -> Self {
         assert!(message_size > 0 && u32::try_from(message_size).is_ok());
         assert!(params.alpha > 0.0 && params.alpha < 1.0 && params.inverse_rate > 1.0);
         let codeword_length = (message_size as f64 * params.inverse_rate) as usize;
@@ -86,10 +121,12 @@ impl<F: FieldElement> BrakedownCode<F> {
             Layer::Recursive {
                 a: Expander::new(message_size, y, params.cn, rng),
                 b: Expander::new(z, v, params.dn, rng),
-                child: Box::new(Self::new(y, params, rng)),
+                child: Box::new(Self::new_with_base_case(y, params, base_case, rng)),
             }
+        } else if base_case == BrakedownBaseCase::ZeroPadding {
+            Layer::ZeroPadding
         } else {
-            // Messages are evaluations at 0,...,k-1. Interpolate them at k,...,n-1.
+            // Messages are evaluations at indexed, distinct field points.
             // This preserves the systematic layout and gives an MDS base code.
             assert!(u32::try_from(codeword_length).is_ok());
             let mut barycentric = Vec::with_capacity(message_size);
@@ -99,24 +136,19 @@ impl<F: FieldElement> BrakedownCode<F> {
                     .filter(|&j| j != i)
                     .map(|j| xi - F::from_u32(j as u32))
                     .fold(F::ONE, |a, b| a * b);
-                barycentric.push(
-                    denominator
-                        .inverse()
-                        .expect("field too small for base code"),
-                );
+                barycentric.push(denominator);
             }
+            invert_nonzero(&mut barycentric);
             let parity = (message_size..codeword_length)
                 .map(|j| {
                     let x = F::from_u32(j as u32);
-                    let product = (0..message_size)
+                    let mut differences: Vec<_> = (0..message_size)
                         .map(|i| x - F::from_u32(i as u32))
-                        .fold(F::ONE, |a, b| a * b);
+                        .collect();
+                    let product = differences.iter().copied().fold(F::ONE, |a, b| a * b);
+                    invert_nonzero(&mut differences);
                     (0..message_size)
-                        .map(|i| {
-                            product
-                                * barycentric[i]
-                                * (x - F::from_u32(i as u32)).inverse().unwrap()
-                        })
+                        .map(|i| product * barycentric[i] * differences[i])
                         .collect()
                 })
                 .collect();
@@ -143,6 +175,7 @@ impl<F: FieldElement> BrakedownCode<F> {
         let mut result = Vec::with_capacity(self.codeword_length);
         result.extend_from_slice(message);
         match &self.layer {
+            Layer::ZeroPadding => result.resize(self.codeword_length, F::ZERO),
             Layer::Recursive { a, b, child } => {
                 let z = child.encode(&a.apply(message));
                 let v = b.apply(&z);
@@ -252,5 +285,50 @@ mod tests {
             code.encode(&msg),
             (0..16).map(|i| polynomial(F::from(i))).collect::<Vec<_>>()
         );
+    }
+
+    #[test]
+    fn recursive_zero_padding_is_linear_and_has_no_rs_leaf() {
+        let code = BrakedownCode::<F>::new_with_base_case(
+            512,
+            BrakedownParams {
+                alpha: 0.026,
+                inverse_rate: 1.075,
+                cn: 9,
+                dn: 16,
+            },
+            BrakedownBaseCase::ZeroPadding,
+            &mut SmallRng::seed_from_u64(2025),
+        );
+        let Layer::Recursive { child, .. } = &code.layer else {
+            panic!("expected sparse recursion")
+        };
+        assert!(matches!(child.layer, Layer::ZeroPadding));
+        assert_eq!((child.message_size, child.codeword_length), (14, 15));
+        for i in 0..14 {
+            let mut unit = vec![F::ZERO; 14];
+            unit[i] = F::ONE;
+            assert_eq!(
+                child.encode(&unit).iter().filter(|x| !x.is_zero()).count(),
+                1
+            );
+        }
+        let a: Vec<_> = (0..512).map(|i| F::from(i + 1)).collect();
+        let b: Vec<_> = a.iter().map(|x| *x * *x).collect();
+        let c: Vec<_> = a
+            .iter()
+            .zip(&b)
+            .map(|(x, y)| *x + F::from(3) * *y)
+            .collect();
+        let ea = code.encode(&a);
+        let eb = code.encode(&b);
+        assert_eq!(
+            code.encode(&c),
+            ea.iter()
+                .zip(&eb)
+                .map(|(x, y)| *x + F::from(3) * *y)
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(&ea[..512], &a);
     }
 }

@@ -6,7 +6,9 @@ use ark_ff::{BigInt, PrimeField};
 pub use ark_secp256k1::Fr as Scalar;
 pub mod fractional;
 pub mod merkle;
+pub mod profile;
 pub mod sumcheck;
+pub(crate) mod weights;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 pub enum ProofError {
@@ -47,18 +49,54 @@ pub struct Channel<'a> {
     input: Option<&'a [u8]>,
     output: Vec<u8>,
     cursor: usize,
+    profile: Option<profile::Profile>,
 }
 
 impl<'a> Channel<'a> {
     pub fn new(domain: &[u8], input: Option<&'a [u8]>) -> Self {
+        // Wire-format compatibility: keep this domain fixed for reference proofs.
         let mut channel = Self {
             state: blake3::Hasher::new_derive_key("agnostir Fiat-Shamir v1"),
             input,
             output: Vec::new(),
             cursor: 0,
+            profile: None,
         };
         channel.bind(b"protocol", domain);
         channel
+    }
+
+    pub fn enable_profile(&mut self) {
+        assert!(self.profile.is_none());
+        self.profile = Some(profile::Profile::default());
+    }
+
+    fn position(&self) -> usize {
+        if self.input.is_some() {
+            self.cursor
+        } else {
+            self.output.len()
+        }
+    }
+
+    pub fn profile_start(&mut self, name: &str) -> Option<usize> {
+        let position = self.position();
+        self.profile.as_mut().map(|p| p.start(name, position))
+    }
+
+    pub fn profile_end(&mut self, token: Option<usize>) {
+        let position = self.position();
+        if let Some(token) = token {
+            self.profile.as_mut().unwrap().end(token, position);
+        }
+    }
+
+    pub fn finish_profiled(self) -> ProofResult<(Vec<u8>, profile::Profile)> {
+        ensure(self.input.is_none_or(|input| self.cursor == input.len()))?;
+        let position = self.position();
+        let profile = self.profile.unwrap_or_default();
+        profile.assert_complete(position);
+        Ok((self.output, profile))
     }
 
     pub fn bind(&mut self, label: &[u8], bytes: &[u8]) {

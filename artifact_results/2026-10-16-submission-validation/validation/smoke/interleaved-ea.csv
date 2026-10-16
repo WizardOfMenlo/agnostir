@@ -1,0 +1,2 @@
+protocol,field,code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted
+interleaved-fs-v1,secp256k1-scalar,ea,18,2,2025,8,0,32,131072,3839.817659,817.500208,34.810061,788.027140,2114920,32,true

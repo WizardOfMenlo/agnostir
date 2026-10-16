@@ -1,0 +1,44 @@
+[
+  {
+    "case": "basefold:n18:eta2",
+    "proof": "basefold.proof",
+    "bytes": 2114376,
+    "sha256": "bb2255fec8062ce497b8984c16762067487aa22ad35a12f9fbdb75c0d9539347",
+    "matched_reference": false
+  },
+  {
+    "case": "brakedown:n18:eta2",
+    "proof": "brakedown.proof",
+    "bytes": 2114088,
+    "sha256": "eb361714a8ad082f96e1398a8b94f20a4ed37f55d43aab363a659c0fb1041232",
+    "matched_reference": false
+  },
+  {
+    "case": "ea:n18:eta2",
+    "proof": "ea.proof",
+    "bytes": 2114920,
+    "sha256": "5356f700c60812fa412670eadebe5e875f4d63a9552423a3d916b2893201c081",
+    "matched_reference": false
+  },
+  {
+    "case": "era:n18:eta2",
+    "proof": "era.proof",
+    "bytes": 2115976,
+    "sha256": "b58b4e3ba5dfffa1a0db1afb5ac51be7f97c2bad7b0bff3badfa67b5be986f02",
+    "matched_reference": false
+  },
+  {
+    "case": "era-corrected:n10:eta2",
+    "proof": "proofs/era-corrected.proof",
+    "bytes": 232712,
+    "sha256": "af422bdb2170e6ad0b2be38dcf05ca061e57910dcf5aeead78c49f0cfd9e37ef",
+    "matched_reference": false
+  },
+  {
+    "case": "basefold-local:n10:eta2",
+    "proof": "proofs/basefold-local.proof",
+    "bytes": 17192,
+    "sha256": "05a7d0143533be04d26e51f2243759e2887c3729539a02ef125e281e32455e27",
+    "matched_reference": false
+  }
+]

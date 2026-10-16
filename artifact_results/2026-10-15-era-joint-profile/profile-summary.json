@@ -1,0 +1,720 @@
+{
+  "status": "all proofs verified; byte accounting and cross-run identities agree",
+  "results": [
+    {
+      "protocol": "era-corrected",
+      "threads": 16,
+      "samples": 1,
+      "proof_bytes": 3622568,
+      "proof_blake3": "858ccbe1ec0f9b87e895d556be97b17907a2c9ed04fe8877bfa6825ee561dd51",
+      "metrics": {
+        "setup_ms": {
+          "median": 40355.247512,
+          "mean": 40355.247512,
+          "min": 40355.247512,
+          "max": 40355.247512
+        },
+        "commit_ms": {
+          "median": 26165.571933,
+          "mean": 26165.571933,
+          "min": 26165.571933,
+          "max": 26165.571933
+        },
+        "prove_ms": {
+          "median": 102136.062628,
+          "mean": 102136.062628,
+          "min": 102136.062628,
+          "max": 102136.062628
+        },
+        "verify_ms": {
+          "median": 10357.805314,
+          "mean": 10357.805314,
+          "min": 10357.805314,
+          "max": 10357.805314
+        },
+        "total_prover_ms": {
+          "median": 128301.634561,
+          "mean": 128301.634561,
+          "min": 128301.634561,
+          "max": 128301.634561
+        }
+      },
+      "stages": {
+        "prove": {
+          "calls": 1,
+          "inclusive_bytes": 3622568,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 102136.053087,
+            "mean": 102136.053087
+          },
+          "exclusive_ms": {
+            "median": 1167.258118,
+            "mean": 1167.258118
+          }
+        },
+        "prove/accumulator_claims": {
+          "calls": 1,
+          "inclusive_bytes": 288,
+          "exclusive_bytes": 288,
+          "inclusive_ms": {
+            "median": 1597.412978,
+            "mean": 1597.412978
+          },
+          "exclusive_ms": {
+            "median": 1597.412978,
+            "mean": 1597.412978
+          }
+        },
+        "prove/auxiliary_witness": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 2036.775303,
+            "mean": 2036.775303
+          },
+          "exclusive_ms": {
+            "median": 2036.775303,
+            "mean": 2036.775303
+          }
+        },
+        "prove/claim_reduction": {
+          "calls": 1,
+          "inclusive_bytes": 1362816,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 12334.305906,
+            "mean": 12334.305906
+          },
+          "exclusive_ms": {
+            "median": 575.797553,
+            "mean": 575.797553
+          }
+        },
+        "prove/claim_reduction/batched_sumcheck": {
+          "calls": 1,
+          "inclusive_bytes": 2688,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 3206.285823,
+            "mean": 3206.285823
+          },
+          "exclusive_ms": {
+            "median": 452.080866,
+            "mean": 452.080866
+          }
+        },
+        "prove/claim_reduction/batched_sumcheck/polynomial_evaluation": {
+          "calls": 21,
+          "inclusive_bytes": 2688,
+          "exclusive_bytes": 2688,
+          "inclusive_ms": {
+            "median": 2098.136891,
+            "mean": 2098.136891
+          },
+          "exclusive_ms": {
+            "median": 2098.136891,
+            "mean": 2098.136891
+          }
+        },
+        "prove/claim_reduction/batched_sumcheck/table_folding": {
+          "calls": 21,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 656.0680660000003,
+            "mean": 656.0680660000003
+          },
+          "exclusive_ms": {
+            "median": 656.0680660000003,
+            "mean": 656.0680660000003
+          }
+        },
+        "prove/claim_reduction/build_tables": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 6033.757064,
+            "mean": 6033.757064
+          },
+          "exclusive_ms": {
+            "median": 6033.757064,
+            "mean": 6033.757064
+          }
+        },
+        "prove/claim_reduction/endpoint_checks": {
+          "calls": 1,
+          "inclusive_bytes": 1984,
+          "exclusive_bytes": 1984,
+          "inclusive_ms": {
+            "median": 322.136206,
+            "mean": 322.136206
+          },
+          "exclusive_ms": {
+            "median": 322.136206,
+            "mean": 322.136206
+          }
+        },
+        "prove/claim_reduction/oracle_fold": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 339.309366,
+            "mean": 339.309366
+          },
+          "exclusive_ms": {
+            "median": 339.309366,
+            "mean": 339.309366
+          }
+        },
+        "prove/claim_reduction/terminal_basefold": {
+          "calls": 1,
+          "inclusive_bytes": 1358144,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 1857.019894,
+            "mean": 1857.019894
+          },
+          "exclusive_ms": {
+            "median": 142.092461,
+            "mean": 142.092461
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/fold_commitments": {
+          "calls": 10,
+          "inclusive_bytes": 288,
+          "exclusive_bytes": 288,
+          "inclusive_ms": {
+            "median": 769.1873290000001,
+            "mean": 769.1873290000001
+          },
+          "exclusive_ms": {
+            "median": 769.1873290000001,
+            "mean": 769.1873290000001
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/fold_sumchecks": {
+          "calls": 10,
+          "inclusive_bytes": 960,
+          "exclusive_bytes": 960,
+          "inclusive_ms": {
+            "median": 56.44669199999999,
+            "mean": 56.44669199999999
+          },
+          "exclusive_ms": {
+            "median": 56.44669199999999,
+            "mean": 56.44669199999999
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/folded_oracle_openings": {
+          "calls": 9,
+          "inclusive_bytes": 525600,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 4.158849,
+            "mean": 4.158849
+          },
+          "exclusive_ms": {
+            "median": 0.04885,
+            "mean": 0.04885
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/folded_oracle_openings/authentication_hashes": {
+          "calls": 9,
+          "inclusive_bytes": 435808,
+          "exclusive_bytes": 435808,
+          "inclusive_ms": {
+            "median": 2.9287479999999997,
+            "mean": 2.9287479999999997
+          },
+          "exclusive_ms": {
+            "median": 2.9287479999999997,
+            "mean": 2.9287479999999997
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/folded_oracle_openings/columns": {
+          "calls": 9,
+          "inclusive_bytes": 89792,
+          "exclusive_bytes": 89792,
+          "inclusive_ms": {
+            "median": 1.181251,
+            "mean": 1.181251
+          },
+          "exclusive_ms": {
+            "median": 1.181251,
+            "mean": 1.181251
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/source_0_openings": {
+          "calls": 1,
+          "inclusive_bytes": 462752,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 4.729067,
+            "mean": 4.729067
+          },
+          "exclusive_ms": {
+            "median": 0.360703,
+            "mean": 0.360703
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/source_0_openings/authentication_hashes": {
+          "calls": 1,
+          "inclusive_bytes": 73376,
+          "exclusive_bytes": 73376,
+          "inclusive_ms": {
+            "median": 0.631437,
+            "mean": 0.631437
+          },
+          "exclusive_ms": {
+            "median": 0.631437,
+            "mean": 0.631437
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/source_0_openings/columns": {
+          "calls": 1,
+          "inclusive_bytes": 389376,
+          "exclusive_bytes": 389376,
+          "inclusive_ms": {
+            "median": 3.736927,
+            "mean": 3.736927
+          },
+          "exclusive_ms": {
+            "median": 3.736927,
+            "mean": 3.736927
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/source_1_openings": {
+          "calls": 1,
+          "inclusive_bytes": 303008,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 2.349213,
+            "mean": 2.349213
+          },
+          "exclusive_ms": {
+            "median": 0.213022,
+            "mean": 0.213022
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/source_1_openings/authentication_hashes": {
+          "calls": 1,
+          "inclusive_bytes": 73376,
+          "exclusive_bytes": 73376,
+          "inclusive_ms": {
+            "median": 0.618966,
+            "mean": 0.618966
+          },
+          "exclusive_ms": {
+            "median": 0.618966,
+            "mean": 0.618966
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/source_1_openings/columns": {
+          "calls": 1,
+          "inclusive_bytes": 229632,
+          "exclusive_bytes": 229632,
+          "inclusive_ms": {
+            "median": 1.517225,
+            "mean": 1.517225
+          },
+          "exclusive_ms": {
+            "median": 1.517225,
+            "mean": 1.517225
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/terminal_encoding": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 1.447565,
+            "mean": 1.447565
+          },
+          "exclusive_ms": {
+            "median": 1.447565,
+            "mean": 1.447565
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/terminal_message": {
+          "calls": 1,
+          "inclusive_bytes": 65536,
+          "exclusive_bytes": 65536,
+          "inclusive_ms": {
+            "median": 0.446685,
+            "mean": 0.446685
+          },
+          "exclusive_ms": {
+            "median": 0.446685,
+            "mean": 0.446685
+          }
+        },
+        "prove/claim_reduction/terminal_basefold/virtual_codeword": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 876.162033,
+            "mean": 876.162033
+          },
+          "exclusive_ms": {
+            "median": 876.162033,
+            "mean": 876.162033
+          }
+        },
+        "prove/era_openings": {
+          "calls": 1,
+          "inclusive_bytes": 2199424,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 2142.598128,
+            "mean": 2142.598128
+          },
+          "exclusive_ms": {
+            "median": 2127.39092,
+            "mean": 2127.39092
+          }
+        },
+        "prove/era_openings/authentication_hashes": {
+          "calls": 1,
+          "inclusive_bytes": 380800,
+          "exclusive_bytes": 380800,
+          "inclusive_ms": {
+            "median": 2.806707,
+            "mean": 2.806707
+          },
+          "exclusive_ms": {
+            "median": 2.806707,
+            "mean": 2.806707
+          }
+        },
+        "prove/era_openings/columns": {
+          "calls": 1,
+          "inclusive_bytes": 1818624,
+          "exclusive_bytes": 1818624,
+          "inclusive_ms": {
+            "median": 12.400501,
+            "mean": 12.400501
+          },
+          "exclusive_ms": {
+            "median": 12.400501,
+            "mean": 12.400501
+          }
+        },
+        "prove/header": {
+          "calls": 1,
+          "inclusive_bytes": 40,
+          "exclusive_bytes": 40,
+          "inclusive_ms": {
+            "median": 0.01253,
+            "mean": 0.01253
+          },
+          "exclusive_ms": {
+            "median": 0.01253,
+            "mean": 0.01253
+          }
+        },
+        "prove/initial_claims_and_oods": {
+          "calls": 1,
+          "inclusive_bytes": 800,
+          "exclusive_bytes": 800,
+          "inclusive_ms": {
+            "median": 3189.916227,
+            "mean": 3189.916227
+          },
+          "exclusive_ms": {
+            "median": 3189.916227,
+            "mean": 3189.916227
+          }
+        },
+        "prove/interleaved_row_fold": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 669.836282,
+            "mean": 669.836282
+          },
+          "exclusive_ms": {
+            "median": 669.836282,
+            "mean": 669.836282
+          }
+        },
+        "prove/online_commitment": {
+          "calls": 1,
+          "inclusive_bytes": 32,
+          "exclusive_bytes": 32,
+          "inclusive_ms": {
+            "median": 16900.156112,
+            "mean": 16900.156112
+          },
+          "exclusive_ms": {
+            "median": 746.084174,
+            "mean": 746.084174
+          }
+        },
+        "prove/online_commitment/encode": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 14632.429368,
+            "mean": 14632.429368
+          },
+          "exclusive_ms": {
+            "median": 14632.429368,
+            "mean": 14632.429368
+          }
+        },
+        "prove/online_commitment/merkle": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 1521.64257,
+            "mean": 1521.64257
+          },
+          "exclusive_ms": {
+            "median": 1521.64257,
+            "mean": 1521.64257
+          }
+        },
+        "prove/permutation_checks": {
+          "calls": 1,
+          "inclusive_bytes": 53184,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 46344.359391,
+            "mean": 46344.359391
+          },
+          "exclusive_ms": {
+            "median": 57.008796,
+            "mean": 57.008796
+          }
+        },
+        "prove/permutation_checks/denominators": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 6614.173274,
+            "mean": 6614.173274
+          },
+          "exclusive_ms": {
+            "median": 6614.173274,
+            "mean": 6614.173274
+          }
+        },
+        "prove/permutation_checks/logup_gkr": {
+          "calls": 1,
+          "inclusive_bytes": 51456,
+          "exclusive_bytes": 13056,
+          "inclusive_ms": {
+            "median": 26954.377473,
+            "mean": 26954.377473
+          },
+          "exclusive_ms": {
+            "median": 919.6924,
+            "mean": 919.6924
+          }
+        },
+        "prove/permutation_checks/logup_gkr/fraction_trees": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 7263.377145,
+            "mean": 7263.377145
+          },
+          "exclusive_ms": {
+            "median": 7263.377145,
+            "mean": 7263.377145
+          }
+        },
+        "prove/permutation_checks/logup_gkr/layer_sumchecks": {
+          "calls": 25,
+          "inclusive_bytes": 38400,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 9078.491545,
+            "mean": 9078.491545
+          },
+          "exclusive_ms": {
+            "median": 970.712241,
+            "mean": 970.712241
+          }
+        },
+        "prove/permutation_checks/logup_gkr/layer_sumchecks/polynomial_evaluation": {
+          "calls": 300,
+          "inclusive_bytes": 38400,
+          "exclusive_bytes": 38400,
+          "inclusive_ms": {
+            "median": 6728.470721,
+            "mean": 6728.470721
+          },
+          "exclusive_ms": {
+            "median": 6728.470721,
+            "mean": 6728.470721
+          }
+        },
+        "prove/permutation_checks/logup_gkr/layer_sumchecks/table_folding": {
+          "calls": 300,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 1379.3085830000002,
+            "mean": 1379.3085830000002
+          },
+          "exclusive_ms": {
+            "median": 1379.3085830000002,
+            "mean": 1379.3085830000002
+          }
+        },
+        "prove/permutation_checks/logup_gkr/layer_tables": {
+          "calls": 25,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 9692.816383,
+            "mean": 9692.816383
+          },
+          "exclusive_ms": {
+            "median": 9692.816383,
+            "mean": 9692.816383
+          }
+        },
+        "prove/permutation_checks/terminal_linear_claims": {
+          "calls": 1,
+          "inclusive_bytes": 1728,
+          "exclusive_bytes": 1728,
+          "inclusive_ms": {
+            "median": 12718.799848,
+            "mean": 12718.799848
+          },
+          "exclusive_ms": {
+            "median": 12718.799848,
+            "mean": 12718.799848
+          }
+        },
+        "prove/public_evaluation": {
+          "calls": 1,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 4469.709704,
+            "mean": 4469.709704
+          },
+          "exclusive_ms": {
+            "median": 4469.709704,
+            "mean": 4469.709704
+          }
+        },
+        "prove/starting_sumcheck": {
+          "calls": 1,
+          "inclusive_bytes": 2688,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 8589.069331,
+            "mean": 8589.069331
+          },
+          "exclusive_ms": {
+            "median": 5269.170153,
+            "mean": 5269.170153
+          }
+        },
+        "prove/starting_sumcheck/polynomial_evaluation": {
+          "calls": 28,
+          "inclusive_bytes": 2688,
+          "exclusive_bytes": 2688,
+          "inclusive_ms": {
+            "median": 1964.3116569999995,
+            "mean": 1964.3116569999995
+          },
+          "exclusive_ms": {
+            "median": 1964.3116569999995,
+            "mean": 1964.3116569999995
+          }
+        },
+        "prove/starting_sumcheck/table_folding": {
+          "calls": 28,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 1355.5875210000002,
+            "mean": 1355.5875210000002
+          },
+          "exclusive_ms": {
+            "median": 1355.5875210000002,
+            "mean": 1355.5875210000002
+          }
+        },
+        "prove/tensor_check": {
+          "calls": 1,
+          "inclusive_bytes": 3296,
+          "exclusive_bytes": 480,
+          "inclusive_ms": {
+            "median": 2694.643077,
+            "mean": 2694.643077
+          },
+          "exclusive_ms": {
+            "median": 2605.087123,
+            "mean": 2605.087123
+          }
+        },
+        "prove/tensor_check/polynomial_evaluation": {
+          "calls": 22,
+          "inclusive_bytes": 2816,
+          "exclusive_bytes": 2816,
+          "inclusive_ms": {
+            "median": 58.57658300000001,
+            "mean": 58.57658300000001
+          },
+          "exclusive_ms": {
+            "median": 58.57658300000001,
+            "mean": 58.57658300000001
+          }
+        },
+        "prove/tensor_check/table_folding": {
+          "calls": 22,
+          "inclusive_bytes": 0,
+          "exclusive_bytes": 0,
+          "inclusive_ms": {
+            "median": 30.979371,
+            "mean": 30.979371
+          },
+          "exclusive_ms": {
+            "median": 30.979371,
+            "mean": 30.979371
+          }
+        }
+      }
+    }
+  ],
+  "unprofiled_controls": [
+    {
+      "protocol": "era-corrected",
+      "message_log": "28",
+      "eta": "6",
+      "output_log": "21",
+      "output_log_rate": "3",
+      "terminal_log": "11",
+      "seed": "2025",
+      "threads": "16",
+      "sample": "0",
+      "setup_ms": "40310.097802",
+      "commit_ms": "26168.974457",
+      "prove_ms": "101904.679299",
+      "verify_ms": "10283.650861",
+      "proof_bytes": "3622568",
+      "index_rows": "39",
+      "online_rows": "23",
+      "accepted": "true",
+      "proof_blake3": "858ccbe1ec0f9b87e895d556be97b17907a2c9ed04fe8877bfa6825ee561dd51",
+      "gkr_checkpoints": "",
+      "checkpoint_rows": "0"
+    }
+  ]
+}

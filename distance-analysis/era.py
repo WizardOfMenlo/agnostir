@@ -1,356 +1,235 @@
-'''
-This script follows Figure 1: CalcDist in the ERA analysis section, please refer to the paper for more details.
-'''
+"""Numerical implementation of the ERA draft's CalcDist figure.
+
+This checks equations and feasibility; it is NOT an interval-arithmetic proof
+that all solutions of the Hessian system have been found. n and q arguments
+are log2(block length) and log2(field size), respectively.
+"""
+
+import argparse
+import math
+from functools import lru_cache
 
 import numpy as np
-from scipy.optimize import root
-import argparse
-import sys
-
-def solve_system(c, r, gamma, db):
-    """
-    Solves for relative distance of ERA code given c, r, gamma and db.
-    """
-
-    # Pre-compute common constants dependent on c and r
-    A = 1 - c/r
-    B = c/r
-    h_arg_const = B / A
-    h_arg_const = np.clip(h_arg_const, 1e-16, 1.0 - 1e-16)
-
-    # delta initial guess based on setting derivative wrt to d1 = 0 and exponent = -gamma
-    current_delta_guess = 0.0
-
-    # Binary entropy function (using base-2 log)
-    def H(x):
-        x = np.clip(x, 1e-16, 1.0 - 1e-16)
-        return -x * np.log2(x) - (1 - x) * np.log2(1 - x)
-
-    # Derivative of binary entropy function
-    def Hprime(x):
-        x = np.clip(x, 1e-16, 1.0 - 1e-16)
-        return np.log2((1 - x) / x)
-
-    # Second derivative of binary entropy function
-    def Hprimeprime(x):
-        x = np.clip(x, 1e-16, 1.0 - 1e-16)
-        return -1.0 / (x * (1 - x) * np.log(2))
-
-    # Compute exponent 
-    def exponent_term(d0, d1, delta):
-
-        # E1: (1/r) * H(d0)
-        E1 = (1.0 / r) * H(d0)
-        
-        # E2: d0 * (1-c/r) * H(c/(r-c))
-        E2 = d0 * A * H(h_arg_const)
-        
-        # E3: d1 * H( d0(1-c/r)/d1 )
-        arg_E3 = (d0 * A) / d1
-        E3 = d1 * H(arg_E3)
-        
-        # E4: (1-d1) * H( d0*c / (r*(1-d1)) )
-        arg_E4 = (d0 * B) / (1 - d1)
-        E4 = (1 - d1) * H(arg_E4)
-        
-        # E5: -H(d0)
-        E5 = -H(d0)
-        
-        # E6: d1 * (1-c/r) * H(c/(r-c))
-        E6 = d1 * A * H(h_arg_const)
-        
-        # E7: delta * H( d1(1-c/r)/delta )
-        arg_E7 = (d1 * A) / delta
-        E7 = delta * H(arg_E7)
-        
-        # E8: (1-delta) * H( d1*c/r / (1-delta) )
-        arg_E8 = (d1 * B) / (1 - delta)
-        E8 = (1 - delta) * H(arg_E8)
-        
-        # E9: -H(d1)
-        E9 = -H(d1)
-        
-        total_exponent = E1 + E2 + E3 + E4 + E5 + E6 + E7 + E8 + E9
-
-        return total_exponent
-    
-    # compute derivative of exponent wrt d1
-    def d1_prime(d0, d1, delta):
-
-        # 1. Derivative of d1 * H( (d0*(1-c/r))/d1 )
-        # Result: -log2( 1 - d0 * A / d1 )
-        arg_log1 = 1 - (d0 * A / d1)
-        arg_log1 = np.maximum(arg_log1, 1e-16)
-        term_d1_1 = -np.log2(arg_log1)
-        
-        # 2. Derivative of (1-d1) * H( (d0*c) / (r*(1-d1)) )
-        # Result: log2( 1 - d0 * B / (1-d1) )
-        arg_log2 = 1 - (d0 * B / (1 - d1))
-        arg_log2 = np.maximum(arg_log2, 1e-16)
-        term_d1_2 = np.log2(arg_log2)
-
-        # 3. Derivative of d1 * (1-c/r) * H(c/(r-c))
-        # Result: (1-c/r) * H(c/(r-c))
-        term_d1_3 = A * H(h_arg_const)
-        
-        # 4. Derivative of delta * H( d1(1-c/r)/delta )
-        # Result: (1-c/r) * log2( delta / (d1(1-c/r)) - 1 )
-        term_d1_4 = A * Hprime(d1 * A / delta)
-        
-        # 5. Derivative of (1-delta) * H( d1*c/r / (1-delta) )
-        # Result: (c/r) * log2( r(1-delta)/(d1*c) - 1 )
-        term_d1_5 = B * Hprime(d1 * B / (1 - delta))
-        
-        # 6. Derivative of -H(d1)
-        # Result: log2( d1 / (1-d1) )
-        term_d1_6 = -Hprime(d1)
-        
-        total_derivative = term_d1_1 + term_d1_2 + term_d1_3 + term_d1_4 + term_d1_5 + term_d1_6
-
-        return total_derivative
-    
-    # compute derivative of exponent wrt d1
-    def d0_prime(d0, d1, delta):
-
-        # 1. Derivative of ((1/r) - 1) * H(d0)
-        # Result: (1/r - 1) * log2( (1-d0)/d0 )
-        term_d0_1 = (1.0 / r - 1.0) * Hprime(d0)
-
-        # 2. Derivative of d0 * (1-c/r) * H(c/(r-c))
-        # Result: (1-c/r) * H(c/(r-c))
-        term_d0_2 = A * H(h_arg_const)
-
-        # 3. Derivative of d1 * H( d0(1-c/r)/d1 )
-        # Result: A * log2( (d1 / (d0*A)) - 1 )
-        term_d0_3 = A * Hprime(d0 * A / d1)
-
-        # 4. Derivative of (1-d1) * H( d0*c / (r*(1-d1)) )
-        # Result: B * log2( (r*(1-d1) / (d0*c)) - 1 )
-        term_d0_4 = B * Hprime((d0 * B) / (1 - d1))
-
-        total_derivative = term_d0_1 + term_d0_2 + term_d0_3 + term_d0_4
-
-        return total_derivative
-
-    # compute second derivative of exponent wrt d0
-    def d0_prime_prime(d0, d1, delta):
-
-        X = d0 * A / d1
-        Y = (d0 * B) / (1.0 - d1)
-
-        term_00_1 = (1.0 / r - 1.0) * Hprimeprime(d0)
-        term_00_2 = (A ** 2) / d1 * Hprimeprime(X)
-        term_00_3 = (B ** 2) / (1.0 - d1) * Hprimeprime(Y)
-
-        return term_00_1 + term_00_2 + term_00_3
-    
-    # compute second derivative of exponent wrt d1
-    def d1_prime_prime(d0, d1, delta):
-
-        X = d0 * A / d1
-        Y = (d0 * B) / (1.0 - d1)
-
-        term_11_1 = X**2 * Hprimeprime(X) / d1
-        term_11_2 = Y**2 * Hprimeprime(Y) / (1.0 - d1)
-        term_11_3 = A**2 * Hprimeprime(d1 * A / delta) / delta
-        term_11_4 = B**2 * Hprimeprime(d1 * B / (1.0 - delta)) / (1.0 - delta)
-        term_11_5 = - Hprimeprime(d1)
-
-        return term_11_1 + term_11_2 + term_11_3 + term_11_4 + term_11_5
-        
-    # compute mixed derivative of exponent wrt d1 and d0
-    def d0_d1_mixed_prime(d0, d1, delta):
-
-        X = d0 * A / d1
-        Y = (d0 * B) / (1.0 - d1)
-
-        # Compute Mixed Partial Derivative E_01 (d^2E / dd0 dd1)
-        # Formula: (-X^2 * H''(X) + Y^2 * H''(Y)) / d0
-        return (-X**2 * Hprimeprime(X) + Y**2 * Hprimeprime(Y)) / d0
-
-    def solve_for_delta(vars):
-        d1, delta = vars
-        d1 = np.clip(d1, 1e-16, 1.0 - 1e-16)
-        delta = np.clip(delta, 1e-16, 1.0 - 1e-16)
-
-        eq1 = d1_prime(db, d1, delta)
-        eq2 = gamma + exponent_term(db, d1, delta)
-        return [eq1, eq2]
-
-    def verify(vars):
-        d0, d1, delta = vars
-        d0 = np.clip(d0, 1e-16, 1.0 - 1e-16)
-        d1 = np.clip(d1, 1e-16, 1.0 - 1e-16)
-        delta = np.clip(delta, 1e-16, 1.0 - 1e-16)
-
-        eq1 = d0_prime(d0, d1, delta)
-        eq2 = d1_prime(d0, d1, delta)
-        eq3 = d0_prime_prime(d0, d1, delta) * d1_prime_prime(d0, d1, delta) - (d0_d1_mixed_prime(d0, d1, delta))**2
-
-        return [eq1, eq2, eq3]
+from scipy.optimize import brentq, root
+from scipy.special import expit, logit, xlogy
 
 
-    # Compute delta_1^* as defined in Figure 1
-    guesses_first_system = [
-        [1e-8, 0.1], [1e-6, 0.1], [1e-4, 0.1], [1e-3, 0.1],
-        [0.1, 0.3], [0.15, 0.4], [0.2, 0.5], [0.3, 0.7],
-        [0.05, 0.3], [0.2, 0.4], [0.5, 0.8],
-    ]
-    sol = None
-    for x0 in guesses_first_system:
-        temp_sol = root(solve_for_delta, x0, method='lm')
+def entropy(x):
+    if not np.isfinite(x) or not 0 <= x <= 1:
+        raise ValueError("entropy argument outside [0, 1]")
+    return -(xlogy(x, x) + xlogy(1-x, 1-x)) / math.log(2)
 
-        if temp_sol.success and np.max(np.abs(temp_sol.fun)) < 1e-12 \
-            and np.all((temp_sol.x > 1e-16)) \
-            and temp_sol.x[0] > db * (1 - c/r) \
-            and temp_sol.x[1] > temp_sol.x[0] * (1 - c/r) \
-            and temp_sol.x[1] < (1.0 - c / r) ** 2:
 
-            current_delta_guess = temp_sol.x[1]
-            print(f"Guess for delta: {current_delta_guess}")
-            sol = current_delta_guess
-            break
+def entropy_prime(x):
+    if not 0 < x < 1:
+        raise ValueError("entropy derivative requires 0 < x < 1")
+    return (math.log1p(-x) - math.log(x)) / math.log(2)
 
-    if sol is None:
-        print("Failed to compute delta_1^*: likely that the value of n is too small.")
-        return None
 
-    # Compute delta_2^* as defined in Figure 1
-    guesses_second_system = [
-        [x/8, x/2, x] for x in np.arange(0, 1, 0.001) 
-    ]
-    best_verify_sol = None
-    for x0 in guesses_second_system:
-        verify_sol = root(verify, x0, method='lm')
-        new_delta_guess = verify_sol.x[2]
-    
-        if verify_sol.success and np.max(np.abs(verify_sol.fun)) < 1e-12 \
-            and np.all((verify_sol.x > 1e-16)) \
-            and verify_sol.x[1] > verify_sol.x[0] * (1 - c/r) \
-            and new_delta_guess > verify_sol.x[1] * (1 - c/r) \
-            and new_delta_guess < (1.0 - c / r) ** 2:
+def entropy_second(x):
+    if not 0 < x < 1:
+        raise ValueError("entropy second derivative requires 0 < x < 1")
+    return -1 / (x * (1-x) * math.log(2))
 
-            # Pick the solution with the smallest verify_sol.x[2]
-            if best_verify_sol is None or new_delta_guess < best_verify_sol:
-                print(f"Found new solution for 3 equations: (d0, d1, delta_2^*) = ({verify_sol.x})")
-                best_verify_sol = new_delta_guess
-            
 
-    if sol > best_verify_sol:
-        print(f"Guess for delta: {current_delta_guess} is invalid: exponent not minimized at d0 = {db}. Maximum possible delta: {best_verify_sol}")
-        sol = best_verify_sol
-    else:
-        print(f"Guess for delta: {current_delta_guess} is valid.")
+class Exponent:
+    """E_perm/n in eq:event-4-exp-term, with its analytic gradient/Hessian."""
 
-    return sol
+    def __init__(self, c, r):
+        if not (isinstance(r, (int, np.integer)) and r >= 4 and
+                math.isfinite(c) and 1 < c < r/2*(1-1/math.sqrt(5))):
+            raise ValueError("CalcDist requires integer r>=4 and 1<c<r/2*(1-1/sqrt(5))")
+        self.r, self.A, self.B = r, 1-c/r, c/r
+        self.constant = self.A * entropy(self.B/self.A)
+
+    def arguments(self, d0, d1, delta):
+        A, B = self.A, self.B
+        if not (0 < d0 < 1 and d0*A < d1 < 1 and d1*A < delta < A*A):
+            raise ValueError("weights outside the interior feasible domain")
+        args = (d0*A/d1, d0*B/(1-d1), d1*A/delta, d1*B/(1-delta))
+        if not all(0 < x < 1 for x in args):
+            raise ValueError("infeasible entropy ratio")
+        return args
+
+    def value(self, d0, d1, delta):
+        x, y, u, v = self.arguments(d0, d1, delta)
+        return ((1/self.r-1)*entropy(d0) + (d0+d1)*self.constant
+                + d1*entropy(x) + (1-d1)*entropy(y)
+                + delta*entropy(u) + (1-delta)*entropy(v) - entropy(d1))
+
+    def derivatives(self, d0, d1, delta):
+        x, y, u, v = self.arguments(d0, d1, delta)
+        A, B = self.A, self.B
+        p, pp = entropy_prime, entropy_second
+        e0 = (1/self.r-1)*p(d0) + self.constant + A*p(x) + B*p(y)
+        e1 = (-math.log1p(-x)+math.log1p(-y))/math.log(2) + self.constant + A*p(u)+B*p(v)-p(d1)
+        e00 = (1/self.r-1)*pp(d0)+A*A/d1*pp(x)+B*B/(1-d1)*pp(y)
+        e11 = x*x/d1*pp(x)+y*y/(1-d1)*pp(y)+A*A/delta*pp(u)+B*B/(1-delta)*pp(v)-pp(d1)
+        e01 = (-x*x*pp(x)+y*y*pp(y))/d0
+        return np.array([e0, e1]), np.array([[e00, e01], [e01, e11]])
+
+    def maximizing_d1(self, d0, delta):
+        # E is strictly concave in d1. Its derivative has opposite infinite
+        # limits at d0*A and delta/A; bracket the unique interior maximum.
+        lo, hi = d0*self.A, delta/self.A
+        gap = hi-lo
+        if gap <= 0:
+            raise ValueError("empty d1 interval")
+        margin = max(gap*1e-11, 8*math.ulp(hi))
+        a, b = lo+margin, hi-margin
+        if a >= b:
+            raise ValueError("d1 interval is too narrow for float64")
+        return brentq(lambda d1: self.derivatives(d0, d1, delta)[0][1], a, b,
+                      xtol=1e-14, rtol=1e-14)
+
+
+def _validate_inputs(r, secparam, db, n_log, q_log=None):
+    if not isinstance(r, (int, np.integer)) or r < 4:
+        raise ValueError("r must be an integer >=4")
+    if not math.isfinite(secparam) or secparam <= 0 or not 0 < db < 1:
+        raise ValueError("positive security and 0<base distance<1 required")
+    if not math.isfinite(n_log) or not 0 <= n_log <= 1000:
+        raise ValueError("invalid log2 block length")
+    if q_log is not None and (not math.isfinite(q_log) or q_log <= 1):
+        raise ValueError("log2 field size must exceed one")
+
+
+def field_bound_log2(c, r, secparam, db, n_log):
+    """Log2 of the right side of CalcDist step 1 (a bound on q-1)."""
+    alpha = 1 - (c/(math.e*r))**(c/r)
+    return (-math.log2(db) + (r-r*alpha+1+c*alpha)*math.log2(math.e)
+            + c*alpha*math.log2(r/c) - (r-r*alpha)*math.log2(1-alpha)
+            + r*(2*secparam+4+4*n_log)/(db*2**n_log)) / (c-1)
 
 
 def compute_c_from_q_bound(r, secparam, db, n_lower_bound, q_lower_bound):
-    """
-    Calculates the lower bound for q based on step 1 of Figure 1.
-    """
-    def rhs_log2(c_val):
-        alpha = 1 - (c_val / (np.e * r)) ** (c_val / r)
-        term1 = -np.log2(db) 
-        term2 = (r - r * alpha + 1 + c_val * alpha) * np.log2(np.e) 
-        term3 = c_val * alpha * np.log2(r / c_val)
-        term4 = - (r - r * alpha) * np.log2(1 - alpha)
-        term5 = (r * (2 * secparam + 4 + 4 * n_lower_bound)) / (db * (2 ** n_lower_bound))
-        return (term1 + term2 + term3 + term4 + term5) / (c_val - 1)
-    
-    # Find c such that rhs_log2(c) = q_lower_bound
-    def equation_to_solve(c_val):
-        return rhs_log2(c_val) - q_lower_bound
-
-    # Initial guesses for c    
-    c_guesses = [1.1, 1.5, 2.0, 3.0, 5.0, 10.0]
-
-    c_value = None
-    for x0 in c_guesses:
-        temp_sol = root(equation_to_solve, x0, method='lm')
-        if temp_sol.success and temp_sol.x > 1:
-            c_value = temp_sol.x[0]
-            break
-
-    return c_value
+    _validate_inputs(r, secparam, db, n_lower_bound, q_lower_bound)
+    # Figure 1 equates q_min - 1, NOT q_min, to its RHS.
+    target = q_lower_bound + math.log1p(-2.0**(-q_lower_bound))/math.log(2)
+    lower = math.nextafter(1.0, math.inf)
+    upper = math.nextafter(r/2*(1-1/math.sqrt(5)), 1.0)
+    fun = lambda c: field_bound_log2(c, r, secparam, db, n_lower_bound)-target
+    if fun(upper) >= 0:
+        return None
+    c = brentq(fun, lower, upper, xtol=5e-15, rtol=1e-14)
+    if abs(fun(c)) > 1e-8 * max(1, abs(target)):
+        return None
+    # Round toward the feasible (larger c) side, then check the inequality.
+    c = math.nextafter(c, upper)
+    for _ in range(128):
+        if fun(c) <= 0:
+            return c
+        c = math.nextafter(c, upper)
+    return None
 
 
 def compute_gamma_from_n_bound(r, c, secparam, n_lower_bound):
-    """
-    Calculates the value of gamma based on step 2 of Figure 1.
-    """
-    term_inside_log = (c**2 * (r-c)**3) / (r**5)
+    _validate_inputs(r, secparam, 0.5, n_lower_bound)
+    Exponent(c, r)
     n = 2**n_lower_bound
-    return (secparam + 1 + np.log2(term_inside_log) + 7 * np.log2(n + 1)) / n
+    return (secparam+1+math.log2(c*c*(r-c)**3/r**5)+7*math.log2(n+1))/n
 
 
-def run_simulation():
-    r_values = [4, 6, 8, 10, 16, 25, 50, 100]
-    db_values = [0.001, 0.003, 0.01, 0.03]
-    n_val = 20.0
-    q_val = 256.0
-    secparam = 100
+@lru_cache(maxsize=256)
+def critical_delta(c, r):
+    """Step 4: smallest admissible root FOUND, not an all-roots certificate."""
+    exponent = Exponent(c, r)
+    A = exponent.A
 
-    lines = []
-    header = f"| delta_B \\ r | " + " | ".join([f"{r}" for r in r_values]) + " |"
-    separator = "| :--- | " + " | ".join([":---:" for _ in r_values]) + " |"
-    lines.extend([header, separator])
+    def unpack(z):
+        # Interior parameterization prevents evaluating fictitious clipped
+        # entropy values outside the weight polytope.
+        s0, s1, s2 = expit(z)
+        delta = A*A*s2
+        d1 = delta/A*s1
+        d0 = d1/A*s0
+        return d0, d1, delta
 
-    for db in db_values:
-        row_str = f"| **{db}** |"
-        for r in r_values:
+    def equations(z):
+        try:
+            with np.errstate(over='raise', invalid='raise', divide='raise'):
+                d0, d1, delta = unpack(z)
+                grad, hessian = exponent.derivatives(d0, d1, delta)
+                # det(H)=0 iff H11-H01^2/H00=0; scaling avoids huge determinants.
+                schur = hessian[1, 1]-hessian[0, 1]**2/hessian[0, 0]
+                return [grad[0], grad[1], schur*d1]
+        except (ValueError, ZeroDivisionError, FloatingPointError):
+            return [1e6, 1e6, 1e6]
 
-            c = compute_c_from_q_bound(r, secparam, db, n_val, q_val)
-            c_upper_bound = (r / 2) * (1 - 1 / np.sqrt(5))
+    candidates = []
+    for s0 in (0.03, 0.15, 0.5):
+        for s1 in (0.08, 0.3, 0.7):
+            for s2 in (0.15, 0.4, 0.7, 0.9):
+                result = root(equations, logit([s0, s1, s2]), method='hybr', tol=1e-10)
+                if not result.success or not np.all(np.isfinite(result.x)):
+                    continue
+                point = unpack(result.x)
+                try:
+                    with np.errstate(over='raise', invalid='raise', divide='raise'):
+                        grad, hessian = exponent.derivatives(*point)
+                except (ValueError, FloatingPointError, ZeroDivisionError):
+                    continue
+                if not np.all(np.isfinite(grad)) or not np.all(np.isfinite(hessian)):
+                    continue
+                det = np.linalg.det(hessian)
+                scale = max(1, abs(hessian[0, 0]*hessian[1, 1]), hessian[0, 1]**2)
+                if np.max(np.abs(grad)) < 1e-8 and abs(det)/scale < 1e-9:
+                    candidates.append(point)
+    if not candidates:
+        return None
+    return min(candidates, key=lambda point: point[2])
 
-            gamma = compute_gamma_from_n_bound(r, c, secparam, n_val)
-            
-            val_str = "-"
-            if c is not None and (1 < c < c_upper_bound):
-                # 3. Solve System
-                delta = solve_system(c, r, gamma, db)
-                if delta is not None:
-                    val_str = f"{delta:.4f}"
-                else:
-                    val_str = "No Sol"
-            else:
-                val_str = "Inv c"
-            
-            row_str += f" {val_str} |"
-        lines.append(row_str)
 
-    with open("table.txt", "w", encoding="ascii") as outfile:
-        outfile.write("\n".join(lines) + "\n")
+def solve_details(c, r, gamma, db):
+    exponent = Exponent(c, r)
+    if not (0 < gamma < db < 1):
+        raise ValueError("the ERA theorem requires 0<gamma<base distance<1")
+    A = exponent.A
+
+    def boundary_value(delta):
+        d1 = exponent.maximizing_d1(db, delta)
+        return gamma+exponent.value(db, d1, delta)
+
+    lower, upper = db*A*A*(1+1e-5), A*A*(1-1e-8)
+    try:
+        delta1 = brentq(boundary_value, lower, upper, xtol=1e-13, rtol=1e-13)
+    except ValueError:
+        return None
+    d1 = exponent.maximizing_d1(db, delta1)
+    if abs(boundary_value(delta1)) > 1e-9:
+        return None
+    critical = critical_delta(c, r)
+    if critical is None:
+        return None
+    return {"delta": min(delta1, critical[2]), "delta1": delta1,
+            "d1_at_delta1": d1, "delta2": critical[2],
+            "critical_point": list(critical),
+            "scope": "numerical CalcDist candidate; no certified all-roots isolation"}
 
 
-if __name__ == "__main__":
+def solve_system(c, r, gamma, db):
+    """Compatibility API; return None if either root computation fails."""
+    result = solve_details(c, r, gamma, db)
+    return None if result is None else result['delta']
 
-    # run_simulation()
 
-    parser = argparse.ArgumentParser(description="Given lower bounds on block length (n) and field size (q), compute the relative distance of ERA code given repetition parameter r and base code distance db.")
-    
-    parser.add_argument("-n", type=float, default=20.0, help="Lower bound for block length (n) in log2")
-    parser.add_argument("-q", type=float, default=192.0, help="Lower bound for field size (q) in log2")
-    parser.add_argument("-secparam", type=int, default=100, help="Soundness parameter")
-    parser.add_argument("-r", type=int, required=True, help="Repetition parameter")
-    parser.add_argument("-db", type=float, required=True, help="Relative distance of base code")
-
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-n', type=float, default=20, help='log2 of minimum ERA block length')
+    parser.add_argument('-q', type=float, default=192, help='lower bound on log2 field size')
+    parser.add_argument('-secparam', type=int, default=100)
+    parser.add_argument('-r', type=int, required=True)
+    parser.add_argument('-db', type=float, required=True, help='separately justified base-code distance')
     args = parser.parse_args()
-
-    c = compute_c_from_q_bound(args.r, args.secparam, args.db, args.n, args.q)
-    c_upper_bound = (args.r / 2) * (1 - 1 / np.sqrt(5))
-    if c is None \
-        or not (1 < c < c_upper_bound):
-        print(f"Error: Could not compute a valid c value. For r={args.r}, need 1 < c < {c_upper_bound}. Got {c}. Likely that the value of q/n/db is too small.")
-        sys.exit(1)
-    print(f"Computed c: {c}")
-
-    gamma = compute_gamma_from_n_bound(args.r, c, args.secparam, args.n)
-    print(f"Computed gamma: {gamma}")
-
-    result = solve_system(c, args.r, gamma, args.db)
-    if result is not None:
-        print(f"ERA code has relative distance: {result}")
-    else:
-        print("Error: Could not compute relative distance.")
-        sys.exit(1)
+    try:
+        c = compute_c_from_q_bound(args.r, args.secparam, args.db, args.n, args.q)
+        if c is None:
+            raise ValueError('no feasible c satisfies the field-size bound')
+        gamma = compute_gamma_from_n_bound(args.r, c, args.secparam, args.n)
+        result = solve_details(c, args.r, gamma, args.db)
+        if result is None:
+            raise ValueError('failed to find and validate both CalcDist roots')
+    except (ValueError, OverflowError) as error:
+        parser.error(str(error))
+    import json
+    print(json.dumps({'c': c, 'gamma': gamma, **result}, indent=2))

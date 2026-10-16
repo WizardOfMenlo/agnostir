@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-16",
+  "scope": "Repository cleanup and local macOS validation; no new AWS performance campaign.",
+  "rust_sources_unchanged": 50,
+  "cargo_manifests_unchanged": true,
+  "final_parameters_unchanged": true,
+  "reference_proof_hashes_unchanged": true,
+  "default_rust_tests": 204,
+  "serial_rust_tests": 203,
+  "distance_tests": 18,
+  "model_tests": 2,
+  "accepted_smoke_proofs": 6,
+  "source_snapshot_verified_files": 480,
+  "full_size_dry_run_cases": 6,
+  "full_size_log": 28,
+  "full_size_workers": 16,
+  "warmups": 1,
+  "samples": 1,
+  "packaged_proof_size_audit_matches_saved_json": true
+}

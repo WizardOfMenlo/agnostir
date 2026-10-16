@@ -1,0 +1,2 @@
+ERA base parameters: BrakedownParams { alpha: 0.05, inverse_rate: 1.1, cn: 6, dn: 40 }; terminal code: ReedSolomon
+ERA setup complete: 2.297 ms, inner (17,16), ERA length 1156, index rows 81

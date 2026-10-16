@@ -4,10 +4,13 @@ use super::{Channel, ProofResult, Scalar, ensure, sumcheck};
 use crate::FieldElement;
 use p3_maybe_rayon::prelude::*;
 
+pub(crate) mod checkpointed;
+
 type FractionLayer = (Vec<Scalar>, Vec<Scalar>);
 
 fn tree(denominators: Vec<Scalar>, real_len: usize) -> Vec<FractionLayer> {
     let numerators: Vec<Scalar> = (0..denominators.len())
+        .into_par_iter()
         .map(|i| {
             if i < real_len {
                 Scalar::ONE
@@ -19,12 +22,12 @@ fn tree(denominators: Vec<Scalar>, real_len: usize) -> Vec<FractionLayer> {
     let mut layers = vec![(numerators, denominators)];
     while layers.last().unwrap().0.len() > 1 {
         let (n, d) = layers.last().unwrap();
-        let pairs: Vec<_> = n
+        let pair = n
             .par_chunks_exact(2)
             .zip(d.par_chunks_exact(2))
             .map(|(n, d)| (n[0] * d[1] + n[1] * d[0], d[0] * d[1]))
-            .collect();
-        layers.push(pairs.into_iter().unzip());
+            .unzip();
+        layers.push(pair);
     }
     layers.reverse();
     layers
@@ -43,7 +46,13 @@ pub fn prove_or_verify(
     if let Some(denominators) = &denominators {
         ensure(denominators.len() == 4 && denominators.iter().all(|d| d.len() == padded))?;
     }
-    let trees = denominators.map(|d| d.into_iter().map(|d| tree(d, real_len)).collect::<Vec<_>>());
+    let span = channel.profile_start("fraction_trees");
+    let mut trees = denominators.map(|d| {
+        d.into_par_iter()
+            .map(|d| tree(d, real_len))
+            .collect::<Vec<_>>()
+    });
+    channel.profile_end(span);
     let roots = trees.as_ref().map(|trees| {
         trees
             .iter()
@@ -66,15 +75,24 @@ pub fn prove_or_verify(
             power *= beta;
         }
         let claim = sumcheck::dot(&claims, &weights);
-        let tables = trees.as_ref().map(|trees| {
-            let mut tables = Vec::with_capacity(17);
-            for tree in trees {
-                let (n, d) = &tree[layer + 1];
-                tables.push(n.iter().step_by(2).copied().collect());
-                tables.push(n.iter().skip(1).step_by(2).copied().collect());
-                tables.push(d.iter().step_by(2).copied().collect());
-                tables.push(d.iter().skip(1).step_by(2).copied().collect());
-            }
+        let span = channel.profile_start("layer_tables");
+        let tables = trees.as_mut().map(|trees| {
+            // A layer is used exactly once. Split its numerator/denominator
+            // tables in parallel, then free the original storage immediately.
+            // Indexed collection preserves the old transcript's factor order.
+            let parts: Vec<_> = trees
+                .par_iter_mut()
+                .map(|tree| {
+                    let (n, d) = std::mem::take(&mut tree[layer + 1]);
+                    let (n0, n1): (Vec<_>, Vec<_>) =
+                        n.par_chunks_exact(2).map(|v| (v[0], v[1])).unzip();
+                    drop(n);
+                    let (d0, d1): (Vec<_>, Vec<_>) =
+                        d.par_chunks_exact(2).map(|v| (v[0], v[1])).unzip();
+                    [n0, n1, d0, d1]
+                })
+                .collect();
+            let mut tables: Vec<_> = parts.into_iter().flatten().collect();
             tables.push(sumcheck::eq_weights(&point));
             tables
         });
@@ -87,8 +105,11 @@ pub fn prove_or_verify(
                 ]
             })
             .collect();
+        channel.profile_end(span);
+        let span = channel.profile_start("layer_sumchecks");
         let (r, final_claim, evaluations) =
             sumcheck::sumcheck(channel, tables, &terms, layer, claim)?;
+        channel.profile_end(span);
         let children = channel.fields(evaluations.as_ref().map(|e| &e[..16]), 16)?;
         let expected: Scalar = (0..4)
             .map(|i| {

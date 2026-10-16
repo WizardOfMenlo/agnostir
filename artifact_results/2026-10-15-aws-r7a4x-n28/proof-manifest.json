@@ -1,0 +1,38 @@
+[
+  {
+    "protocol": "interleaved-era",
+    "path": "results/aws-r7a4x-n28-20261015/remote/results/full-n28/interleaved-era-n28-eta8/proof.bin",
+    "bytes": 40541384,
+    "sha256": "fba9ac68646d564c3eedfed5372a9d246ac08786dcb35a5c4ace792b049f6b91"
+  },
+  {
+    "protocol": "interleaved-basefold",
+    "path": "results/aws-r7a4x-n28-20261015/remote/results/full-n28/interleaved-basefold-n28-eta9/proof.bin",
+    "bytes": 33989320,
+    "sha256": "28e967cef8417336534e926ab7d5a215853178c3576b00bcf1358b17f07a9d15"
+  },
+  {
+    "protocol": "interleaved-brakedown",
+    "path": "results/aws-r7a4x-n28-20261015/remote/results/full-n28/interleaved-brakedown-n28-eta9/proof.bin",
+    "bytes": 49624040,
+    "sha256": "2e06d66093f9c8354f2ce6c7ec4e95649c54564cfa7ea17ea756788aecc2af24"
+  },
+  {
+    "protocol": "interleaved-ea",
+    "path": "results/aws-r7a4x-n28-20261015/remote/results/full-n28/interleaved-ea-n28-eta9/proof.bin",
+    "bytes": 49622792,
+    "sha256": "ea4ace27eb4670f80f66ee8298a1e2e610b8e317180d2aaf97108f42855a530c"
+  },
+  {
+    "protocol": "era-codeswitch",
+    "path": "results/aws-r7a4x-n28-20261015/remote/results/full-n28/era-codeswitch-n28-eta10/proofs/era-corrected.proof",
+    "bytes": 30348584,
+    "sha256": "672f5541f1c6a4312fb77b81a4393f4ccd6a1820464293df832d8e14d4289c7e"
+  },
+  {
+    "protocol": "basefold-local",
+    "path": "results/aws-r7a4x-n28-20261015/remote/results/full-n28/basefold-local-n28-eta4/proofs/basefold-local.proof",
+    "bytes": 6004040,
+    "sha256": "41c038c00d566fd26537a013bb8864ef5d1e2c0a58616d21ff6ee26794d0759e"
+  }
+]

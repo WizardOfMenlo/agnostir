@@ -1,0 +1,2 @@
+protocol,message_log,eta,output_log,output_log_rate,terminal_log,seed,threads,sample,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,index_rows,online_rows,accepted,proof_blake3,gkr_checkpoints,checkpoint_rows
+era-corrected,28,10,15,3,12,2025,16,0,1765.496033,23736.038911,18825.336043,503.632555,31785384,157,92,true,59b04072375e127be9da09a1d529d5f315b849591c1a69cc618914cc6db5b5d6,,0

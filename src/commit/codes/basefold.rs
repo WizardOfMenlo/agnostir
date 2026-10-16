@@ -177,49 +177,64 @@ impl<F: FieldElement> BasefoldCode<F> {
             }
         }
 
-        // Step 2: butterfly mixing passes
-        let mut chunk_size = self.rate; // starts at base-code block length
-        for i in 0..self.log_message_size {
-            let level = &self.table[i];
-            chunk_size <<= 1;
-            debug_assert_eq!(level.len(), chunk_size >> 1);
-
-            // Process each chunk independently.
-            let butterfly = |chunk: &mut [F]| {
-                let half = chunk_size >> 1;
-                let (lo, hi) = chunk.split_at_mut(half);
-                #[cfg(feature = "parallel")]
-                {
-                    lo.par_iter_mut()
-                        .zip(hi.par_iter_mut())
-                        .zip(level.par_iter())
-                        .for_each(|((l, h), &t)| {
+        // Coarse tiles amortize Rayon scheduling at early levels; split each
+        // large butterfly at late levels so a single row can use all workers.
+        for level in &self.table {
+            let stride = 2 * level.len();
+            let process = |block: &mut [F]| {
+                for chunk in block.chunks_mut(stride) {
+                    let (lo, hi) = chunk.split_at_mut(level.len());
+                    let butterfly = |((lo, hi), table): ((&mut [F], &mut [F]), &[F])| {
+                        for ((l, h), &t) in lo.iter_mut().zip(hi).zip(table) {
                             let rhs = *h * t;
                             let lhs = *l;
-                            *h = lhs - rhs;
                             *l = lhs + rhs;
-                        });
-                }
-                #[cfg(not(feature = "parallel"))]
-                {
-                    for j in 0..half {
-                        let rhs = hi[j] * level[j];
-                        let lhs = lo[j];
-                        hi[j] = lhs - rhs;
-                        lo[j] = lhs + rhs;
+                            *h = lhs - rhs;
+                        }
+                    };
+                    #[cfg(feature = "parallel")]
+                    if level.len() >= 2048 {
+                        lo.par_chunks_mut(1024)
+                            .zip(hi.par_chunks_mut(1024))
+                            .zip(level.par_chunks(1024))
+                            .for_each(butterfly);
+                    } else {
+                        butterfly(((lo, hi), level));
                     }
+                    #[cfg(not(feature = "parallel"))]
+                    butterfly(((lo, hi), level));
                 }
             };
             #[cfg(feature = "parallel")]
-            codeword.par_chunks_mut(chunk_size).for_each(butterfly);
+            codeword.par_chunks_mut(stride.max(2048)).for_each(process);
             #[cfg(not(feature = "parallel"))]
-            codeword.chunks_mut(chunk_size).for_each(butterfly);
+            codeword.chunks_mut(stride.max(2048)).for_each(process);
         }
 
         // Step 3: bit-reversal permutation
         reverse_index_bits_in_place(&mut codeword);
 
         codeword
+    }
+
+    /// Parallelize within rows when the batch alone cannot fill the pool.
+    pub(crate) fn encode_batch(&self, messages: &[Vec<F>]) -> Vec<Vec<F>> {
+        #[cfg(feature = "parallel")]
+        {
+            let within_rows = messages.len() < rayon::current_num_threads();
+            messages
+                .par_iter()
+                .map(|m| {
+                    if within_rows {
+                        self.encode(m)
+                    } else {
+                        self.encode_sequential(m)
+                    }
+                })
+                .collect()
+        }
+        #[cfg(not(feature = "parallel"))]
+        messages.iter().map(|m| self.encode_sequential(m)).collect()
     }
 
     /// Sequential variant of [`Self::encode`], useful when parallelism is
@@ -342,5 +357,43 @@ impl<F: FieldElement> BasefoldCode<F> {
         println!("  bit-reversal:         {:?}", t.elapsed());
 
         codeword
+    }
+}
+
+#[cfg(test)]
+mod scheduling_tests {
+    use super::*;
+    use crate::proof::Scalar;
+    use rand::{SeedableRng, rngs::SmallRng};
+
+    #[test]
+    fn tiled_and_batch_encoders_match_sequential_at_all_butterfly_sizes() {
+        for log in [4, 11] {
+            for log_rate in [1, 3] {
+                let code = BasefoldCode::new(
+                    1 << log,
+                    BasefoldParams { log_rate },
+                    &mut SmallRng::seed_from_u64(17),
+                );
+                let messages: Vec<Vec<Scalar>> = (0..9)
+                    .map(|j| {
+                        (0..1 << log)
+                            .map(|i| Scalar::from((i * i + 11 * j + 1) as u64))
+                            .collect()
+                    })
+                    .collect();
+                let expected: Vec<_> = messages.iter().map(|m| code.encode_sequential(m)).collect();
+                for threads in [1, 8, 32] {
+                    rayon::ThreadPoolBuilder::new()
+                        .num_threads(threads)
+                        .build()
+                        .unwrap()
+                        .install(|| {
+                            assert_eq!(code.encode(&messages[0]), expected[0]);
+                            assert_eq!(code.encode_batch(&messages), expected);
+                        });
+                }
+            }
+        }
     }
 }

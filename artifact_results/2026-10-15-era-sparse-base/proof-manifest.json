@@ -1,0 +1,20 @@
+[
+  {
+    "case": "era-codeswitch-n28-eta8",
+    "bytes": 17668488,
+    "sha256": "03f33b60bb28ed8d31e32b168b66954c9d9e5c198ce336cdb4feb50797f65816",
+    "local_path": "results/era-sparse-base-20261015/remote/results/full-n28/era-codeswitch-n28-eta8/proofs/era-corrected.proof"
+  },
+  {
+    "case": "basefold-local-n28-eta4",
+    "bytes": 6004040,
+    "sha256": "41c038c00d566fd26537a013bb8864ef5d1e2c0a58616d21ff6ee26794d0759e",
+    "local_path": "results/era-sparse-base-20261015/remote/results/full-n28/basefold-local-n28-eta4/proofs/basefold-local.proof"
+  },
+  {
+    "case": "era-codeswitch-n28-eta10",
+    "bytes": 31785384,
+    "sha256": "338a28b59d1a44607694c4297834a3b073d13f075056eb7b4a121aa450ed1e34",
+    "local_path": "results/era-sparse-base-20261015/remote/results/fixed-eta-n28/era-codeswitch-n28-eta10/proofs/era-corrected.proof"
+  }
+]

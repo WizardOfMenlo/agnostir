@@ -1,0 +1,88 @@
+{"verified_rows": 6, "known_hash_matches": 0}
+[
+  {
+    "campaign": ".",
+    "protocol": "basefold",
+    "message_log": 18,
+    "eta": 2,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 2114376,
+    "setup_ms": 24.616421,
+    "commit_ms": 31.879062,
+    "prove_ms": 34.433067,
+    "verify_ms": 17.071557,
+    "total_prover_ms": 66.312129
+  },
+  {
+    "campaign": ".",
+    "protocol": "brakedown",
+    "message_log": 18,
+    "eta": 2,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 2114088,
+    "setup_ms": 785.9531,
+    "commit_ms": 124.804101,
+    "prove_ms": 33.153844,
+    "verify_ms": 119.175506,
+    "total_prover_ms": 157.957945
+  },
+  {
+    "campaign": ".",
+    "protocol": "ea",
+    "message_log": 18,
+    "eta": 2,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 2114920,
+    "setup_ms": 3839.817659,
+    "commit_ms": 817.500208,
+    "prove_ms": 34.810061,
+    "verify_ms": 788.02714,
+    "total_prover_ms": 852.3102690000001
+  },
+  {
+    "campaign": ".",
+    "protocol": "era",
+    "message_log": 18,
+    "eta": 2,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 2115976,
+    "setup_ms": 756.821764,
+    "commit_ms": 74.63507,
+    "prove_ms": 37.278475,
+    "verify_ms": 47.207122,
+    "total_prover_ms": 111.913545
+  },
+  {
+    "campaign": ".",
+    "protocol": "era-corrected",
+    "message_log": 10,
+    "eta": 2,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 232712,
+    "setup_ms": 2.296733,
+    "commit_ms": 0.534955,
+    "prove_ms": 17.645653,
+    "verify_ms": 2.716956,
+    "total_prover_ms": 18.180608
+  },
+  {
+    "campaign": ".",
+    "protocol": "basefold-local",
+    "message_log": 10,
+    "eta": 2,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 17192,
+    "setup_ms": 0.177472,
+    "commit_ms": 0.260103,
+    "prove_ms": 1.301543,
+    "verify_ms": 0.223822,
+    "total_prover_ms": 1.5616459999999999
+  }
+]
+Completed: /results/smoke

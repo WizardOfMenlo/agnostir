@@ -1,0 +1,14 @@
+{
+  "sources": {
+    "scripts/search_era_joint.py": "ec316af721bc56ab98f63ef3c3df3a717d9a950fad1980e6de951d18e0fd6916",
+    "scripts/search_era_base.py": "765283da75609c4489d578c515a69f45cd7c2c3e84aae8b10e56181f8dc0fe32",
+    "scripts/plan_large_iopp.py": "377f02101fd81c5225f6e1e133367d7ede26c430bfe05f59550c2f14d61759c5",
+    "scripts/check_era_sparse_base.py": "eb63fd82159bdcecbe922fc98e8fdd73bc56da7de09b4a055e4f076b4737d048",
+    "distance-analysis/basefold.py": "85231411ff6d293711ac9206cee806bfaf6d290f0b1e5f58cc105ea06fa9ae55",
+    "distance-analysis/brakedown.py": "e157f7d76b99b8a53348ca443ba9a4ac3fea0f0463a7e675631f01c6582d025a",
+    "distance-analysis/era.py": "6ef3723a1c530af69d3872074d605b1fe834c0d5fcbbc01e452bc72f5d0add8b"
+  },
+  "raw_search": "results/era-joint-params-20261015/search.json",
+  "raw_search_sha256": "66edf2111d859a16533830ec58f6ba9e23e6b2cb9508aaa9a37578f506db2d55",
+  "base_grid": "results/era-base-search-20261015/search.json"
+}

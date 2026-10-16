@@ -1,0 +1,23 @@
+test_domain_and_vacuous_bound (test_distances.BasefoldTests.test_domain_and_vacuous_bound) ... ok
+test_published_closed_form_independent_high_precision (test_distances.BasefoldTests.test_published_closed_form_independent_high_precision) ... ok
+test_setup_union_bound (test_distances.BasefoldTests.test_setup_union_bound) ... ok
+test_convexity_bound_dominates_entire_interval (test_distances.BrakedownTests.test_convexity_bound_dominates_entire_interval) ... ok
+test_era_base_preset_at_explicit_distance (test_distances.BrakedownTests.test_era_base_preset_at_explicit_distance) ... ok
+test_impossible_graph_and_failed_search_raise (test_distances.BrakedownTests.test_impossible_graph_and_failed_search_raise) ... ok
+test_recursive_budget_and_small_levels (test_distances.BrakedownTests.test_recursive_budget_and_small_levels) ... ok
+test_singleton_is_not_skipped (test_distances.BrakedownTests.test_singleton_is_not_skipped) ... ok
+test_union_bound_against_enumerated_graphs (test_distances.BrakedownTests.test_union_bound_against_enumerated_graphs) ... ok
+test_invalid_input_exits_nonzero (test_distances.CliTests.test_invalid_input_exits_nonzero) ... ok
+test_field_equation_and_infeasible_inputs (test_distances.EraTests.test_field_equation_and_infeasible_inputs) ... ok
+test_gradient_and_hessian_against_finite_differences (test_distances.EraTests.test_gradient_and_hessian_against_finite_differences) ... ok
+test_known_valid_roots_agree_with_original_script (test_distances.EraTests.test_known_valid_roots_agree_with_original_script) ... ok
+test_missing_second_root_fails_closed (test_distances.EraTests.test_missing_second_root_fails_closed) ... ok
+test_no_clipping_invalid_weights (test_distances.EraTests.test_no_clipping_invalid_weights) ... ok
+test_numerical_independent_domain_search (test_distances.EraTests.test_numerical_independent_domain_search) ... ok
+test_padding_cannot_inherit_rs_distance (test_distances.ZeroPaddingBaseTests.test_padding_cannot_inherit_rs_distance) ... ok
+test_recursive_bound_uses_distance_one_at_terminal_code (test_distances.ZeroPaddingBaseTests.test_recursive_bound_uses_distance_one_at_terminal_code) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.709s
+
+OK

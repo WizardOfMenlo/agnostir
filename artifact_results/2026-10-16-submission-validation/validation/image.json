@@ -1,0 +1,61 @@
+[
+    {
+        "Architecture": "amd64",
+        "Config": {
+            "Cmd": [
+                "smoke",
+                "/results/smoke"
+            ],
+            "Entrypoint": [
+                "bash",
+                "artifact/run.sh"
+            ],
+            "Env": [
+                "PATH=/opt/analysis/bin:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "RUSTUP_HOME=/usr/local/rustup",
+                "CARGO_HOME=/usr/local/cargo",
+                "RUST_VERSION=1.92.0",
+                "RUSTFLAGS=-C target-cpu=native",
+                "PYTHONDONTWRITEBYTECODE=1"
+            ],
+            "Labels": {
+                "org.opencontainers.image.source": "https://github.com/rust-lang/docker-rust"
+            },
+            "WorkingDir": "/artifact"
+        },
+        "Created": "2026-10-16T04:57:17.949176736Z",
+        "Descriptor": {
+            "digest": "sha256:ac6a45b4c0a8cc56a16c0fafb6b1318e0a6ce2157cb05b0347f9e08c2031153d",
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "size": 2506
+        },
+        "Id": "sha256:ac6a45b4c0a8cc56a16c0fafb6b1318e0a6ce2157cb05b0347f9e08c2031153d",
+        "Metadata": {
+            "LastTagTime": "2026-10-16T04:57:18.31449698Z"
+        },
+        "Os": "linux",
+        "Parent": "sha256:786360ff4fde42b828041dfac48376fcef5fec40de88af31ac8a4fe74ec866b1",
+        "RepoDigests": [
+            "agnostir-artifact@sha256:ac6a45b4c0a8cc56a16c0fafb6b1318e0a6ce2157cb05b0347f9e08c2031153d"
+        ],
+        "RepoTags": [
+            "agnostir-artifact:20261016"
+        ],
+        "RootFS": {
+            "Layers": [
+                "sha256:f77cd126bcdfedb7ff4e195153ee4ee6ac48cbd420cdb5a74595148f70839557",
+                "sha256:881e9a2631bef0498cf356a846f379e423cbfbf4dc18cc33d403952fdb8485d4",
+                "sha256:7c3c6c0e7920cd95ff3cd4b1c27f16f2cc95ce1476526b243cda0ab17ce621e7",
+                "sha256:615dfee08a6cb44800f56db6a24db3816c61b661af488693c90c47465ae2fb69",
+                "sha256:c975b13ec30f03834a02f1205303752a6fcaefbe86d2143f3f382f2a0fc3e8e3",
+                "sha256:2daa04797a3d5e7d5cb558cb9c141f623ee2b6fc210d13c4757539e53f29adf0",
+                "sha256:7338974e722fb8f4a561a60dff4267ede674642ea976646484cd170b0ffe74ca",
+                "sha256:0216790e15e47639651dbe4cc926423573eb807deb6dd61d1adf081ab7676ac9",
+                "sha256:fb694eb3df97205eed2d88652c8d49575eb5cde0237b316a029b29da7da29cef",
+                "sha256:166ec209a5dd05c5f1f76a26bc26e1914190ff10db0eafbc68388ea5f0c2c0bc"
+            ],
+            "Type": "layers"
+        },
+        "Size": 1101933281
+    }
+]

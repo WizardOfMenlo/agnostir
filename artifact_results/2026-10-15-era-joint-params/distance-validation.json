@@ -1,0 +1,233 @@
+{
+  "brakedown_exact_checks": [
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 1,
+      "expansion_threshold": 1,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 2,
+      "expansion_threshold": 2,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 3,
+      "expansion_threshold": 3,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 4,
+      "expansion_threshold": 4,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 5,
+      "expansion_threshold": 5,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 6,
+      "expansion_threshold": 6,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 7,
+      "expansion_threshold": 7,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 8,
+      "expansion_threshold": 8,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 9,
+      "expansion_threshold": 9,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 2048,
+      "output": 35,
+      "degree": 9,
+      "weight": 10,
+      "expansion_threshold": 10,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 1,
+      "expansion_threshold": 11,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 2,
+      "expansion_threshold": 12,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 3,
+      "expansion_threshold": 13,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 4,
+      "expansion_threshold": 14,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 5,
+      "expansion_threshold": 15,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 6,
+      "expansion_threshold": 16,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 7,
+      "expansion_threshold": 17,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 8,
+      "expansion_threshold": 18,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 9,
+      "expansion_threshold": 19,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 36,
+      "output": 25,
+      "degree": 20,
+      "weight": 10,
+      "expansion_threshold": 20,
+      "bits": 108,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    }
+  ],
+  "setup_bits": 102,
+  "base_distance": "239/50000",
+  "terminal_distance": "1/36",
+  "era_distance": 0.216292,
+  "tensor_distance": 2.2848400000000003e-05,
+  "exponent_maximum_found": -0.0001026878386074276,
+  "exponent_maximizer_d0": 2.2848400000000003e-05,
+  "required_exponent_upper_bound": -1.4977931380044089e-05,
+  "scope": "Brakedown rational probability inequalities for the ideal sampler. ERA numerical falsification check, not an interval or all-roots certificate."
+}

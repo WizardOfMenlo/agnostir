@@ -1,0 +1,72 @@
+[
+  {
+    "stage": "permutation_checks",
+    "seconds": 46.344359391,
+    "percent_total": 36.121409948963624
+  },
+  {
+    "stage": "Original ERA commitment",
+    "seconds": 26.165571933,
+    "percent_total": 20.393794687440078
+  },
+  {
+    "stage": "online_commitment",
+    "seconds": 16.900156112,
+    "percent_total": 13.172206394584128
+  },
+  {
+    "stage": "claim_reduction",
+    "seconds": 12.334305905999999,
+    "percent_total": 9.613522032048431
+  },
+  {
+    "stage": "starting_sumcheck",
+    "seconds": 8.589069331000001,
+    "percent_total": 6.694434845190064
+  },
+  {
+    "stage": "public_evaluation",
+    "seconds": 4.469709704,
+    "percent_total": 3.483751176899396
+  },
+  {
+    "stage": "initial_claims_and_oods",
+    "seconds": 3.1899162270000003,
+    "percent_total": 2.486263123548422
+  },
+  {
+    "stage": "tensor_check",
+    "seconds": 2.6946430770000003,
+    "percent_total": 2.100240644805545
+  },
+  {
+    "stage": "era_openings",
+    "seconds": 2.142598128,
+    "percent_total": 1.6699694710290838
+  },
+  {
+    "stage": "auxiliary_witness",
+    "seconds": 2.0367753029999998,
+    "percent_total": 1.5874897541010136
+  },
+  {
+    "stage": "accumulator_claims",
+    "seconds": 1.5974129780000001,
+    "percent_total": 1.245044915807774
+  },
+  {
+    "stage": "Other profiler-root and outer overhead",
+    "seconds": 1.1672676590000066,
+    "percent_total": 0.9097839345492037
+  },
+  {
+    "stage": "interleaved_row_fold",
+    "seconds": 0.669836282,
+    "percent_total": 0.522079304984639
+  },
+  {
+    "stage": "header",
+    "seconds": 1.253e-05,
+    "percent_total": 9.76604861105079e-06
+  }
+]

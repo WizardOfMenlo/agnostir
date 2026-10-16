@@ -1,0 +1,1526 @@
+{
+  "ram_gib": 128.0,
+  "threads": 16,
+  "headroom": 0.15,
+  "scope": "Numerical distance assumptions and allocation model; confirm peak RSS on target. Optimize eta only, with fixed encoder/output/termination parameters; EA retains conjectured distance 0.1. No complete FS soundness certification.",
+  "maximum_fitting_log": {
+    "interleaved": 28,
+    "codeswitching": 28
+  },
+  "results": {
+    "28": {
+      "interleaved": {
+        "fits": true,
+        "protocols": {
+          "interleaved-era": {
+            "best": {
+              "protocol": "interleaved-era",
+              "message_log": 28,
+              "eta": 8,
+              "row_log": 20,
+              "queries": 816,
+              "estimated_proof_bytes": 40541941.892282516,
+              "estimated_live_bytes": 63036621960,
+              "block_length": 4404016,
+              "distance": 0.225055,
+              "numerical_distance": 0.22505519315556463,
+              "code_storage_bytes": 652248200,
+              "distance_details": {
+                "base_distance": 0.0009,
+                "c": 1.0724397271648918,
+                "gamma": 5.7298522531913666e-05,
+                "delta": 0.22505519315556463,
+                "delta1": 0.262037901345151,
+                "d1_at_delta1": 0.02370674237434084,
+                "delta2": 0.22505519315556463,
+                "critical_point": [
+                  0.05262183242339815,
+                  0.12411596899722865,
+                  0.22505519315556463
+                ],
+                "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+              },
+              "estimated_peak_with_margin_bytes": 72492115254
+            },
+            "candidates": [
+              {
+                "protocol": "interleaved-era",
+                "message_log": 28,
+                "eta": 8,
+                "row_log": 20,
+                "queries": 816,
+                "estimated_proof_bytes": 40541941.892282516,
+                "estimated_live_bytes": 63036621960,
+                "block_length": 4404016,
+                "distance": 0.225055,
+                "numerical_distance": 0.22505519315556463,
+                "code_storage_bytes": 652248200,
+                "distance_details": {
+                  "base_distance": 0.0009,
+                  "c": 1.0724397271648918,
+                  "gamma": 5.7298522531913666e-05,
+                  "delta": 0.22505519315556463,
+                  "delta1": 0.262037901345151,
+                  "d1_at_delta1": 0.02370674237434084,
+                  "delta2": 0.22505519315556463,
+                  "critical_point": [
+                    0.05262183242339815,
+                    0.12411596899722865,
+                    0.22505519315556463
+                  ],
+                  "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+                },
+                "estimated_peak_with_margin_bytes": 72492115254
+              },
+              {
+                "protocol": "interleaved-era",
+                "message_log": 28,
+                "eta": 12,
+                "row_log": 16,
+                "queries": 836,
+                "estimated_proof_bytes": 111710298.60703398,
+                "estimated_live_bytes": 61931432744,
+                "block_length": 275248,
+                "distance": 0.22037,
+                "numerical_distance": 0.22037045020625684,
+                "code_storage_bytes": 50768680,
+                "distance_details": {
+                  "base_distance": 0.0009,
+                  "c": 1.0890071157378098,
+                  "gamma": 0.0008151311009640017,
+                  "delta": 0.22037045020625684,
+                  "delta1": 0.2471814143612239,
+                  "d1_at_delta1": 0.014407599549379417,
+                  "delta2": 0.22037045020625684,
+                  "critical_point": [
+                    0.05265006205549296,
+                    0.12224439163363351,
+                    0.22037045020625684
+                  ],
+                  "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+                },
+                "estimated_peak_with_margin_bytes": 71221147656
+              }
+            ],
+            "rejected": [
+              {
+                "row_log": 19,
+                "reason": "ERA base-code bound fails at distance 0.0009"
+              },
+              {
+                "row_log": 18,
+                "reason": "ERA base-code bound fails at distance 0.0009"
+              },
+              {
+                "row_log": 17,
+                "reason": "ERA base-code bound fails at distance 0.0009"
+              },
+              {
+                "row_log": 15,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 14,
+                "reason": "ERA base-code bound fails at distance 0.0009"
+              },
+              {
+                "row_log": 13,
+                "reason": "ERA base-code bound fails at distance 0.0009"
+              },
+              {
+                "row_log": 12,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 11,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 10,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 9,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 8,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 7,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 6,
+                "reason": "ERA field-size inequality has no feasible c"
+              }
+            ]
+          },
+          "interleaved-basefold": {
+            "best": {
+              "protocol": "interleaved-basefold",
+              "message_log": 28,
+              "eta": 9,
+              "row_log": 19,
+              "queries": 1033,
+              "estimated_proof_bytes": 33997083.196854144,
+              "estimated_live_bytes": 43050336192,
+              "block_length": 1048576,
+              "distance": 0.182429,
+              "numerical_distance": 0.1824299969367832,
+              "code_storage_bytes": 33554368,
+              "distance_details": {},
+              "estimated_peak_with_margin_bytes": 49507886621
+            },
+            "candidates": [
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 9,
+                "row_log": 19,
+                "queries": 1033,
+                "estimated_proof_bytes": 33997083.196854144,
+                "estimated_live_bytes": 43050336192,
+                "block_length": 1048576,
+                "distance": 0.182429,
+                "numerical_distance": 0.1824299969367832,
+                "code_storage_bytes": 33554368,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49507886621
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 10,
+                "row_log": 18,
+                "queries": 999,
+                "estimated_proof_bytes": 41355944.54819581,
+                "estimated_live_bytes": 43000004544,
+                "block_length": 524288,
+                "distance": 0.187971,
+                "numerical_distance": 0.18797113520623798,
+                "code_storage_bytes": 16777152,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49450005226
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 8,
+                "row_log": 20,
+                "queries": 1069,
+                "estimated_proof_bytes": 42655946.383148655,
+                "estimated_live_bytes": 43150999488,
+                "block_length": 2097152,
+                "distance": 0.176867,
+                "numerical_distance": 0.17686737421766963,
+                "code_storage_bytes": 67108800,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49623649412
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 11,
+                "row_log": 17,
+                "queries": 968,
+                "estimated_proof_bytes": 67741961.98512721,
+                "estimated_live_bytes": 42974838720,
+                "block_length": 262144,
+                "distance": 0.193491,
+                "numerical_distance": 0.19349113194260426,
+                "code_storage_bytes": 8388544,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49421064528
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 12,
+                "row_log": 16,
+                "queries": 927,
+                "estimated_proof_bytes": 123361272.26488268,
+                "estimated_live_bytes": 42962255808,
+                "block_length": 131072,
+                "distance": 0.201061,
+                "numerical_distance": 0.20106193534326489,
+                "code_storage_bytes": 4194240,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49406594180
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 13,
+                "row_log": 15,
+                "queries": 899,
+                "estimated_proof_bytes": 235264515.9027273,
+                "estimated_live_bytes": 42955964352,
+                "block_length": 65536,
+                "distance": 0.206533,
+                "numerical_distance": 0.20653379210507528,
+                "code_storage_bytes": 2097088,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49399359005
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 14,
+                "row_log": 14,
+                "queries": 873,
+                "estimated_proof_bytes": 452316371.1186029,
+                "estimated_live_bytes": 42952818624,
+                "block_length": 32768,
+                "distance": 0.211988,
+                "numerical_distance": 0.21198824649519132,
+                "code_storage_bytes": 1048512,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49395741418
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 15,
+                "row_log": 13,
+                "queries": 849,
+                "estimated_proof_bytes": 867953305.4268391,
+                "estimated_live_bytes": 42951245760,
+                "block_length": 16384,
+                "distance": 0.217429,
+                "numerical_distance": 0.21742924087691573,
+                "code_storage_bytes": 524224,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49393932624
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 16,
+                "row_log": 12,
+                "queries": 825,
+                "estimated_proof_bytes": 1646179915.8159635,
+                "estimated_live_bytes": 42950459328,
+                "block_length": 8192,
+                "distance": 0.222864,
+                "numerical_distance": 0.22286445730552362,
+                "code_storage_bytes": 262080,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49393028228
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 17,
+                "row_log": 11,
+                "queries": 803,
+                "estimated_proof_bytes": 3058891896.3729434,
+                "estimated_live_bytes": 42950066112,
+                "block_length": 4096,
+                "distance": 0.228308,
+                "numerical_distance": 0.22830893880295977,
+                "code_storage_bytes": 131008,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49392576029
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 18,
+                "row_log": 10,
+                "queries": 781,
+                "estimated_proof_bytes": 5448195788.904479,
+                "estimated_live_bytes": 42949869504,
+                "block_length": 2048,
+                "distance": 0.233792,
+                "numerical_distance": 0.2337922131605089,
+                "code_storage_bytes": 65472,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49392349930
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 19,
+                "row_log": 9,
+                "queries": 760,
+                "estimated_proof_bytes": 9004021278.221163,
+                "estimated_live_bytes": 42949771200,
+                "block_length": 1024,
+                "distance": 0.239372,
+                "numerical_distance": 0.23937230305197843,
+                "code_storage_bytes": 32704,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49392236880
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 20,
+                "row_log": 8,
+                "queries": 733,
+                "estimated_proof_bytes": 13081069109.100595,
+                "estimated_live_bytes": 42949722048,
+                "block_length": 512,
+                "distance": 0.247163,
+                "numerical_distance": 0.24716314052620336,
+                "code_storage_bytes": 16320,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49392180356
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 21,
+                "row_log": 7,
+                "queries": 712,
+                "estimated_proof_bytes": 16121176237.953074,
+                "estimated_live_bytes": 42949697472,
+                "block_length": 256,
+                "distance": 0.253373,
+                "numerical_distance": 0.2533737812761019,
+                "code_storage_bytes": 8128,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49392152093
+              },
+              {
+                "protocol": "interleaved-basefold",
+                "message_log": 28,
+                "eta": 22,
+                "row_log": 6,
+                "queries": 690,
+                "estimated_proof_bytes": 17103189360.834938,
+                "estimated_live_bytes": 42949685184,
+                "block_length": 128,
+                "distance": 0.260452,
+                "numerical_distance": 0.2604527800024352,
+                "code_storage_bytes": 4032,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49392137962
+              }
+            ],
+            "rejected": []
+          },
+          "interleaved-brakedown": {
+            "best": {
+              "protocol": "interleaved-brakedown",
+              "message_log": 28,
+              "eta": 9,
+              "row_log": 19,
+              "queries": 1974,
+              "estimated_proof_bytes": 49607396.0726656,
+              "estimated_live_bytes": 43943720456,
+              "block_length": 1048576,
+              "distance": 0.1,
+              "numerical_distance": 0.1,
+              "code_storage_bytes": 926938632,
+              "distance_details": {
+                "base_rs_dimensions": [
+                  35,
+                  70
+                ]
+              },
+              "estimated_peak_with_margin_bytes": 50535278525
+            },
+            "candidates": [
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 9,
+                "row_log": 19,
+                "queries": 1974,
+                "estimated_proof_bytes": 49607396.0726656,
+                "estimated_live_bytes": 43943720456,
+                "block_length": 1048576,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 926938632,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    35,
+                    70
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 50535278525
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 10,
+                "row_log": 18,
+                "queries": 1974,
+                "estimated_proof_bytes": 73406665.40551135,
+                "estimated_live_bytes": 43446721200,
+                "block_length": 524288,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 463493808,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    58,
+                    116
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49963729380
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 8,
+                "row_log": 20,
+                "queries": 1974,
+                "estimated_proof_bytes": 50299486.83303898,
+                "estimated_live_bytes": 44937814344,
+                "block_length": 2097152,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 1853923656,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    69,
+                    138
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 51678486496
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 11,
+                "row_log": 17,
+                "queries": 1974,
+                "estimated_proof_bytes": 133469518.6389362,
+                "estimated_live_bytes": 43198171624,
+                "block_length": 262144,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 231721448,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    29,
+                    58
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49677897368
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 12,
+                "row_log": 16,
+                "queries": 1974,
+                "estimated_proof_bytes": 259225969.37518314,
+                "estimated_live_bytes": 43073925776,
+                "block_length": 131072,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 115864208,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    48,
+                    96
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49535014643
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 13,
+                "row_log": 15,
+                "queries": 1974,
+                "estimated_proof_bytes": 511077525.3000216,
+                "estimated_live_bytes": 43011785184,
+                "block_length": 65536,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 57917920,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    24,
+                    48
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49463552962
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 14,
+                "row_log": 14,
+                "queries": 1974,
+                "estimated_proof_bytes": 1005135097.1712531,
+                "estimated_live_bytes": 42980724384,
+                "block_length": 32768,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 28954272,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    40,
+                    80
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49427833042
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 15,
+                "row_log": 13,
+                "queries": 1974,
+                "estimated_proof_bytes": 1950524546.2693756,
+                "estimated_live_bytes": 42965238248,
+                "block_length": 16384,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 14516712,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    67,
+                    134
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49410023986
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 17,
+                "row_log": 11,
+                "queries": 1974,
+                "estimated_proof_bytes": 6570530273.271928,
+                "estimated_live_bytes": 42953563760,
+                "block_length": 4096,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 3628656,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    56,
+                    112
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49396598324
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 18,
+                "row_log": 10,
+                "queries": 1974,
+                "estimated_proof_bytes": 10628806580.446438,
+                "estimated_live_bytes": 42951596096,
+                "block_length": 2048,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 1792064,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    28,
+                    56
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49394335511
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 19,
+                "row_log": 9,
+                "queries": 1974,
+                "estimated_proof_bytes": 14682962559.600403,
+                "estimated_live_bytes": 42950636136,
+                "block_length": 1024,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 897640,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    47,
+                    94
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49393231557
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 20,
+                "row_log": 8,
+                "queries": 1974,
+                "estimated_proof_bytes": 16817659339.908066,
+                "estimated_live_bytes": 42950138768,
+                "block_length": 512,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 433040,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    24,
+                    48
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49392659584
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 21,
+                "row_log": 7,
+                "queries": 1974,
+                "estimated_proof_bytes": 17172296442.740242,
+                "estimated_live_bytes": 42949897784,
+                "block_length": 256,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 208440,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    39,
+                    78
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49392382452
+              },
+              {
+                "protocol": "interleaved-brakedown",
+                "message_log": 28,
+                "eta": 22,
+                "row_log": 6,
+                "queries": 1974,
+                "estimated_proof_bytes": 17179870715.97023,
+                "estimated_live_bytes": 42949812224,
+                "block_length": 128,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 131072,
+                "distance_details": {
+                  "base_rs_dimensions": [
+                    64,
+                    128
+                  ]
+                },
+                "estimated_peak_with_margin_bytes": 49392284058
+              }
+            ],
+            "rejected": [
+              {
+                "row_log": 12,
+                "reason": "Brakedown recursive finite-size bound fails at distance 0.1"
+              }
+            ]
+          },
+          "interleaved-ea": {
+            "best": {
+              "protocol": "interleaved-ea",
+              "message_log": 28,
+              "eta": 9,
+              "row_log": 19,
+              "queries": 1974,
+              "estimated_proof_bytes": 49607396.0726656,
+              "estimated_live_bytes": 52076478464,
+              "block_length": 1048576,
+              "distance": 0.1,
+              "numerical_distance": 0.1,
+              "code_storage_bytes": 9059696640,
+              "distance_details": {
+                "scope": "EA distance 0.1 is the inherited conjecture"
+              },
+              "estimated_peak_with_margin_bytes": 59887950234
+            },
+            "candidates": [
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 9,
+                "row_log": 19,
+                "queries": 1974,
+                "estimated_proof_bytes": 49607396.0726656,
+                "estimated_live_bytes": 52076478464,
+                "block_length": 1048576,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 9059696640,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 59887950234
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 10,
+                "row_log": 18,
+                "queries": 1974,
+                "estimated_proof_bytes": 73406665.40551135,
+                "estimated_live_bytes": 47286583296,
+                "block_length": 524288,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 4303355904,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 54379570791
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 8,
+                "row_log": 20,
+                "queries": 1974,
+                "estimated_proof_bytes": 50299486.83303898,
+                "estimated_live_bytes": 62109253632,
+                "block_length": 2097152,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 19025362944,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 71425641677
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 11,
+                "row_log": 17,
+                "queries": 1974,
+                "estimated_proof_bytes": 133469518.6389362,
+                "estimated_live_bytes": 45004881920,
+                "block_length": 262144,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 2038431744,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 51755614208
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 12,
+                "row_log": 16,
+                "queries": 1974,
+                "estimated_proof_bytes": 259225969.37518314,
+                "estimated_live_bytes": 43920654336,
+                "block_length": 131072,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 962592768,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 50508752487
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 13,
+                "row_log": 15,
+                "queries": 1974,
+                "estimated_proof_bytes": 511077525.3000216,
+                "estimated_live_bytes": 43406852096,
+                "block_length": 65536,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 452984832,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49917879911
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 14,
+                "row_log": 14,
+                "queries": 1974,
+                "estimated_proof_bytes": 1005135097.1712531,
+                "estimated_live_bytes": 43164106752,
+                "block_length": 32768,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 212336640,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49638722765
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 15,
+                "row_log": 13,
+                "queries": 1974,
+                "estimated_proof_bytes": 1950524546.2693756,
+                "estimated_live_bytes": 43049811968,
+                "block_length": 16384,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 99090432,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49507283764
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 16,
+                "row_log": 12,
+                "queries": 1974,
+                "estimated_proof_bytes": 3679191914.9853935,
+                "estimated_live_bytes": 42996203520,
+                "block_length": 8192,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 46006272,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49445634048
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 17,
+                "row_log": 11,
+                "queries": 1974,
+                "estimated_proof_bytes": 6570530273.271928,
+                "estimated_live_bytes": 42971168768,
+                "block_length": 4096,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 21233664,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49416844084
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 18,
+                "row_log": 10,
+                "queries": 1974,
+                "estimated_proof_bytes": 10628806580.446438,
+                "estimated_live_bytes": 42959536128,
+                "block_length": 2048,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 9732096,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49403466548
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 19,
+                "row_log": 9,
+                "queries": 1974,
+                "estimated_proof_bytes": 14682962559.600403,
+                "estimated_live_bytes": 42954162176,
+                "block_length": 1024,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 4423680,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49397286503
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 20,
+                "row_log": 8,
+                "queries": 1974,
+                "estimated_proof_bytes": 16817659339.908066,
+                "estimated_live_bytes": 42951696384,
+                "block_length": 512,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 1990656,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49394450842
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 21,
+                "row_log": 7,
+                "queries": 1974,
+                "estimated_proof_bytes": 17172296442.740242,
+                "estimated_live_bytes": 42950574080,
+                "block_length": 256,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 884736,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49393160192
+              },
+              {
+                "protocol": "interleaved-ea",
+                "message_log": 28,
+                "eta": 22,
+                "row_log": 6,
+                "queries": 1974,
+                "estimated_proof_bytes": 17179870715.97023,
+                "estimated_live_bytes": 42950068224,
+                "block_length": 128,
+                "distance": 0.1,
+                "numerical_distance": 0.1,
+                "code_storage_bytes": 387072,
+                "distance_details": {
+                  "scope": "EA distance 0.1 is the inherited conjecture"
+                },
+                "estimated_peak_with_margin_bytes": 49392578458
+              }
+            ],
+            "rejected": []
+          }
+        }
+      },
+      "codeswitching": {
+        "fits": true,
+        "protocols": {
+          "era-codeswitch": {
+            "best": {
+              "protocol": "era-codeswitch",
+              "message_log": 28,
+              "eta": 10,
+              "row_log": 18,
+              "output_log": 15,
+              "output_log_rate": 3,
+              "terminal_log": 12,
+              "queries": 832,
+              "terminal_queries": 147,
+              "terminal_distance": 0.772359,
+              "index_rows": 165,
+              "online_rows": 96,
+              "estimated_proof_bytes": 30335919.407299496,
+              "estimated_live_bytes": 69142737728,
+              "block_length": 1267876,
+              "distance": 0.228952,
+              "numerical_distance": 0.22895267561638222,
+              "code_storage_bytes": 102265664,
+              "distance_details": {
+                "base_distance": 0.008530802696793693,
+                "c": 1.0589684522313152,
+                "gamma": 0.00018909749023940685,
+                "delta": 0.22895267561638222,
+                "delta1": 0.2578785543683145,
+                "d1_at_delta1": 0.0626801434080255,
+                "delta2": 0.22895267561638222,
+                "critical_point": [
+                  0.05259851309418639,
+                  0.12567148993034516,
+                  0.22895267561638222
+                ],
+                "scope": "numerical CalcDist candidate; no certified all-roots isolation",
+                "inner_k": 512,
+                "inner_n": 563,
+                "inner_distance": 0.09236234458259325
+              },
+              "estimated_peak_with_margin_bytes": 79514148388
+            },
+            "candidates": [
+              {
+                "protocol": "era-codeswitch",
+                "message_log": 28,
+                "eta": 10,
+                "row_log": 18,
+                "output_log": 15,
+                "output_log_rate": 3,
+                "terminal_log": 12,
+                "queries": 832,
+                "terminal_queries": 147,
+                "terminal_distance": 0.772359,
+                "index_rows": 165,
+                "online_rows": 96,
+                "estimated_proof_bytes": 30335919.407299496,
+                "estimated_live_bytes": 69142737728,
+                "block_length": 1267876,
+                "distance": 0.228952,
+                "numerical_distance": 0.22895267561638222,
+                "code_storage_bytes": 102265664,
+                "distance_details": {
+                  "base_distance": 0.008530802696793693,
+                  "c": 1.0589684522313152,
+                  "gamma": 0.00018909749023940685,
+                  "delta": 0.22895267561638222,
+                  "delta1": 0.2578785543683145,
+                  "d1_at_delta1": 0.0626801434080255,
+                  "delta2": 0.22895267561638222,
+                  "critical_point": [
+                    0.05259851309418639,
+                    0.12567148993034516,
+                    0.22895267561638222
+                  ],
+                  "scope": "numerical CalcDist candidate; no certified all-roots isolation",
+                  "inner_k": 512,
+                  "inner_n": 563,
+                  "inner_distance": 0.09236234458259325
+                },
+                "estimated_peak_with_margin_bytes": 79514148388
+              },
+              {
+                "protocol": "era-codeswitch",
+                "message_log": 28,
+                "eta": 12,
+                "row_log": 16,
+                "output_log": 15,
+                "output_log_rate": 3,
+                "terminal_log": 12,
+                "queries": 834,
+                "terminal_queries": 147,
+                "terminal_distance": 0.772359,
+                "index_rows": 43,
+                "online_rows": 25,
+                "estimated_proof_bytes": 110362773.30452083,
+                "estimated_live_bytes": 67666488640,
+                "block_length": 315844,
+                "distance": 0.228604,
+                "numerical_distance": 0.22860498720492317,
+                "code_storage_bytes": 25472320,
+                "distance_details": {
+                  "base_distance": 0.008561188434796923,
+                  "c": 1.0601590766536497,
+                  "gamma": 0.0007146495619597424,
+                  "delta": 0.22860498720492317,
+                  "delta1": 0.25543178472400613,
+                  "d1_at_delta1": 0.06078068202382882,
+                  "delta2": 0.22860498720492317,
+                  "critical_point": [
+                    0.05260059161960495,
+                    0.12553277977860583,
+                    0.22860498720492317
+                  ],
+                  "scope": "numerical CalcDist candidate; no certified all-roots isolation",
+                  "inner_k": 256,
+                  "inner_n": 281,
+                  "inner_distance": 0.09252669039145907
+                },
+                "estimated_peak_with_margin_bytes": 77816461936
+              },
+              {
+                "protocol": "era-codeswitch",
+                "message_log": 28,
+                "eta": 4,
+                "row_log": 24,
+                "output_log": 15,
+                "output_log_rate": 3,
+                "terminal_log": 12,
+                "queries": 865,
+                "terminal_queries": 147,
+                "terminal_distance": 0.772359,
+                "index_rows": 10476,
+                "online_rows": 6088,
+                "estimated_proof_bytes": 158303159.3111321,
+                "estimated_live_bytes": 378696677336,
+                "block_length": 81180100,
+                "distance": 0.221315,
+                "numerical_distance": 0.2213154860191227,
+                "code_storage_bytes": 6495885368,
+                "distance_details": {
+                  "base_distance": 8.099999999999999e-05,
+                  "c": 1.0856310097129647,
+                  "gamma": 3.4711583000453936e-06,
+                  "delta": 0.2213154860191227,
+                  "delta1": 0.26010250933408713,
+                  "d1_at_delta1": 0.008432155537248317,
+                  "delta2": 0.2213154860191227,
+                  "critical_point": [
+                    0.052644337144087776,
+                    0.12262210425632611,
+                    0.2213154860191227
+                  ],
+                  "scope": "numerical CalcDist candidate; no certified all-roots isolation",
+                  "inner_k": 4096,
+                  "inner_n": 4505,
+                  "inner_distance": 0.009
+                },
+                "estimated_peak_with_margin_bytes": 435501178937
+              },
+              {
+                "protocol": "era-codeswitch",
+                "message_log": 28,
+                "eta": 2,
+                "row_log": 26,
+                "output_log": 15,
+                "output_log_rate": 3,
+                "terminal_log": 12,
+                "queries": 863,
+                "terminal_queries": 147,
+                "terminal_distance": 0.772359,
+                "index_rows": 41901,
+                "online_rows": 24350,
+                "estimated_proof_bytes": 629155446.1028348,
+                "estimated_live_bytes": 1364178409536,
+                "block_length": 324792484,
+                "distance": 0.221816,
+                "numerical_distance": 0.22181660092122094,
+                "code_storage_bytes": 25986630560,
+                "distance_details": {
+                  "base_distance": 0.0001,
+                  "c": 1.0838478685090516,
+                  "gamma": 9.107018731826407e-07,
+                  "delta": 0.22181660092122094,
+                  "delta1": 0.260622742180373,
+                  "d1_at_delta1": 0.009381479849326687,
+                  "delta2": 0.22181660092122094,
+                  "critical_point": [
+                    0.052641308849388856,
+                    0.12282235589367513,
+                    0.22181660092122094
+                  ],
+                  "scope": "numerical CalcDist candidate; no certified all-roots isolation",
+                  "inner_k": 8192,
+                  "inner_n": 9011,
+                  "inner_distance": 0.01
+                },
+                "estimated_peak_with_margin_bytes": 1568805170967
+              },
+              {
+                "protocol": "era-codeswitch",
+                "message_log": 28,
+                "eta": 0,
+                "row_log": 28,
+                "output_log": 15,
+                "output_log_rate": 3,
+                "terminal_log": 12,
+                "queries": 863,
+                "terminal_queries": 147,
+                "terminal_distance": 0.772359,
+                "index_rows": 167603,
+                "online_rows": 97400,
+                "estimated_proof_bytes": 2513662932.060911,
+                "estimated_live_bytes": 5306104886448,
+                "block_length": 1299169936,
+                "distance": 0.221849,
+                "numerical_distance": 0.22184904730746902,
+                "code_storage_bytes": 103941134384,
+                "distance_details": {
+                  "base_distance": 0.0001,
+                  "c": 1.0837325808912892,
+                  "gamma": 2.38451475160275e-07,
+                  "delta": 0.22184904730746902,
+                  "delta1": 0.26066827363379874,
+                  "d1_at_delta1": 0.009407604488185601,
+                  "delta2": 0.22184904730746902,
+                  "critical_point": [
+                    0.05264111293538564,
+                    0.12283532104813638,
+                    0.22184904730746902
+                  ],
+                  "scope": "numerical CalcDist candidate; no certified all-roots isolation",
+                  "inner_k": 16384,
+                  "inner_n": 18022,
+                  "inner_distance": 0.01
+                },
+                "estimated_peak_with_margin_bytes": 6102020619416
+              }
+            ],
+            "rejected": [
+              {
+                "row_log": 20,
+                "reason": "ERA field-size inequality has no feasible c"
+              },
+              {
+                "row_log": 22,
+                "reason": "ERA field-size inequality has no feasible c"
+              }
+            ]
+          },
+          "basefold-local": {
+            "best": {
+              "protocol": "basefold-local",
+              "message_log": 28,
+              "eta": 4,
+              "row_log": 24,
+              "terminal_log": 12,
+              "queries": 1290,
+              "estimated_proof_bytes": 5975705.002763543,
+              "estimated_live_bytes": 55834574848,
+              "block_length": 33554432,
+              "distance": 0.154398,
+              "numerical_distance": 0.15439850245678088,
+              "code_storage_bytes": 1073741760,
+              "distance_details": {},
+              "estimated_peak_with_margin_bytes": 64209761076
+            },
+            "candidates": [
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 9,
+                "row_log": 19,
+                "terminal_log": 12,
+                "queries": 1074,
+                "estimated_proof_bytes": 36921363.814837895,
+                "estimated_live_bytes": 43352326144,
+                "block_length": 1048576,
+                "distance": 0.182429,
+                "numerical_distance": 0.1824299969367832,
+                "code_storage_bytes": 33554368,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49855175066
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 10,
+                "row_log": 18,
+                "terminal_log": 12,
+                "queries": 1039,
+                "estimated_proof_bytes": 69344109.53968418,
+                "estimated_live_bytes": 43150999552,
+                "block_length": 524288,
+                "distance": 0.187971,
+                "numerical_distance": 0.18797113520623798,
+                "code_storage_bytes": 16777152,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49623649485
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 8,
+                "row_log": 20,
+                "terminal_log": 12,
+                "queries": 1112,
+                "estimated_proof_bytes": 20410445.349906806,
+                "estimated_live_bytes": 43754979328,
+                "block_length": 2097152,
+                "distance": 0.176867,
+                "numerical_distance": 0.17686737421766963,
+                "code_storage_bytes": 67108800,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 50318226228
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 11,
+                "row_log": 17,
+                "terminal_log": 12,
+                "queries": 1006,
+                "estimated_proof_bytes": 132415957.02305071,
+                "estimated_live_bytes": 43050336256,
+                "block_length": 262144,
+                "distance": 0.193491,
+                "numerical_distance": 0.19349113194260426,
+                "code_storage_bytes": 8388544,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49507886695
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 7,
+                "row_log": 21,
+                "terminal_log": 12,
+                "queries": 1152,
+                "estimated_proof_bytes": 12135440.269832747,
+                "estimated_live_bytes": 44560285696,
+                "block_length": 4194304,
+                "distance": 0.171283,
+                "numerical_distance": 0.17128305087875562,
+                "code_storage_bytes": 134217664,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 51244328551
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 12,
+                "row_log": 16,
+                "terminal_log": 12,
+                "queries": 964,
+                "estimated_proof_bytes": 251638671.00704232,
+                "estimated_live_bytes": 43000004608,
+                "block_length": 131072,
+                "distance": 0.201061,
+                "numerical_distance": 0.20106193534326489,
+                "code_storage_bytes": 4194240,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49450005300
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 6,
+                "row_log": 22,
+                "terminal_log": 12,
+                "queries": 1194,
+                "estimated_proof_bytes": 8159327.083470512,
+                "estimated_live_bytes": 46170898432,
+                "block_length": 8388608,
+                "distance": 0.165676,
+                "numerical_distance": 0.16567687488257876,
+                "code_storage_bytes": 268435392,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 53096533197
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 13,
+                "row_log": 15,
+                "terminal_log": 12,
+                "queries": 935,
+                "estimated_proof_bytes": 483837424.5221535,
+                "estimated_live_bytes": 42974838784,
+                "block_length": 65536,
+                "distance": 0.206533,
+                "numerical_distance": 0.20653379210507528,
+                "code_storage_bytes": 2097088,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49421064602
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 5,
+                "row_log": 23,
+                "terminal_log": 12,
+                "queries": 1240,
+                "estimated_proof_bytes": 6457128.116834343,
+                "estimated_live_bytes": 49392123904,
+                "block_length": 16777216,
+                "distance": 0.160048,
+                "numerical_distance": 0.16004872655297153,
+                "code_storage_bytes": 536870848,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 56800942490
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 14,
+                "row_log": 14,
+                "terminal_log": 12,
+                "queries": 908,
+                "estimated_proof_bytes": 926590249.3477224,
+                "estimated_live_bytes": 42962255872,
+                "block_length": 32768,
+                "distance": 0.211988,
+                "numerical_distance": 0.21198824649519132,
+                "code_storage_bytes": 1048512,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49406594253
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 4,
+                "row_log": 24,
+                "terminal_log": 12,
+                "queries": 1290,
+                "estimated_proof_bytes": 5975705.002763543,
+                "estimated_live_bytes": 55834574848,
+                "block_length": 33554432,
+                "distance": 0.154398,
+                "numerical_distance": 0.15439850245678088,
+                "code_storage_bytes": 1073741760,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 64209761076
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 15,
+                "row_log": 13,
+                "terminal_log": 12,
+                "queries": 883,
+                "estimated_proof_bytes": 1755781700.927997,
+                "estimated_live_bytes": 42955964416,
+                "block_length": 16384,
+                "distance": 0.217429,
+                "numerical_distance": 0.21742924087691573,
+                "code_storage_bytes": 524224,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 49399359079
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 3,
+                "row_log": 25,
+                "terminal_log": 12,
+                "queries": 1344,
+                "estimated_proof_bytes": 6177964.181256724,
+                "estimated_live_bytes": 68719476736,
+                "block_length": 67108864,
+                "distance": 0.148726,
+                "numerical_distance": 0.14872610722810042,
+                "code_storage_bytes": 2147483584,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 79027398247
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 2,
+                "row_log": 26,
+                "terminal_log": 12,
+                "queries": 1402,
+                "estimated_proof_bytes": 6792009.842656396,
+                "estimated_live_bytes": 94489280512,
+                "block_length": 134217728,
+                "distance": 0.143031,
+                "numerical_distance": 0.1430314494217373,
+                "code_storage_bytes": 4294967232,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 108662672589
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 1,
+                "row_log": 27,
+                "terminal_log": 12,
+                "queries": 1465,
+                "estimated_proof_bytes": 7687245.572290289,
+                "estimated_live_bytes": 146028888064,
+                "block_length": 268435456,
+                "distance": 0.137314,
+                "numerical_distance": 0.13731443941028398,
+                "code_storage_bytes": 8589934528,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 167933221274
+              },
+              {
+                "protocol": "basefold-local",
+                "message_log": 28,
+                "eta": 0,
+                "row_log": 28,
+                "terminal_log": 12,
+                "queries": 1533,
+                "estimated_proof_bytes": 8800915.917877017,
+                "estimated_live_bytes": 249108103168,
+                "block_length": 536870912,
+                "distance": 0.131574,
+                "numerical_distance": 0.13157498831748538,
+                "code_storage_bytes": 17179869120,
+                "distance_details": {},
+                "estimated_peak_with_margin_bytes": 286474318644
+              }
+            ],
+            "rejected": []
+          }
+        }
+      }
+    }
+  }
+}

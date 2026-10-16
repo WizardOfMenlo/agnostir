@@ -131,14 +131,13 @@ where
 
         let mut active_len = 1;
         for &coord in &self.0 {
-            let one_minus_coord = F::ONE - coord;
-
             // Traverse in reverse so each parent is read before its slot can be
             // overwritten by an expanded child.
             for idx in (0..active_len).rev() {
                 let parent = weights[idx];
-                weights[2 * idx] = parent * one_minus_coord;
-                weights[2 * idx + 1] = parent * coord;
+                let right = parent * coord;
+                weights[2 * idx] = parent - right;
+                weights[2 * idx + 1] = right;
             }
 
             active_len *= 2;

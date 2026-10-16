@@ -1,0 +1,439 @@
+{
+  "message_log": 28,
+  "threads": 16,
+  "memory_budget_gib": 112,
+  "target_era_distance_strictly_above": 0.2,
+  "scope": "Numerical sufficient ideal-ensemble bounds; ERA CalcDist is not an all-roots certificate. Finite parameter grid, minimum root degrees, then full recursion checks. Fastest multiplication-count base per row size, then minimum expected proof size.",
+  "rates": [
+    1.025,
+    1.03,
+    1.035,
+    1.04,
+    1.045,
+    1.05,
+    1.06,
+    1.075,
+    1.09,
+    1.1,
+    1.125,
+    1.15,
+    1.175,
+    1.2,
+    1.25,
+    1.3,
+    1.4,
+    1.5
+  ],
+  "alpha_grid": [
+    0.004,
+    0.12,
+    0.001
+  ],
+  "candidates_checked_and_passing": 4973,
+  "fastest_by_row": [
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 12,
+        "row_log": 16,
+        "output_log": 15,
+        "output_log_rate": 3,
+        "terminal_log": 12,
+        "queries": 870,
+        "terminal_queries": 147,
+        "terminal_distance": 0.772359,
+        "index_rows": 47,
+        "online_rows": 27,
+        "estimated_proof_bytes": 115142159.67857502,
+        "estimated_live_bytes": 69793633824,
+        "block_length": 331776,
+        "distance": 0.220102,
+        "numerical_distance": 0.22010203107872733,
+        "code_storage_bytes": 26629664,
+        "distance_details": {
+          "inner_k": 256,
+          "inner_n": 288,
+          "inner_distance": 0.02742,
+          "tensor_feasibility_threshold": 0.0006819466679330469,
+          "base_distance": 0.0007518564,
+          "c": 1.0899692359862458,
+          "gamma": 0.0006819379898059744,
+          "delta": 0.22010203107872733,
+          "delta1": 0.24824139402496778,
+          "d1_at_delta1": 0.013379249950390214,
+          "delta2": 0.22010203107872733,
+          "critical_point": [
+            0.05265169173160835,
+            0.12213709418766548,
+            0.22010203107872733
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.028,
+          "inverse_rate": 1.125,
+          "cn": 8,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 80262678898
+      },
+      "inner_multiplications": 2183,
+      "terminal_dimensions": [
+        8,
+        9
+      ],
+      "encoding_multiplications_per_input": 28.24560546875,
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.02742,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          8,
+          9
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 256,
+            "block_length": 288,
+            "A_dimensions": [
+              256,
+              8
+            ],
+            "B_dimensions": [
+              9,
+              23
+            ],
+            "A": {
+              "passes": true,
+              "weights": 7,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -107.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 7,
+              "worst_weight": 7,
+              "graph_log2_bound_per_weight": -108.25015357921403,
+              "required_log2_bound_per_weight": -107.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 10,
+        "row_log": 18,
+        "output_log": 15,
+        "output_log_rate": 3,
+        "terminal_log": 12,
+        "queries": 879,
+        "terminal_queries": 147,
+        "terminal_distance": 0.772359,
+        "index_rows": 157,
+        "online_rows": 92,
+        "estimated_proof_bytes": 31771221.54358744,
+        "estimated_live_bytes": 67165488056,
+        "block_length": 1210000,
+        "distance": 0.218307,
+        "numerical_distance": 0.2183078471670993,
+        "code_storage_bytes": 96994232,
+        "distance_details": {
+          "inner_k": 512,
+          "inner_n": 550,
+          "inner_distance": 0.01477,
+          "tensor_feasibility_threshold": 0.0001977930492668152,
+          "base_distance": 0.0002181529,
+          "c": 1.0964371650944804,
+          "gamma": 0.00019778938570380266,
+          "delta": 0.2183078471670993,
+          "delta1": 0.25266868377588736,
+          "d1_at_delta1": 0.008092247473275015,
+          "delta2": 0.2183078471670993,
+          "critical_point": [
+            0.05266263234961908,
+            0.1214197129907981,
+            0.2183078471670993
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.026,
+          "inverse_rate": 1.075,
+          "cn": 9,
+          "dn": 16,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 77240311265
+      },
+      "inner_multiplications": 4848,
+      "terminal_dimensions": [
+        14,
+        15
+      ],
+      "encoding_multiplications_per_input": 28.871826171875,
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.01477,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          14,
+          15
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 512,
+            "block_length": 550,
+            "A_dimensions": [
+              512,
+              14
+            ],
+            "B_dimensions": [
+              15,
+              23
+            ],
+            "A": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -107.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 8,
+              "graph_log2_bound_per_weight": -112.67170057765766,
+              "required_log2_bound_per_weight": -107.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 8,
+        "row_log": 20,
+        "output_log": 15,
+        "output_log_rate": 3,
+        "terminal_log": 12,
+        "queries": 887,
+        "terminal_queries": 147,
+        "terminal_distance": 0.772359,
+        "index_rows": 647,
+        "online_rows": 377,
+        "estimated_proof_bytes": 17659389.14971233,
+        "estimated_live_bytes": 73656064328,
+        "block_length": 4981824,
+        "distance": 0.216416,
+        "numerical_distance": 0.21641624270835252,
+        "code_storage_bytes": 398874952,
+        "distance_details": {
+          "inner_k": 1024,
+          "inner_n": 1116,
+          "inner_distance": 0.00754,
+          "tensor_feasibility_threshold": 5.1547095770835875e-05,
+          "base_distance": 5.6851599999999996e-05,
+          "c": 1.1033269557000294,
+          "gamma": 5.090999033786922e-05,
+          "delta": 0.21641624270835252,
+          "delta1": 0.25391549148383313,
+          "d1_at_delta1": 0.004691049160470707,
+          "delta2": 0.21641624270835252,
+          "critical_point": [
+            0.052674272728231095,
+            0.12066304424543291,
+            0.21641624270835252
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.058,
+          "inverse_rate": 1.09,
+          "cn": 7,
+          "dn": 16,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 84704473978
+      },
+      "inner_multiplications": 8208,
+      "terminal_dimensions": [
+        60,
+        65
+      ],
+      "encoding_multiplications_per_input": 26.25347900390625,
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00754,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          60,
+          65
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 1024,
+            "block_length": 1116,
+            "A_dimensions": [
+              1024,
+              60
+            ],
+            "B_dimensions": [
+              65,
+              27
+            ],
+            "A": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 8,
+              "graph_log2_bound_per_weight": -108.2844243346537,
+              "required_log2_bound_per_weight": -107.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 8,
+              "graph_log2_bound_per_weight": -133.22056537541127,
+              "required_log2_bound_per_weight": -107.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    }
+  ],
+  "chosen": {
+    "case": {
+      "protocol": "era-codeswitch",
+      "message_log": 28,
+      "eta": 8,
+      "row_log": 20,
+      "output_log": 15,
+      "output_log_rate": 3,
+      "terminal_log": 12,
+      "queries": 887,
+      "terminal_queries": 147,
+      "terminal_distance": 0.772359,
+      "index_rows": 647,
+      "online_rows": 377,
+      "estimated_proof_bytes": 17659389.14971233,
+      "estimated_live_bytes": 73656064328,
+      "block_length": 4981824,
+      "distance": 0.216416,
+      "numerical_distance": 0.21641624270835252,
+      "code_storage_bytes": 398874952,
+      "distance_details": {
+        "inner_k": 1024,
+        "inner_n": 1116,
+        "inner_distance": 0.00754,
+        "tensor_feasibility_threshold": 5.1547095770835875e-05,
+        "base_distance": 5.6851599999999996e-05,
+        "c": 1.1033269557000294,
+        "gamma": 5.090999033786922e-05,
+        "delta": 0.21641624270835252,
+        "delta1": 0.25391549148383313,
+        "d1_at_delta1": 0.004691049160470707,
+        "delta2": 0.21641624270835252,
+        "critical_point": [
+          0.052674272728231095,
+          0.12066304424543291,
+          0.21641624270835252
+        ],
+        "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+      },
+      "base_parameters": {
+        "alpha": 0.058,
+        "inverse_rate": 1.09,
+        "cn": 7,
+        "dn": 16,
+        "base_case": "zero-pad"
+      },
+      "estimated_peak_with_margin_bytes": 84704473978
+    },
+    "inner_multiplications": 8208,
+    "terminal_dimensions": [
+      60,
+      65
+    ],
+    "encoding_multiplications_per_input": 26.25347900390625,
+    "recursive_bound": {
+      "bound_passes": true,
+      "scope": "numerical sufficient bound for ideal independent uniform sampling",
+      "distance_target": 0.00754,
+      "setup_bits": 102,
+      "events": 4,
+      "per_event_bits": 104,
+      "base_rs_passes": null,
+      "base_rs_dimensions": null,
+      "base_case": "zero-pad",
+      "base_dimensions": [
+        60,
+        65
+      ],
+      "base_absolute_distance": 1,
+      "base_code_passes": true,
+      "levels": [
+        {
+          "message_length": 1024,
+          "block_length": 1116,
+          "A_dimensions": [
+            1024,
+            60
+          ],
+          "B_dimensions": [
+            65,
+            27
+          ],
+          "A": {
+            "passes": true,
+            "weights": 8,
+            "worst_weight": 8,
+            "graph_log2_bound_per_weight": -108.2844243346537,
+            "required_log2_bound_per_weight": -107.000001
+          },
+          "B": {
+            "passes": true,
+            "weights": 8,
+            "worst_weight": 8,
+            "graph_log2_bound_per_weight": -133.22056537541127,
+            "required_log2_bound_per_weight": -107.000001
+          }
+        }
+      ]
+    },
+    "fits": true
+  }
+}

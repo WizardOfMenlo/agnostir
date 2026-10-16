@@ -1,0 +1,43 @@
+{
+  "paper_example": {
+    "input_log": 32,
+    "interleaving_rows": 64,
+    "output_log": 25,
+    "index_rows": 33,
+    "online_rows": 25,
+    "initial_queries": 830,
+    "terminal_queries": 154,
+    "field_elements": 72418,
+    "hashes": 53011,
+    "bytes": 4013728
+  },
+  "current_measured_bytes": 17668488,
+  "old_estimator_at_current_parameters_and_104_bits": 12329216,
+  "missing_first_fold_source_fields_at_paper_parameters": 8624,
+  "missing_first_fold_source_bytes_at_paper_parameters": 275968,
+  "sources": {
+    "/Users/anubhavbaweja/Desktop/Research/research-git/agnostir/proof-size-estimate.py": "0b5ab99edbbec392a6cc3514ad635e9e1e421c6b35a6df08e919a994aed48dd0",
+    "/Users/anubhavbaweja/Desktop/Research/research-git/agnostir/scripts/plan_large_iopp.py": "9ebea80d1069e291653cddf17c202a934cca17d05892078714117caf9bbda9b5",
+    "/Users/anubhavbaweja/Desktop/Research/research-git/agnostir/src/basefold_iopp.rs": "98388dd9a68363155c6a423d87067c3f851d691178c01ad86444cfc9e8c051df",
+    "/Users/anubhavbaweja/Desktop/Research/research-git/agnostir/src/era_iopp.rs": "c7847f1764bbe36657d118b07b19c74c60d3240906763d98592d79af2a701504",
+    "/Users/anubhavbaweja/Desktop/Research/research-git/AgnosSTIR/sections/evaluation.tex": "37d6a97222b8fa218eaa8ce8c5a73f7f53ebd258f3b1df3afede5ac0dcd7385b",
+    "/Users/anubhavbaweja/Desktop/Research/research-git/agnostir/iopp_k_sweep_summary.csv": "017fd92ca7ada45ef8a780fd41626e3e23ee385d80ae3401931af069203cd6e3"
+  },
+  "scope": "Analytical wire-size audit; no new measured runs or changes to the paper. Paper-parameter counterfactual retains paper query counts and is not a security calibration.",
+  "saved_n28_sweep": {
+    "log_k": "28",
+    "k": "268435456",
+    "baseline_proof_kb": "5917.856",
+    "baseline_field": "62641.0",
+    "baseline_hashes": "122292.0",
+    "baseline_oracle": "33538048",
+    "baseline_eta": "32",
+    "baseline_k0_exp": "23",
+    "codeswitch1_proof_kb": "3300.576",
+    "codeswitch1_field": "45785.0",
+    "codeswitch1_hashes": "57358.0",
+    "codeswitch1_oracle": "1073709056",
+    "codeswitch1_eta": "32",
+    "codeswitch1_k_exponents": "23,23"
+  }
+}

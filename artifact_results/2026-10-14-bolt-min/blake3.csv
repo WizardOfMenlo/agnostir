@@ -1,4 +1,0 @@
-code,scope,field,hash,message_log,eta,seed,threads,sample,degree,compression,block_length,setup_ms,buffer_ms,expander_ms,rs_ms,merkle_ms,commit_ms,commitment_bytes,root_hex,encoder_checked,merkle_checked
-bolt-min,commitment-only,GF(2^32),blake3,22,6,2025,8,0,16,8,81920,22.468250,1.209000,4.936458,3.303334,7.120750,16.569542,32,3bc4ada6d6a7266490c1949708bec445a39a09d39e8d17be62edfca87c59ef79,true,true
-bolt-min,commitment-only,GF(2^32),blake3,22,6,2025,8,1,16,8,81920,22.468250,1.259542,7.986333,3.417917,6.753292,19.417084,32,3bc4ada6d6a7266490c1949708bec445a39a09d39e8d17be62edfca87c59ef79,true,true
-bolt-min,commitment-only,GF(2^32),blake3,22,6,2025,8,2,16,8,81920,22.468250,1.197167,5.247750,3.364792,7.446500,17.256209,32,3bc4ada6d6a7266490c1949708bec445a39a09d39e8d17be62edfca87c59ef79,true,true

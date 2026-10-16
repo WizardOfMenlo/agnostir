@@ -1,0 +1,2 @@
+protocol,message_log,eta,output_log,output_log_rate,terminal_log,seed,threads,sample,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,index_rows,online_rows,accepted,proof_blake3,gkr_checkpoints,checkpoint_rows
+basefold-local,28,4,24,1,12,2025,16,0,9671.793653,18820.192981,18659.731434,56.415908,6004040,0,16,true,fee80e62051e76bff1b8620bac68b9fc419018d08e78d472499e6c927b16f575,,0

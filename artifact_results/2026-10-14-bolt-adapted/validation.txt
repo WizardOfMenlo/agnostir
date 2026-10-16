@@ -1,7 +1,0 @@
-187 library tests passed; 186 serial library tests passed. Formatting, clippy (existing warnings), and shell/Python syntax checks passed.
-Full-size 32-worker proof verified and matched the 8-worker proof byte for byte.
-proof_bytes=11621288
-proof_sha256=4ceab30943c4ecce499f151695ba8ce05febe4e353fd5d74b3375207f4e06c67
-Measured Rust source and dependency manifests match current source byte for byte.
-Top-level 32-worker smoke including adapted Bolt and kernel calibration passed. Raw smoke output: results/bolt-adapted-integration-smoke-20261014.
-Revised 77-page paper compiled successfully; table page 63 visually inspected. Existing bibliography/layout warnings remain.

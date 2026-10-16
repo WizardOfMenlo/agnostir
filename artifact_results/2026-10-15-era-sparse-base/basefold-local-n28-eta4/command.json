@@ -1,0 +1,22 @@
+[
+  "/home/ubuntu/agnostir-era-sparse-base-20261015/target/release/compare_iopps",
+  "--threads",
+  "16",
+  "--samples",
+  "1",
+  "--warmups",
+  "1",
+  "--message-log",
+  "28",
+  "--basefold-eta",
+  "4",
+  "--custom-parameters",
+  "--protocol",
+  "basefold-local",
+  "--terminal-log",
+  "12",
+  "--proof-dir",
+  "/home/ubuntu/agnostir-era-sparse-base-20261015/results/full-n28/basefold-local-n28-eta4/proofs",
+  "--basefold-queries",
+  "1290"
+]

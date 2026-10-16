@@ -1,0 +1,58 @@
+Title
+Field-Agnostic SNARKs with Small Proofs via Encode-Repeat-Accumulate (ERA) Codes
+
+Authors and affiliations
+Anubhav Baweja — University of Pennsylvania
+Giacomo Fenzi — EPFL
+Pratyush Mishra — University of Pennsylvania
+Tushar Mopuri — University of Pennsylvania
+
+Artifact contact
+Anubhav Baweja <abaweja@upenn.edu>
+
+Artifact description
+This source artifact evaluates ERA, BaseFold-code, Brakedown, and EA encoders
+under a common Fiat-Shamir interleaved evaluation argument. It also compares
+a corrected, optimized ERA codeswitching IOPP against a local recursive
+BaseFold implementation. The artifact contains exact serialized proof-size
+measurements, commitment/proving/verification timings, numerical distance
+calculations, tests, fixed parameter files, and a pinned Docker build recipe.
+The README maps each component to the supplied paper and explicitly records
+deviations. Table 3's original configuration is supported; the additional
+2^28 AWS results and corrected implementation are identified separately.
+The older analytical estimates in Table 4/Figure 7 are not claimed as reproduced
+by the current measured wire format. This is an encoder/IOPP artifact, not a
+complete zero-knowledge SNARK implementation.
+
+Version and acquisition
+The attached era-codes-artifact-20261016-final.tar.gz is self-contained source plus
+compact reference evidence, documentation, and the paper PDF. SHA256SUMS and
+SOURCE_VERSION.json identify this exact snapshot, including uncommitted work;
+the Git base revision alone does not identify it. Optional dependency and
+large-evidence archives are conveniences, not prerequisites for building or
+regenerating proofs. See README.md for reproduction and resource requirements.
+
+License
+MIT for the authors' code. Dependencies retain their own licenses; the supplied
+paper is provided for evaluation and is not relicensed under MIT.
+
+AI disclosure
+GPT-6 Astra, accessed through OpenAI Codex, generated or substantially revised
+nearly all final project-specific code and original repository content. It
+implemented the algorithms from the human-written descriptions and details
+in the paper under human direction. Its assistance included implementation,
+auditing and proposed corrections, optimization, parameter searches, tests,
+experiment execution and analysis, documentation, and submission packaging.
+Recorded benchmark values come from program executions. This disclosure does
+not attribute third-party dependencies or the paper's human-written algorithm
+descriptions to the AI. AI_DISCLOSURE.md supplies the detailed supplementary
+account, including prompt excerpts and the subsequent revision process.
+The human authors retain responsibility for all scientific claims, code, and
+content and for reviewing the final submission.
+
+Submission status
+Prepared locally; not submitted. Upload the main archive and supplied PDF using
+the conference submission form. The published artifact deadline is October 15,
+2026 without a timezone stated on the requirements page; verify that the
+submission portal still accepts the upload. Check which submission fields and badge options
+the live form offers before submitting. No badge has been awarded or claimed.

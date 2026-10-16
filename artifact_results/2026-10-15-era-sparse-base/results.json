@@ -1,0 +1,50 @@
+[
+  {
+    "label": "era-codeswitch-n28-eta8",
+    "group": "full-n28",
+    "eta": 8,
+    "protocol": "era-codeswitch",
+    "setup_s": 7.626331043,
+    "commit_s": 24.785271376,
+    "evaluation_prove_s": 34.317252612,
+    "total_prover_s": 59.102523988,
+    "verify_s": 1.257826996,
+    "proof_bytes": 17668488,
+    "peak_rss_bytes": 76668391424,
+    "peak_rss_gib": 71.40300369262695,
+    "accepted": true,
+    "proof_blake3": "d6626a5053d9e0fcd0c57e667cee2b0f293847f28c87b08985ba32ec216ec08a"
+  },
+  {
+    "label": "basefold-local-n28-eta4",
+    "group": "full-n28",
+    "eta": 4,
+    "protocol": "basefold-local",
+    "setup_s": 9.798892,
+    "commit_s": 18.833729044,
+    "evaluation_prove_s": 18.687572095,
+    "total_prover_s": 37.521301139,
+    "verify_s": 0.056477689,
+    "proof_bytes": 6004040,
+    "peak_rss_bytes": 47491375104,
+    "peak_rss_gib": 44.22978973388672,
+    "accepted": true,
+    "proof_blake3": "fee80e62051e76bff1b8620bac68b9fc419018d08e78d472499e6c927b16f575"
+  },
+  {
+    "label": "era-codeswitch-n28-eta10",
+    "group": "fixed-eta-n28",
+    "eta": 10,
+    "protocol": "era-codeswitch",
+    "setup_s": 1.7654960329999998,
+    "commit_s": 23.736038911,
+    "evaluation_prove_s": 18.825336043,
+    "total_prover_s": 42.561374954,
+    "verify_s": 0.503632555,
+    "proof_bytes": 31785384,
+    "peak_rss_bytes": 68343017472,
+    "peak_rss_gib": 63.64939498901367,
+    "accepted": true,
+    "proof_blake3": "59b04072375e127be9da09a1d529d5f315b849591c1a69cc618914cc6db5b5d6"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "wheel": "numpy-2.4.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+    "sha256": "538bf4ec353709c765ff75ae616c34d3c3dca1a68312727e8f2676ea644f8509",
+    "notices": [
+      "python/numpy-2.4.1.dist-info/licenses/LICENSE.txt",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/ma/LICENSE",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/random/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+      "python/numpy-2.4.1.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md"
+    ]
+  },
+  {
+    "wheel": "scipy-1.17.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+    "sha256": "dac97a27520d66c12a34fd90a4fe65f43766c18c0d6e1c0a80f114d2260080e4",
+    "notices": [
+      "python/scipy-1.17.0.dist-info/LICENSE.txt"
+    ]
+  }
+]

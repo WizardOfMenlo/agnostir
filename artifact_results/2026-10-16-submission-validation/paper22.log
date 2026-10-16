@@ -1,0 +1,60 @@
+{"verified_rows": 4, "known_hash_matches": 4}
+[
+  {
+    "campaign": ".",
+    "protocol": "basefold",
+    "message_log": 22,
+    "eta": 6,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 4177416,
+    "setup_ms": 24.320932,
+    "commit_ms": 432.036329,
+    "prove_ms": 410.50841,
+    "verify_ms": 30.498526,
+    "total_prover_ms": 842.544739
+  },
+  {
+    "campaign": ".",
+    "protocol": "brakedown",
+    "message_log": 22,
+    "eta": 6,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 6438728,
+    "setup_ms": 761.848065,
+    "commit_ms": 1012.292349,
+    "prove_ms": 421.096703,
+    "verify_ms": 147.11015,
+    "total_prover_ms": 1433.389052
+  },
+  {
+    "campaign": ".",
+    "protocol": "ea",
+    "message_log": 22,
+    "eta": 6,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 6443944,
+    "setup_ms": 3847.81217,
+    "commit_ms": 6696.191317,
+    "prove_ms": 409.793806,
+    "verify_ms": 811.055229,
+    "total_prover_ms": 7105.9851229999995
+  },
+  {
+    "campaign": ".",
+    "protocol": "era",
+    "message_log": 22,
+    "eta": 6,
+    "threads": 8,
+    "samples": 1,
+    "proof_bytes": 4010824,
+    "setup_ms": 753.346232,
+    "commit_ms": 547.935969,
+    "prove_ms": 404.666247,
+    "verify_ms": 61.857978,
+    "total_prover_ms": 952.602216
+  }
+]
+Completed: /results/paper22

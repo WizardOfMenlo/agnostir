@@ -1,0 +1,30 @@
+[
+  {
+    "case": "basefold:n22:eta6",
+    "proof": "basefold.proof",
+    "bytes": 4177416,
+    "sha256": "4f4bd94b2a14e3bd20017b9c191b36ac8e18475fb22f3f27578b7bb09e76fe3c",
+    "matched_reference": true
+  },
+  {
+    "case": "brakedown:n22:eta6",
+    "proof": "brakedown.proof",
+    "bytes": 6438728,
+    "sha256": "b7bbdfc1996c45dba625783daecb3aa7b382e2b90724401e097a825839676555",
+    "matched_reference": true
+  },
+  {
+    "case": "ea:n22:eta6",
+    "proof": "ea.proof",
+    "bytes": 6443944,
+    "sha256": "a6834c2048f2afdb201f9d7177f08ea3341447e2768ed9a177bfee77038c4940",
+    "matched_reference": true
+  },
+  {
+    "case": "era:n22:eta6",
+    "proof": "era.proof",
+    "bytes": 4010824,
+    "sha256": "d5b48aadf7be84fab2b9dcb4db8948f3cd02576fe048e57b9c9b44945847141d",
+    "matched_reference": true
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "label": "era-codeswitch-n28-eta6",
+    "group": "full-n28",
+    "eta": 6,
+    "protocol": "era-codeswitch",
+    "setup_s": 40.310097801999994,
+    "commit_s": 26.168974457,
+    "evaluation_prove_s": 101.904679299,
+    "total_prover_s": 128.073653756,
+    "verify_s": 10.283650861,
+    "proof_bytes": 3622568,
+    "peak_rss_bytes": 97603940352,
+    "peak_rss_gib": 90.90075302124023,
+    "accepted": true,
+    "proof_blake3": "858ccbe1ec0f9b87e895d556be97b17907a2c9ed04fe8877bfa6825ee561dd51"
+  }
+]

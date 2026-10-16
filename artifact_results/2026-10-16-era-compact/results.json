@@ -1,0 +1,30 @@
+[
+  {
+    "protocol": "era-codeswitch",
+    "eta": 6,
+    "setup_s": 39.818625842,
+    "commit_s": 25.987198852000002,
+    "evaluation_prove_s": 57.530584813000004,
+    "total_prover_s": 83.517783665,
+    "verify_s": 0.038494849000000005,
+    "proof_bytes": 3622568,
+    "peak_rss_bytes": 93679845376,
+    "peak_rss_gib": 87.24615478515625,
+    "accepted": true,
+    "proof_blake3": "858ccbe1ec0f9b87e895d556be97b17907a2c9ed04fe8877bfa6825ee561dd51"
+  },
+  {
+    "protocol": "basefold-local",
+    "eta": 4,
+    "setup_s": 9.625375167,
+    "commit_s": 18.767194725,
+    "evaluation_prove_s": 18.578576973,
+    "total_prover_s": 37.345771698,
+    "verify_s": 0.056703346,
+    "proof_bytes": 6004040,
+    "peak_rss_bytes": 47542009856,
+    "peak_rss_gib": 44.276947021484375,
+    "accepted": true,
+    "proof_blake3": "fee80e62051e76bff1b8620bac68b9fc419018d08e78d472499e6c927b16f575"
+  }
+]

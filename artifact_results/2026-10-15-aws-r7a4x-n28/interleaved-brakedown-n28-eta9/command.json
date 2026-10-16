@@ -1,0 +1,22 @@
+[
+  "/home/ubuntu/agnostir-aws-r7a4x-n28-20261015/target/release/interleaved_iopp",
+  "--threads",
+  "16",
+  "--samples",
+  "1",
+  "--warmups",
+  "1",
+  "--message-log",
+  "28",
+  "--eta",
+  "9",
+  "--csv",
+  "--code",
+  "brakedown",
+  "--distance",
+  "0.1",
+  "--queries",
+  "1974",
+  "--proof-out",
+  "/home/ubuntu/agnostir-aws-r7a4x-n28-20261015/results/full-n28/interleaved-brakedown-n28-eta9/proof.bin"
+]

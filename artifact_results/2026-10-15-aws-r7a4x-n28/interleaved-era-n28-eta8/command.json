@@ -1,0 +1,22 @@
+[
+  "/home/ubuntu/agnostir-aws-r7a4x-n28-20261015/target/release/interleaved_iopp",
+  "--threads",
+  "16",
+  "--samples",
+  "1",
+  "--warmups",
+  "1",
+  "--message-log",
+  "28",
+  "--eta",
+  "8",
+  "--csv",
+  "--code",
+  "era",
+  "--distance",
+  "0.225055",
+  "--queries",
+  "816",
+  "--proof-out",
+  "/home/ubuntu/agnostir-aws-r7a4x-n28-20261015/results/full-n28/interleaved-era-n28-eta8/proof.bin"
+]

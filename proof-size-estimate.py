@@ -1004,7 +1004,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--optimization-output-path",
         type=Path,
-        default=Path("iopp_optimization_results.txt"),
+        default=Path("results/analytical-model/iopp_optimization_results.txt"),
     )
     return parser
 

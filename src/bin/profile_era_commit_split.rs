@@ -1,11 +1,11 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use agnostir::{
+use ark_secp256k1::Fr as SecpScalar;
+use era_codes::{
     BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement,
     blake3_merkle_commit_interleaved, random_permutation,
 };
-use ark_secp256k1::Fr as SecpScalar;
 use rand::{SeedableRng, rngs::SmallRng};
 use rayon::prelude::*;
 

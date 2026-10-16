@@ -1,1 +1,0 @@
-scope=commitment-only upstream=3832e47b24e7b3e10525c9c5bcfc1cfe66d525f2 field=GF(2^32) degree=16 compression=8 rs_inverse_rate=2 retained_merkle=true native_gpu=false; no Bolt evaluation proof is implemented or measured

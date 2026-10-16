@@ -1,2 +1,0 @@
-code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted
-era,14,2,2025,32,0,32,17200,3006.330708,26.404167,9.788333,22.932375,145000,32,true

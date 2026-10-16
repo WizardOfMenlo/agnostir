@@ -1,84 +1,69 @@
+"""BaseFold RFC distance bound, CRYPTO 2024 §1.3 and Theorem 2.
+
+q is log2(|F|), c is inverse rate, d is the number of doublings, k0=1.
+The theorem's lambda is PER LEVEL: setup failure is at most d*2**(-lambda).
+This is the symmetric RFC construction (t, -t), requiring odd characteristic;
+field size alone does not make this bound applicable to a binary variant.
+These are ideal-ensemble bounds, not certificates for a fixed seeded code.
+"""
+
 import argparse
 import math
 
+
 def compute_formula(q, c, d, lam):
+    """Return the published §1.3 bound with per-level failure 2**(-lam).
+
+    The recurrence is t_i = 2*t_(i-1) +
+      (2*log2(n_(i-1)) + lam + 2.002*t_(i-1) + 0.6*n_i)/(q-1.001).
+    Normalizing by n_i gives exactly the closed form formerly used here.
+    The printed Theorem 2 has an indexing/logarithm typo; §1.3 and the
+    n_(d-1)^2 factor in the full proof (Eq. 26) give this recurrence.
     """
-    Computes the formula given:
-    q: value of log(|F|)
-    c: constant multiplier for n sequence
-    d: upper bound of summation
-    lam: lambda value
-    """
-    
-    # Define the common denominator term: log(|F|) - 1.001
-    # Since q is passed as log(|F|), we use q directly.
-    denom_log_F = q - 1.001
-    
-    if denom_log_F == 0:
-        raise ValueError("q (log|F|) cannot be 1.001 to avoid division by zero.")
+    if not math.isfinite(q) or q < 10:
+        raise ValueError("Theorem 2 requires log2(|F|) >= 10")
+    if not math.isfinite(c) or c < 1 or not float(c).is_integer():
+        raise ValueError("with k0=1, inverse rate c must be a positive integer")
+    if not isinstance(d, int) or d < 0:
+        raise ValueError("d must be a nonnegative integer")
+    if not math.isfinite(lam) or lam <= 0:
+        raise ValueError("per-level lambda must be positive and finite")
+    zero_fraction = 1 / c
+    n = c
+    for _ in range(d):
+        zero_fraction = (q * zero_fraction + 0.6 + (2 * math.log2(n) + lam) / (2 * n)) / (q - 1.001)
+        n *= 2
+    return max(0.0, 1 - zero_fraction)
 
-    # Let R be the ratio: log(|F|) / (log(|F|) - 1.001)
-    R = q / denom_log_F
 
-    # --- Term 1 ---
-    # (1/c) * R^d
-    term1 = (1.0 / c) * (R ** d)
+def distance_for_setup_bits(q, c, d, setup_bits):
+    """Allocate the union bound over all d random levels explicitly."""
+    if not isinstance(d, int) or d < 0:
+        raise ValueError("d must be a nonnegative integer")
+    if not math.isfinite(setup_bits) or setup_bits <= 0:
+        raise ValueError("setup_bits must be positive and finite")
+    lam = math.ceil(setup_bits + math.log2(max(1, d)))
+    return compute_formula(q, c, d, lam)
 
-    # --- Term 2 (Summation) ---
-    sum_val = 0.0
-    
-    # Initialize n sequence. 
-    # The loop runs for i = 1 to d.
-    # It requires n_{i-1} and n_i.
-    n_prev = c  # This corresponds to n_{0}
-    
-    for i in range(1, d + 1):
-        # Calculate n_i based on n_{i+1} = 2 * n_i (so n_current = 2 * n_prev)
-        n_curr = 2 * n_prev
-        
-        # Calculate log(n_{i-1}). We use log2 assuming standard information theoretic context.
-        # If n_prev = 1, log2(n_prev) = 0.
-        log_n_prev = math.log2(n_prev)
-        
-        # Calculate the two parts inside the large brackets
-        
-        # Part A: 0.6 / (log|F| - 1.001)
-        part_a = 0.6 / denom_log_F
-        
-        # Part B: (2 * log(n_{i-1}) + lambda) / (n_i * (log|F| - 1.001))
-        numerator_b = (2 * log_n_prev) + lam
-        denominator_b = n_curr * denom_log_F
-        part_b = numerator_b / denominator_b
-        
-        # Sum parts A and B
-        brackets = part_a + part_b
-        
-        # Multiply by R^{d-i}
-        outer_factor = R ** (d - i)
-        
-        # Add to total sum
-        sum_val += outer_factor * brackets
-        
-        # Update n_prev for the next iteration
-        n_prev = n_curr
-
-    return 1 - (term1 + sum_val)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute the mathematical formula from the image.")
-    
-    parser.add_argument("q", type=float, help="The value of log(|F|)")
-    parser.add_argument("c", type=float, help="The constant c")
-    parser.add_argument("d", type=int, help="The integer d (summation limit)")
-    
-    # Lambda is required by the formula but wasn't strictly in the 'given' list of the prompt.
-    # We add it as an optional argument with a default, or you can supply it explicitly.
-    parser.add_argument("--lam", type=float, default=100.0, help="The value of lambda (default: 100.0)")
-
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("q", type=float, help="lower bound on log2(|F|)")
+    parser.add_argument("c", type=int, help="inverse rate, with base message length k0=1")
+    parser.add_argument("d", type=int, help="log2(message length)")
+    budget = parser.add_mutually_exclusive_group()
+    budget.add_argument("--lam", type=float, help="per-level lambda (legacy semantics)")
+    budget.add_argument("--setup-bits", type=float, help="total setup budget (default: 100)")
     args = parser.parse_args()
-    
     try:
-        result = compute_formula(args.q, args.c, args.d, args.lam)
-        print(f"Result: {result}")
-    except Exception as e:
-        print(f"Error: {e}")
+        lam = args.lam
+        if lam is None:
+            bits = args.setup_bits if args.setup_bits is not None else 100
+            result = distance_for_setup_bits(args.q, args.c, args.d, bits)
+            lam = math.ceil(bits + math.log2(max(1, args.d)))
+        else:
+            result = compute_formula(args.q, args.c, args.d, lam)
+    except (ValueError, OverflowError) as error:
+        parser.error(str(error))
+    print(f"Numerical ideal-ensemble distance bound: {result:.15g}")
+    print(f"Per-level lambda: {lam}; setup failure <= {args.d} * 2^(-{lam})")

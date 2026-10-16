@@ -1,0 +1,2805 @@
+{
+  "message_log": 28,
+  "threads": 16,
+  "memory_budget_gib": 112,
+  "base_grid_sha256": "936ee6546be98e67bb240c3f43f768b4c0a5e48c77a7c80d87fa5fb5c78164dc",
+  "scope": "Joint wire-size search using the checked sparse-base grid, without rerunning it.\n\nSelect the fastest multiplication-count base for each row size and rounded\ninner block length, then vary interleaving, output length/rate and termination.\nAll sizes are expectations for the current wire format, not measured proofs.\n",
+  "output_log_min": 13,
+  "output_rate_logs": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "terminal_logs": "6 through min(output_log-1,15)",
+  "candidates_checked": 2640,
+  "base_groups": 68,
+  "chosen": {
+    "case": {
+      "protocol": "era-codeswitch",
+      "message_log": 28,
+      "eta": 6,
+      "row_log": 22,
+      "output_log": 21,
+      "output_log_rate": 3,
+      "terminal_log": 11,
+      "queries": 888,
+      "terminal_queries": 156,
+      "terminal_distance": 0.752157,
+      "index_rows": 39,
+      "online_rows": 23,
+      "estimated_proof_bytes": 3629890.705544496,
+      "estimated_live_bytes": 97290853456,
+      "consume_commitment": true,
+      "memory_phases_bytes": {
+        "commitment": 94667247024,
+        "starting_sumcheck": 91481111984,
+        "before_original_openings": 97290853456,
+        "after_original_openings": 88301337680
+      },
+      "block_length": 17791524,
+      "distance": 0.216292,
+      "numerical_distance": 0.21629284464993737,
+      "code_storage_bytes": 1424088496,
+      "distance_details": {
+        "inner_k": 2048,
+        "inner_n": 2109,
+        "inner_distance": 0.00478,
+        "tensor_feasibility_threshold": 2.068381132340431e-05,
+        "base_distance": 2.2848400000000003e-05,
+        "c": 1.1037789712700485,
+        "gamma": 1.4977931380044089e-05,
+        "delta": 0.21629284464993737,
+        "delta1": 0.25504071583630006,
+        "d1_at_delta1": 0.0036606242389613615,
+        "delta2": 0.21629284464993737,
+        "critical_point": [
+          0.052675036441323396,
+          0.12061367125410434,
+          0.21629284464993737
+        ],
+        "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+      },
+      "base_parameters": {
+        "alpha": 0.017,
+        "inverse_rate": 1.03,
+        "cn": 9,
+        "dn": 20,
+        "base_case": "zero-pad"
+      },
+      "estimated_peak_with_margin_bytes": 111884481475
+    },
+    "encoding_multiplications_per_input": 27.465322494506836,
+    "terminal_dimensions": [
+      35,
+      36
+    ],
+    "recursive_bound": {
+      "bound_passes": true,
+      "scope": "numerical sufficient bound for ideal independent uniform sampling",
+      "distance_target": 0.00478,
+      "setup_bits": 102,
+      "events": 4,
+      "per_event_bits": 104,
+      "base_rs_passes": null,
+      "base_rs_dimensions": null,
+      "base_case": "zero-pad",
+      "base_dimensions": [
+        35,
+        36
+      ],
+      "base_absolute_distance": 1,
+      "base_code_passes": true,
+      "levels": [
+        {
+          "message_length": 2048,
+          "block_length": 2109,
+          "A_dimensions": [
+            2048,
+            35
+          ],
+          "B_dimensions": [
+            36,
+            25
+          ],
+          "A": {
+            "passes": true,
+            "weights": 10,
+            "worst_weight": 10,
+            "graph_log2_bound_per_weight": -111.88487306114912,
+            "required_log2_bound_per_weight": -108.000001
+          },
+          "B": {
+            "passes": true,
+            "weights": 10,
+            "worst_weight": 10,
+            "graph_log2_bound_per_weight": -113.35383764162076,
+            "required_log2_bound_per_weight": -108.000001
+          }
+        }
+      ]
+    },
+    "fits": true
+  },
+  "best_by_row": [
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 12,
+        "row_log": 16,
+        "output_log": 15,
+        "output_log_rate": 5,
+        "terminal_log": 10,
+        "queries": 870,
+        "terminal_queries": 88,
+        "terminal_distance": 0.915363,
+        "index_rows": 47,
+        "online_rows": 27,
+        "estimated_proof_bytes": 114783919.38096704,
+        "estimated_live_bytes": 71077090848,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 54270514720,
+          "starting_sumcheck": 71077090848,
+          "before_original_openings": 55046362656,
+          "after_original_openings": 11950937632
+        },
+        "block_length": 331776,
+        "distance": 0.220102,
+        "numerical_distance": 0.22010203107872733,
+        "code_storage_bytes": 26629664,
+        "distance_details": {
+          "inner_k": 256,
+          "inner_n": 288,
+          "inner_distance": 0.02742,
+          "tensor_feasibility_threshold": 0.0006819466679330469,
+          "base_distance": 0.0007518564,
+          "c": 1.0899692359862458,
+          "gamma": 0.0006819379898059744,
+          "delta": 0.22010203107872733,
+          "delta1": 0.24824139402496778,
+          "d1_at_delta1": 0.013379249950390214,
+          "delta2": 0.22010203107872733,
+          "critical_point": [
+            0.05265169173160835,
+            0.12213709418766548,
+            0.22010203107872733
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.028,
+          "inverse_rate": 1.125,
+          "cn": 8,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 81738654476
+      },
+      "encoding_multiplications_per_input": 28.24560546875,
+      "terminal_dimensions": [
+        8,
+        9
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.02742,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          8,
+          9
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 256,
+            "block_length": 288,
+            "A_dimensions": [
+              256,
+              8
+            ],
+            "B_dimensions": [
+              9,
+              23
+            ],
+            "A": {
+              "passes": true,
+              "weights": 7,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -107.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 7,
+              "worst_weight": 7,
+              "graph_log2_bound_per_weight": -108.25015357921403,
+              "required_log2_bound_per_weight": -107.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 10,
+        "row_log": 18,
+        "output_log": 17,
+        "output_log_rate": 5,
+        "terminal_log": 10,
+        "queries": 879,
+        "terminal_queries": 90,
+        "terminal_distance": 0.909852,
+        "index_rows": 43,
+        "online_rows": 25,
+        "estimated_proof_bytes": 29825283.817876272,
+        "estimated_live_bytes": 72138884024,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 56332272568,
+          "starting_sumcheck": 72138884024,
+          "before_original_openings": 59233021496,
+          "after_original_openings": 21123051064
+        },
+        "block_length": 1210000,
+        "distance": 0.218307,
+        "numerical_distance": 0.2183078471670993,
+        "code_storage_bytes": 96994232,
+        "distance_details": {
+          "inner_k": 512,
+          "inner_n": 550,
+          "inner_distance": 0.01477,
+          "tensor_feasibility_threshold": 0.0001977930492668152,
+          "base_distance": 0.0002181529,
+          "c": 1.0964371650944804,
+          "gamma": 0.00019778938570380266,
+          "delta": 0.2183078471670993,
+          "delta1": 0.25266868377588736,
+          "d1_at_delta1": 0.008092247473275015,
+          "delta2": 0.2183078471670993,
+          "critical_point": [
+            0.05266263234961908,
+            0.1214197129907981,
+            0.2183078471670993
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.026,
+          "inverse_rate": 1.075,
+          "cn": 9,
+          "dn": 16,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 82959716628
+      },
+      "encoding_multiplications_per_input": 28.871826171875,
+      "terminal_dimensions": [
+        14,
+        15
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.01477,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          14,
+          15
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 512,
+            "block_length": 550,
+            "A_dimensions": [
+              512,
+              14
+            ],
+            "B_dimensions": [
+              15,
+              23
+            ],
+            "A": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -107.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 8,
+              "graph_log2_bound_per_weight": -112.67170057765766,
+              "required_log2_bound_per_weight": -107.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 8,
+        "row_log": 20,
+        "output_log": 19,
+        "output_log_rate": 5,
+        "terminal_log": 10,
+        "queries": 887,
+        "terminal_queries": 93,
+        "terminal_distance": 0.904427,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 8455076.75548694,
+        "estimated_live_bytes": 87929271864,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 75975783992,
+          "starting_sumcheck": 87929271864,
+          "before_original_openings": 86576833720,
+          "after_original_openings": 55117325496
+        },
+        "block_length": 4579600,
+        "distance": 0.216469,
+        "numerical_distance": 0.21646988625888522,
+        "code_storage_bytes": 366753336,
+        "distance_details": {
+          "inner_k": 1024,
+          "inner_n": 1070,
+          "inner_distance": 0.00781,
+          "tensor_feasibility_threshold": 5.519788019031287e-05,
+          "base_distance": 6.0996100000000004e-05,
+          "c": 1.1031305543776837,
+          "gamma": 5.5195699281801886e-05,
+          "delta": 0.21646988625888522,
+          "delta1": 0.25383908047980475,
+          "d1_at_delta1": 0.004801636691542154,
+          "delta2": 0.21646988625888522,
+          "critical_point": [
+            0.05267394090492984,
+            0.12068450719134982,
+            0.21646988625888522
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.022,
+          "inverse_rate": 1.045,
+          "cn": 9,
+          "dn": 17,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 101118662644
+      },
+      "encoding_multiplications_per_input": 27.953964233398438,
+      "terminal_dimensions": [
+        23,
+        24
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00781,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          23,
+          24
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 1024,
+            "block_length": 1070,
+            "A_dimensions": [
+              1024,
+              23
+            ],
+            "B_dimensions": [
+              24,
+              22
+            ],
+            "A": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -107.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 8,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -107.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 156,
+        "terminal_distance": 0.752157,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 3629890.705544496,
+        "estimated_live_bytes": 97290853456,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 94667247024,
+          "starting_sumcheck": 91481111984,
+          "before_original_openings": 97290853456,
+          "after_original_openings": 88301337680
+        },
+        "block_length": 17791524,
+        "distance": 0.216292,
+        "numerical_distance": 0.21629284464993737,
+        "code_storage_bytes": 1424088496,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2109,
+          "inner_distance": 0.00478,
+          "tensor_feasibility_threshold": 2.068381132340431e-05,
+          "base_distance": 2.2848400000000003e-05,
+          "c": 1.1037789712700485,
+          "gamma": 1.4977931380044089e-05,
+          "delta": 0.21629284464993737,
+          "delta1": 0.25504071583630006,
+          "d1_at_delta1": 0.0036606242389613615,
+          "delta2": 0.21629284464993737,
+          "critical_point": [
+            0.052675036441323396,
+            0.12061367125410434,
+            0.21629284464993737
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.017,
+          "inverse_rate": 1.03,
+          "cn": 9,
+          "dn": 20,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 111884481475
+      },
+      "encoding_multiplications_per_input": 27.465322494506836,
+      "terminal_dimensions": [
+        35,
+        36
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00478,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          35,
+          36
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2109,
+            "A_dimensions": [
+              2048,
+              35
+            ],
+            "B_dimensions": [
+              36,
+              25
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.88487306114912,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -113.35383764162076,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    null
+  ],
+  "best_unconstrained": {
+    "case": {
+      "protocol": "era-codeswitch",
+      "message_log": 28,
+      "eta": 4,
+      "row_log": 24,
+      "output_log": 23,
+      "output_log_rate": 5,
+      "terminal_log": 10,
+      "queries": 888,
+      "terminal_queries": 97,
+      "terminal_distance": 0.89345,
+      "index_rows": 39,
+      "online_rows": 23,
+      "estimated_proof_bytes": 2065003.51578893,
+      "estimated_live_bytes": 752511716328,
+      "consume_commitment": true,
+      "memory_phases_bytes": {
+        "commitment": 519523721576,
+        "starting_sumcheck": 455929012584,
+        "before_original_openings": 691698838504,
+        "after_original_openings": 752511716328
+      },
+      "block_length": 70492816,
+      "distance": 0.216164,
+      "numerical_distance": 0.21616451935867728,
+      "code_storage_bytes": 5640782184,
+      "distance_details": {
+        "inner_k": 4096,
+        "inner_n": 4198,
+        "inner_distance": 0.00309,
+        "tensor_feasibility_threshold": 8.646653551757334e-06,
+        "base_distance": 9.5481e-06,
+        "c": 1.1042493717662365,
+        "gamma": 3.9774940270299656e-06,
+        "delta": 0.21616451935867728,
+        "delta1": 0.25536921801535695,
+        "d1_at_delta1": 0.0028073163970568794,
+        "delta2": 0.21616451935867728,
+        "critical_point": [
+          0.05267583126017877,
+          0.12056232525661448,
+          0.21616451935867728
+        ],
+        "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+      },
+      "base_parameters": {
+        "alpha": 0.015,
+        "inverse_rate": 1.025,
+        "cn": 8,
+        "dn": 18,
+        "base_case": "zero-pad"
+      },
+      "estimated_peak_with_margin_bytes": 865388473778
+    },
+    "encoding_multiplications_per_input": 25.163222551345825,
+    "terminal_dimensions": [
+      62,
+      63
+    ],
+    "recursive_bound": {
+      "bound_passes": true,
+      "scope": "numerical sufficient bound for ideal independent uniform sampling",
+      "distance_target": 0.00309,
+      "setup_bits": 102,
+      "events": 4,
+      "per_event_bits": 104,
+      "base_rs_passes": null,
+      "base_rs_dimensions": null,
+      "base_case": "zero-pad",
+      "base_dimensions": [
+        62,
+        63
+      ],
+      "base_absolute_distance": 1,
+      "base_code_passes": true,
+      "levels": [
+        {
+          "message_length": 4096,
+          "block_length": 4198,
+          "A_dimensions": [
+            4096,
+            62
+          ],
+          "B_dimensions": [
+            63,
+            39
+          ],
+          "A": {
+            "passes": true,
+            "weights": 12,
+            "worst_weight": 12,
+            "graph_log2_bound_per_weight": -116.3271753040892,
+            "required_log2_bound_per_weight": -108.000001
+          },
+          "B": {
+            "passes": true,
+            "weights": 12,
+            "worst_weight": 5,
+            "graph_log2_bound_per_weight": -120.69467167131208,
+            "required_log2_bound_per_weight": -108.000001
+          }
+        }
+      ]
+    },
+    "fits": false
+  },
+  "best_fitting": [
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 156,
+        "terminal_distance": 0.752157,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 3629890.705544496,
+        "estimated_live_bytes": 97290853456,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 94667247024,
+          "starting_sumcheck": 91481111984,
+          "before_original_openings": 97290853456,
+          "after_original_openings": 88301337680
+        },
+        "block_length": 17791524,
+        "distance": 0.216292,
+        "numerical_distance": 0.21629284464993737,
+        "code_storage_bytes": 1424088496,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2109,
+          "inner_distance": 0.00478,
+          "tensor_feasibility_threshold": 2.068381132340431e-05,
+          "base_distance": 2.2848400000000003e-05,
+          "c": 1.1037789712700485,
+          "gamma": 1.4977931380044089e-05,
+          "delta": 0.21629284464993737,
+          "delta1": 0.25504071583630006,
+          "d1_at_delta1": 0.0036606242389613615,
+          "delta2": 0.21629284464993737,
+          "critical_point": [
+            0.052675036441323396,
+            0.12061367125410434,
+            0.21629284464993737
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.017,
+          "inverse_rate": 1.03,
+          "cn": 9,
+          "dn": 20,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 111884481475
+      },
+      "encoding_multiplications_per_input": 27.465322494506836,
+      "terminal_dimensions": [
+        35,
+        36
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00478,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          35,
+          36
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2109,
+            "A_dimensions": [
+              2048,
+              35
+            ],
+            "B_dimensions": [
+              36,
+              25
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.88487306114912,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -113.35383764162076,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 156,
+        "terminal_distance": 0.752157,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 3630325.75420234,
+        "estimated_live_bytes": 97668323616,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 95200307584,
+          "starting_sumcheck": 91840993664,
+          "before_original_openings": 97668323616,
+          "after_original_openings": 88332450080
+        },
+        "block_length": 17960644,
+        "distance": 0.216282,
+        "numerical_distance": 0.21628277182348407,
+        "code_storage_bytes": 1437612416,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2119,
+          "inner_distance": 0.00476,
+          "tensor_feasibility_threshold": 2.0549700875341897e-05,
+          "base_distance": 2.2657600000000005e-05,
+          "c": 1.1038158827082014,
+          "gamma": 1.4842218900242938e-05,
+          "delta": 0.21628277182348407,
+          "delta1": 0.2550364866727237,
+          "d1_at_delta1": 0.003648393860065079,
+          "delta2": 0.21628277182348407,
+          "critical_point": [
+            0.052675098807576384,
+            0.12060964093460468,
+            0.21628277182348407
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.017,
+          "inverse_rate": 1.035,
+          "cn": 9,
+          "dn": 16,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 112318572159
+      },
+      "encoding_multiplications_per_input": 27.448564529418945,
+      "terminal_dimensions": [
+        35,
+        36
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00476,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          35,
+          36
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2119,
+            "A_dimensions": [
+              2048,
+              35
+            ],
+            "B_dimensions": [
+              36,
+              35
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.88487306114912,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -137.247070408353,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 156,
+        "terminal_distance": 0.752157,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 3630718.624068468,
+        "estimated_live_bytes": 98047517608,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 95735827976,
+          "starting_sumcheck": 92202515976,
+          "before_original_openings": 98047517608,
+          "after_original_openings": 88363647912
+        },
+        "block_length": 18130564,
+        "distance": 0.216292,
+        "numerical_distance": 0.2162923433903641,
+        "code_storage_bytes": 1451138568,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2129,
+          "inner_distance": 0.00475,
+          "tensor_feasibility_threshold": 2.041857065945864e-05,
+          "base_distance": 2.25625e-05,
+          "c": 1.1037808080642113,
+          "gamma": 1.470836007250999e-05,
+          "delta": 0.2162923433903641,
+          "delta1": 0.25505071164367915,
+          "d1_at_delta1": 0.003647809404126473,
+          "delta2": 0.2162923433903641,
+          "critical_point": [
+            0.05267503954479875,
+            0.12061347069134268,
+            0.2162923433903641
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.024,
+          "inverse_rate": 1.04,
+          "cn": 8,
+          "dn": 18,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 112754645250
+      },
+      "encoding_multiplications_per_input": 25.893871307373047,
+      "terminal_dimensions": [
+        50,
+        52
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00475,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          50,
+          52
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2129,
+            "A_dimensions": [
+              2048,
+              50
+            ],
+            "B_dimensions": [
+              52,
+              29
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -113.64644993394649,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -117.60630835800482,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 156,
+        "terminal_distance": 0.752157,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 3631086.419047475,
+        "estimated_live_bytes": 98466760208,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 96327879696,
+          "starting_sumcheck": 92602223632,
+          "before_original_openings": 98466760208,
+          "after_original_openings": 88398202384
+        },
+        "block_length": 18318400,
+        "distance": 0.216284,
+        "numerical_distance": 0.21628464292428404,
+        "code_storage_bytes": 1466158096,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2140,
+          "inner_distance": 0.00473,
+          "tensor_feasibility_threshold": 2.0275519514858722e-05,
+          "base_distance": 2.2372899999999997e-05,
+          "c": 1.1038090259803106,
+          "gamma": 1.456322512196981e-05,
+          "delta": 0.21628464292428404,
+          "delta1": 0.2550491067736643,
+          "d1_at_delta1": 0.003636456818507388,
+          "delta2": 0.21628464292428404,
+          "critical_point": [
+            0.05267508722230073,
+            0.12061038959651751,
+            0.21628464292428404
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.023,
+          "inverse_rate": 1.045,
+          "cn": 8,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 113236774240
+      },
+      "encoding_multiplications_per_input": 25.843141555786133,
+      "terminal_dimensions": [
+        48,
+        50
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00473,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          48,
+          50
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2140,
+            "A_dimensions": [
+              2048,
+              48
+            ],
+            "B_dimensions": [
+              50,
+              42
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -109.21071958915596,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 5,
+              "graph_log2_bound_per_weight": -125.07292306331476,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 156,
+        "terminal_distance": 0.752157,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 3631493.955592707,
+        "estimated_live_bytes": 98849724240,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 96868715728,
+          "starting_sumcheck": 92967341264,
+          "before_original_openings": 98849724240,
+          "after_original_openings": 88429729616
+        },
+        "block_length": 18490000,
+        "distance": 0.216293,
+        "numerical_distance": 0.21629369570248902,
+        "code_storage_bytes": 1479838928,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2150,
+          "inner_distance": 0.00472,
+          "tensor_feasibility_threshold": 2.014736953115463e-05,
+          "base_distance": 2.2278400000000003e-05,
+          "c": 1.1037758527214163,
+          "gamma": 1.4433158897276486e-05,
+          "delta": 0.21629369570248902,
+          "delta1": 0.2550626922935419,
+          "d1_at_delta1": 0.003635634964261745,
+          "delta2": 0.21629369570248902,
+          "critical_point": [
+            0.05267503117217807,
+            0.1206140117751268,
+            0.21629369570248902
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.036,
+          "inverse_rate": 1.05,
+          "cn": 7,
+          "dn": 21,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 113677182876
+      },
+      "encoding_multiplications_per_input": 24.78377676010132,
+      "terminal_dimensions": [
+        74,
+        77
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00472,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          74,
+          77
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2150,
+            "A_dimensions": [
+              2048,
+              74
+            ],
+            "B_dimensions": [
+              77,
+              25
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -110.81801718144189,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 156,
+        "terminal_distance": 0.752157,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 3632203.5345206186,
+        "estimated_live_bytes": 99621085712,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 97958029200,
+          "starting_sumcheck": 93702760336,
+          "before_original_openings": 99621085712,
+          "after_original_openings": 88493302288
+        },
+        "block_length": 18835600,
+        "distance": 0.216291,
+        "numerical_distance": 0.2162911011973332,
+        "code_storage_bytes": 1507469200,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2170,
+          "inner_distance": 0.00469,
+          "tensor_feasibility_threshold": 1.989404979592562e-05,
+          "base_distance": 2.1996099999999998e-05,
+          "c": 1.1037853599258145,
+          "gamma": 1.4178265412615804e-05,
+          "delta": 0.2162911011973332,
+          "delta1": 0.2550701900492762,
+          "d1_at_delta1": 0.003621917981836929,
+          "delta2": 0.2162911011973332,
+          "critical_point": [
+            0.05267504723569576,
+            0.1206129736679819,
+            0.2162911011973332
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.036,
+          "inverse_rate": 1.06,
+          "cn": 7,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 114564248569
+      },
+      "encoding_multiplications_per_input": 24.57511615753174,
+      "terminal_dimensions": [
+        74,
+        78
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00469,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          74,
+          78
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2170,
+            "A_dimensions": [
+              2048,
+              74
+            ],
+            "B_dimensions": [
+              78,
+              44
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -110.81801718144189,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 5,
+              "graph_log2_bound_per_weight": -126.63765590115182,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 73,
+        "online_rows": 43,
+        "estimated_proof_bytes": 4062540.9723087205,
+        "estimated_live_bytes": 92861668432,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 92083555760,
+          "starting_sumcheck": 88897420720,
+          "before_original_openings": 92861668432,
+          "after_original_openings": 84107033680
+        },
+        "block_length": 17791524,
+        "distance": 0.216292,
+        "numerical_distance": 0.21629284464993737,
+        "code_storage_bytes": 1424088496,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2109,
+          "inner_distance": 0.00478,
+          "tensor_feasibility_threshold": 2.068381132340431e-05,
+          "base_distance": 2.2848400000000003e-05,
+          "c": 1.1037789712700485,
+          "gamma": 1.4977931380044089e-05,
+          "delta": 0.21629284464993737,
+          "delta1": 0.25504071583630006,
+          "d1_at_delta1": 0.0036606242389613615,
+          "delta2": 0.21629284464993737,
+          "critical_point": [
+            0.052675036441323396,
+            0.12061367125410434,
+            0.21629284464993737
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.017,
+          "inverse_rate": 1.03,
+          "cn": 9,
+          "dn": 20,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 106790918697
+      },
+      "encoding_multiplications_per_input": 27.465322494506836,
+      "terminal_dimensions": [
+        35,
+        36
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00478,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          35,
+          36
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2109,
+            "A_dimensions": [
+              2048,
+              35
+            ],
+            "B_dimensions": [
+              36,
+              25
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.88487306114912,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -113.35383764162076,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 77,
+        "online_rows": 45,
+        "estimated_proof_bytes": 4122558.94239683,
+        "estimated_live_bytes": 95319513376,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 93824575872,
+          "starting_sumcheck": 90465261952,
+          "before_original_openings": 95319513376,
+          "after_original_openings": 86419847456
+        },
+        "block_length": 17960644,
+        "distance": 0.216282,
+        "numerical_distance": 0.21628277182348407,
+        "code_storage_bytes": 1437612416,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2119,
+          "inner_distance": 0.00476,
+          "tensor_feasibility_threshold": 2.0549700875341897e-05,
+          "base_distance": 2.2657600000000005e-05,
+          "c": 1.1038158827082014,
+          "gamma": 1.4842218900242938e-05,
+          "delta": 0.21628277182348407,
+          "delta1": 0.2550364866727237,
+          "d1_at_delta1": 0.003648393860065079,
+          "delta2": 0.21628277182348407,
+          "critical_point": [
+            0.052675098807576384,
+            0.12060964093460468,
+            0.21628277182348407
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.017,
+          "inverse_rate": 1.035,
+          "cn": 9,
+          "dn": 16,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 109617440383
+      },
+      "encoding_multiplications_per_input": 27.448564529418945,
+      "terminal_dimensions": [
+        35,
+        36
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00476,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          35,
+          36
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2119,
+            "A_dimensions": [
+              2048,
+              35
+            ],
+            "B_dimensions": [
+              36,
+              35
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.88487306114912,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -137.247070408353,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 77,
+        "online_rows": 45,
+        "estimated_proof_bytes": 4122951.8122629575,
+        "estimated_live_bytes": 95698707368,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 94360096264,
+          "starting_sumcheck": 90826784264,
+          "before_original_openings": 95698707368,
+          "after_original_openings": 86451045288
+        },
+        "block_length": 18130564,
+        "distance": 0.216292,
+        "numerical_distance": 0.2162923433903641,
+        "code_storage_bytes": 1451138568,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2129,
+          "inner_distance": 0.00475,
+          "tensor_feasibility_threshold": 2.041857065945864e-05,
+          "base_distance": 2.25625e-05,
+          "c": 1.1037808080642113,
+          "gamma": 1.470836007250999e-05,
+          "delta": 0.2162923433903641,
+          "delta1": 0.25505071164367915,
+          "d1_at_delta1": 0.003647809404126473,
+          "delta2": 0.2162923433903641,
+          "critical_point": [
+            0.05267503954479875,
+            0.12061347069134268,
+            0.2162923433903641
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.024,
+          "inverse_rate": 1.04,
+          "cn": 8,
+          "dn": 18,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 110053513474
+      },
+      "encoding_multiplications_per_input": 25.893871307373047,
+      "terminal_dimensions": [
+        50,
+        52
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00475,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          50,
+          52
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2129,
+            "A_dimensions": [
+              2048,
+              50
+            ],
+            "B_dimensions": [
+              52,
+              29
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -113.64644993394649,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -117.60630835800482,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 77,
+        "online_rows": 45,
+        "estimated_proof_bytes": 4123319.607241965,
+        "estimated_live_bytes": 96117949968,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 94952147984,
+          "starting_sumcheck": 91226491920,
+          "before_original_openings": 96117949968,
+          "after_original_openings": 86485599760
+        },
+        "block_length": 18318400,
+        "distance": 0.216284,
+        "numerical_distance": 0.21628464292428404,
+        "code_storage_bytes": 1466158096,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2140,
+          "inner_distance": 0.00473,
+          "tensor_feasibility_threshold": 2.0275519514858722e-05,
+          "base_distance": 2.2372899999999997e-05,
+          "c": 1.1038090259803106,
+          "gamma": 1.456322512196981e-05,
+          "delta": 0.21628464292428404,
+          "delta1": 0.2550491067736643,
+          "d1_at_delta1": 0.003636456818507388,
+          "delta2": 0.21628464292428404,
+          "critical_point": [
+            0.05267508722230073,
+            0.12061038959651751,
+            0.21628464292428404
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.023,
+          "inverse_rate": 1.045,
+          "cn": 8,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 110535642464
+      },
+      "encoding_multiplications_per_input": 25.843141555786133,
+      "terminal_dimensions": [
+        48,
+        50
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00473,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          48,
+          50
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2140,
+            "A_dimensions": [
+              2048,
+              48
+            ],
+            "B_dimensions": [
+              50,
+              42
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -109.21071958915596,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 5,
+              "graph_log2_bound_per_weight": -125.07292306331476,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 77,
+        "online_rows": 45,
+        "estimated_proof_bytes": 4123727.143787197,
+        "estimated_live_bytes": 96500914000,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 95492984016,
+          "starting_sumcheck": 91591609552,
+          "before_original_openings": 96500914000,
+          "after_original_openings": 86517126992
+        },
+        "block_length": 18490000,
+        "distance": 0.216293,
+        "numerical_distance": 0.21629369570248902,
+        "code_storage_bytes": 1479838928,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2150,
+          "inner_distance": 0.00472,
+          "tensor_feasibility_threshold": 2.014736953115463e-05,
+          "base_distance": 2.2278400000000003e-05,
+          "c": 1.1037758527214163,
+          "gamma": 1.4433158897276486e-05,
+          "delta": 0.21629369570248902,
+          "delta1": 0.2550626922935419,
+          "d1_at_delta1": 0.003635634964261745,
+          "delta2": 0.21629369570248902,
+          "critical_point": [
+            0.05267503117217807,
+            0.1206140117751268,
+            0.21629369570248902
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.036,
+          "inverse_rate": 1.05,
+          "cn": 7,
+          "dn": 21,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 110976051100
+      },
+      "encoding_multiplications_per_input": 24.78377676010132,
+      "terminal_dimensions": [
+        74,
+        77
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00472,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          74,
+          77
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2150,
+            "A_dimensions": [
+              2048,
+              74
+            ],
+            "B_dimensions": [
+              77,
+              25
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -110.81801718144189,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 77,
+        "online_rows": 45,
+        "estimated_proof_bytes": 4124436.722715108,
+        "estimated_live_bytes": 97272275472,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 96582297488,
+          "starting_sumcheck": 92327028624,
+          "before_original_openings": 97272275472,
+          "after_original_openings": 86580699664
+        },
+        "block_length": 18835600,
+        "distance": 0.216291,
+        "numerical_distance": 0.2162911011973332,
+        "code_storage_bytes": 1507469200,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2170,
+          "inner_distance": 0.00469,
+          "tensor_feasibility_threshold": 1.989404979592562e-05,
+          "base_distance": 2.1996099999999998e-05,
+          "c": 1.1037853599258145,
+          "gamma": 1.4178265412615804e-05,
+          "delta": 0.2162911011973332,
+          "delta1": 0.2550701900492762,
+          "d1_at_delta1": 0.003621917981836929,
+          "delta2": 0.2162911011973332,
+          "critical_point": [
+            0.05267504723569576,
+            0.1206129736679819,
+            0.2162911011973332
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.036,
+          "inverse_rate": 1.06,
+          "cn": 7,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 111863116793
+      },
+      "encoding_multiplications_per_input": 24.57511615753174,
+      "terminal_dimensions": [
+        74,
+        78
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00469,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          74,
+          78
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2170,
+            "A_dimensions": [
+              2048,
+              74
+            ],
+            "B_dimensions": [
+              78,
+              44
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -110.81801718144189,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 5,
+              "graph_log2_bound_per_weight": -126.63765590115182,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 81,
+        "online_rows": 47,
+        "estimated_proof_bytes": 4185205.8699230757,
+        "estimated_live_bytes": 100562400864,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 99498651328,
+          "starting_sumcheck": 94688370368,
+          "before_original_openings": 100562400864,
+          "after_original_openings": 88962127456
+        },
+        "block_length": 19377604,
+        "distance": 0.216278,
+        "numerical_distance": 0.21627808005942553,
+        "code_storage_bytes": 1550827200,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2201,
+          "inner_distance": 0.00464,
+          "tensor_feasibility_threshold": 1.9515560309171678e-05,
+          "base_distance": 2.15296e-05,
+          "c": 1.1038330761961601,
+          "gamma": 1.3796477977925899e-05,
+          "delta": 0.21627808005942553,
+          "delta1": 0.2550729014316457,
+          "d1_at_delta1": 0.0035957252755829216,
+          "delta2": 0.21627808005942553,
+          "critical_point": [
+            0.05267512785810685,
+            0.1206077636718493,
+            0.21627808005942553
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.036,
+          "inverse_rate": 1.075,
+          "cn": 7,
+          "dn": 14,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 115646760994
+      },
+      "encoding_multiplications_per_input": 24.883333683013916,
+      "terminal_dimensions": [
+        74,
+        79
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00464,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          74,
+          79
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2201,
+            "A_dimensions": [
+              2048,
+              74
+            ],
+            "B_dimensions": [
+              79,
+              74
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -110.81801718144189,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 4,
+              "graph_log2_bound_per_weight": -125.56917102089241,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 20,
+        "output_log_rate": 3,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 154,
+        "terminal_distance": 0.75547,
+        "index_rows": 85,
+        "online_rows": 49,
+        "estimated_proof_bytes": 4245909.309360364,
+        "estimated_live_bytes": 103869665584,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 102439217456,
+          "starting_sumcheck": 97066051888,
+          "before_original_openings": 103869665584,
+          "after_original_openings": 91344949552
+        },
+        "block_length": 19927296,
+        "distance": 0.216282,
+        "numerical_distance": 0.21628285759648253,
+        "code_storage_bytes": 1594779952,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2232,
+          "inner_distance": 0.0046,
+          "tensor_feasibility_threshold": 1.9148991751134396e-05,
+          "base_distance": 2.116e-05,
+          "c": 1.103815568387834,
+          "gamma": 1.3430078901940677e-05,
+          "delta": 0.21628285759648253,
+          "delta1": 0.2550917545604964,
+          "d1_at_delta1": 0.003580302013836295,
+          "delta2": 0.21628285759648253,
+          "critical_point": [
+            0.05267509827649381,
+            0.12060967525396958,
+            0.21628285759648253
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.068,
+          "inverse_rate": 1.09,
+          "cn": 6,
+          "dn": 17,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 119450115422
+      },
+      "encoding_multiplications_per_input": 24.677932739257812,
+      "terminal_dimensions": [
+        140,
+        152
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.0046,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          140,
+          152
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2232,
+            "A_dimensions": [
+              2048,
+              140
+            ],
+            "B_dimensions": [
+              152,
+              32
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 6,
+              "graph_log2_bound_per_weight": -109.13845903895387,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.2046790789569,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 2,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 266,
+        "terminal_distance": 0.557828,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 4379820.400914067,
+        "estimated_live_bytes": 83124522416,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 83124522416,
+          "starting_sumcheck": 79938387376,
+          "before_original_openings": 79037242448,
+          "after_original_openings": 70584597584
+        },
+        "block_length": 17791524,
+        "distance": 0.216292,
+        "numerical_distance": 0.21629284464993737,
+        "code_storage_bytes": 1424088496,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2109,
+          "inner_distance": 0.00478,
+          "tensor_feasibility_threshold": 2.068381132340431e-05,
+          "base_distance": 2.2848400000000003e-05,
+          "c": 1.1037789712700485,
+          "gamma": 1.4977931380044089e-05,
+          "delta": 0.21629284464993737,
+          "delta1": 0.25504071583630006,
+          "d1_at_delta1": 0.0036606242389613615,
+          "delta2": 0.21629284464993737,
+          "critical_point": [
+            0.052675036441323396,
+            0.12061367125410434,
+            0.21629284464993737
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.017,
+          "inverse_rate": 1.03,
+          "cn": 9,
+          "dn": 20,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 95593200779
+      },
+      "encoding_multiplications_per_input": 27.465322494506836,
+      "terminal_dimensions": [
+        35,
+        36
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00478,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          35,
+          36
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2109,
+            "A_dimensions": [
+              2048,
+              35
+            ],
+            "B_dimensions": [
+              36,
+              25
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.88487306114912,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -113.35383764162076,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 2,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 266,
+        "terminal_distance": 0.557828,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 4380255.449571911,
+        "estimated_live_bytes": 83657582976,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 83657582976,
+          "starting_sumcheck": 80298269056,
+          "before_original_openings": 79414712608,
+          "after_original_openings": 70615709984
+        },
+        "block_length": 17960644,
+        "distance": 0.216282,
+        "numerical_distance": 0.21628277182348407,
+        "code_storage_bytes": 1437612416,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2119,
+          "inner_distance": 0.00476,
+          "tensor_feasibility_threshold": 2.0549700875341897e-05,
+          "base_distance": 2.2657600000000005e-05,
+          "c": 1.1038158827082014,
+          "gamma": 1.4842218900242938e-05,
+          "delta": 0.21628277182348407,
+          "delta1": 0.2550364866727237,
+          "d1_at_delta1": 0.003648393860065079,
+          "delta2": 0.21628277182348407,
+          "critical_point": [
+            0.052675098807576384,
+            0.12060964093460468,
+            0.21628277182348407
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.017,
+          "inverse_rate": 1.035,
+          "cn": 9,
+          "dn": 16,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 96206220423
+      },
+      "encoding_multiplications_per_input": 27.448564529418945,
+      "terminal_dimensions": [
+        35,
+        36
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00476,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          35,
+          36
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2119,
+            "A_dimensions": [
+              2048,
+              35
+            ],
+            "B_dimensions": [
+              36,
+              35
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -111.88487306114912,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -137.247070408353,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 2,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 266,
+        "terminal_distance": 0.557828,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 4380648.319438039,
+        "estimated_live_bytes": 84193103368,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 84193103368,
+          "starting_sumcheck": 80659791368,
+          "before_original_openings": 79793906600,
+          "after_original_openings": 70646907816
+        },
+        "block_length": 18130564,
+        "distance": 0.216292,
+        "numerical_distance": 0.2162923433903641,
+        "code_storage_bytes": 1451138568,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2129,
+          "inner_distance": 0.00475,
+          "tensor_feasibility_threshold": 2.041857065945864e-05,
+          "base_distance": 2.25625e-05,
+          "c": 1.1037808080642113,
+          "gamma": 1.470836007250999e-05,
+          "delta": 0.2162923433903641,
+          "delta1": 0.25505071164367915,
+          "d1_at_delta1": 0.003647809404126473,
+          "delta2": 0.2162923433903641,
+          "critical_point": [
+            0.05267503954479875,
+            0.12061347069134268,
+            0.2162923433903641
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.024,
+          "inverse_rate": 1.04,
+          "cn": 8,
+          "dn": 18,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 96822068874
+      },
+      "encoding_multiplications_per_input": 25.893871307373047,
+      "terminal_dimensions": [
+        50,
+        52
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00475,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          50,
+          52
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2129,
+            "A_dimensions": [
+              2048,
+              50
+            ],
+            "B_dimensions": [
+              52,
+              29
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -113.64644993394649,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -117.60630835800482,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 2,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 266,
+        "terminal_distance": 0.557828,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 4381016.114417046,
+        "estimated_live_bytes": 84785155088,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 84785155088,
+          "starting_sumcheck": 81059499024,
+          "before_original_openings": 80213149200,
+          "after_original_openings": 70681462288
+        },
+        "block_length": 18318400,
+        "distance": 0.216284,
+        "numerical_distance": 0.21628464292428404,
+        "code_storage_bytes": 1466158096,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2140,
+          "inner_distance": 0.00473,
+          "tensor_feasibility_threshold": 2.0275519514858722e-05,
+          "base_distance": 2.2372899999999997e-05,
+          "c": 1.1038090259803106,
+          "gamma": 1.456322512196981e-05,
+          "delta": 0.21628464292428404,
+          "delta1": 0.2550491067736643,
+          "d1_at_delta1": 0.003636456818507388,
+          "delta2": 0.21628464292428404,
+          "critical_point": [
+            0.05267508722230073,
+            0.12061038959651751,
+            0.21628464292428404
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.023,
+          "inverse_rate": 1.045,
+          "cn": 8,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 97502928352
+      },
+      "encoding_multiplications_per_input": 25.843141555786133,
+      "terminal_dimensions": [
+        48,
+        50
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00473,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          48,
+          50
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2140,
+            "A_dimensions": [
+              2048,
+              48
+            ],
+            "B_dimensions": [
+              50,
+              42
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -109.21071958915596,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 5,
+              "graph_log2_bound_per_weight": -125.07292306331476,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 2,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 266,
+        "terminal_distance": 0.557828,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 4381423.650962278,
+        "estimated_live_bytes": 85325991120,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 85325991120,
+          "starting_sumcheck": 81424616656,
+          "before_original_openings": 80596113232,
+          "after_original_openings": 70712989520
+        },
+        "block_length": 18490000,
+        "distance": 0.216293,
+        "numerical_distance": 0.21629369570248902,
+        "code_storage_bytes": 1479838928,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2150,
+          "inner_distance": 0.00472,
+          "tensor_feasibility_threshold": 2.014736953115463e-05,
+          "base_distance": 2.2278400000000003e-05,
+          "c": 1.1037758527214163,
+          "gamma": 1.4433158897276486e-05,
+          "delta": 0.21629369570248902,
+          "delta1": 0.2550626922935419,
+          "d1_at_delta1": 0.003635634964261745,
+          "delta2": 0.21629369570248902,
+          "critical_point": [
+            0.05267503117217807,
+            0.1206140117751268,
+            0.21629369570248902
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.036,
+          "inverse_rate": 1.05,
+          "cn": 7,
+          "dn": 21,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 98124889788
+      },
+      "encoding_multiplications_per_input": 24.78377676010132,
+      "terminal_dimensions": [
+        74,
+        77
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00472,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          74,
+          77
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2150,
+            "A_dimensions": [
+              2048,
+              74
+            ],
+            "B_dimensions": [
+              77,
+              25
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -110.81801718144189,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 1,
+              "graph_log2_bound_per_weight": null,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    },
+    {
+      "case": {
+        "protocol": "era-codeswitch",
+        "message_log": 28,
+        "eta": 6,
+        "row_log": 22,
+        "output_log": 21,
+        "output_log_rate": 2,
+        "terminal_log": 11,
+        "queries": 888,
+        "terminal_queries": 266,
+        "terminal_distance": 0.557828,
+        "index_rows": 39,
+        "online_rows": 23,
+        "estimated_proof_bytes": 4382133.22989019,
+        "estimated_live_bytes": 86415304592,
+        "consume_commitment": true,
+        "memory_phases_bytes": {
+          "commitment": 86415304592,
+          "starting_sumcheck": 82160035728,
+          "before_original_openings": 81367474704,
+          "after_original_openings": 70776562192
+        },
+        "block_length": 18835600,
+        "distance": 0.216291,
+        "numerical_distance": 0.2162911011973332,
+        "code_storage_bytes": 1507469200,
+        "distance_details": {
+          "inner_k": 2048,
+          "inner_n": 2170,
+          "inner_distance": 0.00469,
+          "tensor_feasibility_threshold": 1.989404979592562e-05,
+          "base_distance": 2.1996099999999998e-05,
+          "c": 1.1037853599258145,
+          "gamma": 1.4178265412615804e-05,
+          "delta": 0.2162911011973332,
+          "delta1": 0.2550701900492762,
+          "d1_at_delta1": 0.003621917981836929,
+          "delta2": 0.2162911011973332,
+          "critical_point": [
+            0.05267504723569576,
+            0.1206129736679819,
+            0.2162911011973332
+          ],
+          "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+        },
+        "base_parameters": {
+          "alpha": 0.036,
+          "inverse_rate": 1.06,
+          "cn": 7,
+          "dn": 15,
+          "base_case": "zero-pad"
+        },
+        "estimated_peak_with_margin_bytes": 99377600281
+      },
+      "encoding_multiplications_per_input": 24.57511615753174,
+      "terminal_dimensions": [
+        74,
+        78
+      ],
+      "recursive_bound": {
+        "bound_passes": true,
+        "scope": "numerical sufficient bound for ideal independent uniform sampling",
+        "distance_target": 0.00469,
+        "setup_bits": 102,
+        "events": 4,
+        "per_event_bits": 104,
+        "base_rs_passes": null,
+        "base_rs_dimensions": null,
+        "base_case": "zero-pad",
+        "base_dimensions": [
+          74,
+          78
+        ],
+        "base_absolute_distance": 1,
+        "base_code_passes": true,
+        "levels": [
+          {
+            "message_length": 2048,
+            "block_length": 2170,
+            "A_dimensions": [
+              2048,
+              74
+            ],
+            "B_dimensions": [
+              78,
+              44
+            ],
+            "A": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 10,
+              "graph_log2_bound_per_weight": -110.81801718144189,
+              "required_log2_bound_per_weight": -108.000001
+            },
+            "B": {
+              "passes": true,
+              "weights": 10,
+              "worst_weight": 5,
+              "graph_log2_bound_per_weight": -126.63765590115182,
+              "required_log2_bound_per_weight": -108.000001
+            }
+          }
+        ]
+      },
+      "fits": true
+    }
+  ]
+}

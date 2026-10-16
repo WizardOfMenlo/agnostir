@@ -1,0 +1,15 @@
+{
+  "verified_result_files": 10,
+  "measured_rows": 1,
+  "verified_proofs": 1,
+  "source_checks": [
+    {
+      "group": "profile-n28",
+      "matched_source_files": 51,
+      "source_sha256": "00757e4168e8b212b9fc89fa00e6e595a88ad41f0e5464a057d29e40a0c50081"
+    }
+  ],
+  "profiled_proof_byte_identical_to_unprofiled": true,
+  "command_parameters_unchanged": true,
+  "profile_accounting_passes": true
+}

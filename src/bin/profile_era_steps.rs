@@ -1,9 +1,9 @@
 use std::hint::black_box;
 
-use agnostir::{
+use ark_secp256k1::Fr as SecpScalar;
+use era_codes::{
     BrakedownCode, BrakedownParams, EraCode, ErrorCorrectingCode, FieldElement, random_permutation,
 };
-use ark_secp256k1::Fr as SecpScalar;
 use rand::{SeedableRng, rngs::SmallRng};
 
 fn era_inner_params_normal(k_log: u32) -> (f64, f64, usize, usize) {

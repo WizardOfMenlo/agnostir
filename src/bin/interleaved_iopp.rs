@@ -1,4 +1,5 @@
-use agnostir::{
+use clap::Parser;
+use era_codes::{
     ErrorCorrectingCode,
     interleaved_iopp::fs::{Parameters, prove, verify},
     iopp_experiment::{
@@ -7,7 +8,6 @@ use agnostir::{
     },
     proof::merkle::Commitment,
 };
-use clap::Parser;
 use rayon::{current_num_threads, prelude::*};
 use std::{fs::OpenOptions, io::Write, path::PathBuf, time::Instant};
 
@@ -25,6 +25,10 @@ struct Args {
     /// Override the conditional query model; this is not security calibration.
     #[arg(long)]
     queries: Option<usize>,
+    /// Externally computed row-code distance; required outside the 2^16-row preset.
+    /// This records a numerical assumption, not a soundness certification.
+    #[arg(long)]
+    distance: Option<f64>,
     /// Explicit Rayon worker count; otherwise use RAYON_NUM_THREADS.
     #[arg(long)]
     threads: Option<usize>,
@@ -58,8 +62,16 @@ fn main() -> Result<(), String> {
         eta: args.eta,
         seed: args.seed,
     };
-    config.validate(args.code)?;
-    let delta = args.code.assumed_distance(config.message_log - config.eta);
+    config.validate_dimensions()?;
+    let delta = if let Some(distance) = args.distance {
+        if !distance.is_finite() || !(0.0..1.0).contains(&distance) || distance == 0.0 {
+            return Err("distance must be finite and strictly between zero and one".into());
+        }
+        distance
+    } else {
+        config.validate(args.code)?;
+        args.code.assumed_distance(config.message_log - config.eta)
+    };
     let queries = args
         .queries
         .unwrap_or_else(|| num_queries_from_delta(delta));
@@ -67,7 +79,11 @@ fn main() -> Result<(), String> {
         return Err("queries must be in 1..=1048576".into());
     }
     let start = Instant::now();
-    let code = config.build_code(args.code)?;
+    let code = if args.distance.is_some() {
+        config.build_code_with_external_distance(args.code)?
+    } else {
+        config.build_code(args.code)?
+    };
     let setup_ms = start.elapsed().as_secs_f64() * 1000.0;
     let (message, point) = config.message_and_point();
     let parameters = Parameters {
@@ -82,18 +98,15 @@ fn main() -> Result<(), String> {
         current_num_threads(),
         if args.queries.is_some() {
             "override"
+        } else if args.distance.is_some() {
+            "external-distance-conditional-100-bit"
         } else {
             "conditional-100-bit"
         }
     );
-    if args.code == CodeKind::BoltMax {
-        eprintln!(
-            "bolt-max adaptation: kernel_delta=0.013 is an unproved prime-field assumption; full_code_delta=0.0104; no certified setup-failure bound"
-        );
-    }
     if args.csv {
         println!(
-            "code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted"
+            "protocol,field,code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted"
         );
     }
     for sample in 0..args.samples + args.warmups {
@@ -121,7 +134,7 @@ fn main() -> Result<(), String> {
         let sample = sample - args.warmups;
         if args.csv {
             println!(
-                "{},{},{},{},{},{sample},{queries},{},{setup_ms:.6},{commit_ms:.6},{prove_ms:.6},{verify_ms:.6},{},32,true",
+                "interleaved-fs-v1,secp256k1-scalar,{},{},{},{},{},{sample},{queries},{},{setup_ms:.6},{commit_ms:.6},{prove_ms:.6},{verify_ms:.6},{},32,true",
                 args.code.name(),
                 config.message_log,
                 config.eta,

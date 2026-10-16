@@ -1,0 +1,142 @@
+[
+  {
+    "protocol": "interleaved-fs-v1",
+    "field": "secp256k1-scalar",
+    "code": "basefold",
+    "message_log": "22",
+    "eta": "6",
+    "seed": "2025",
+    "threads": "8",
+    "queries": "927",
+    "block_length": "131072",
+    "proof_bytes": "4177416",
+    "commitment_bytes": "32",
+    "accepted": "true",
+    "samples": 3,
+    "setup_ms": {
+      "median": 12.961666,
+      "min": 12.961666,
+      "max": 12.961666
+    },
+    "commit_ms": {
+      "median": 544.411167,
+      "min": 542.083333,
+      "max": 554.647667
+    },
+    "prove_ms": {
+      "median": 702.622416,
+      "min": 696.870292,
+      "max": 703.47
+    },
+    "verify_ms": {
+      "median": 36.225958,
+      "min": 36.047083,
+      "max": 36.369417
+    }
+  },
+  {
+    "protocol": "interleaved-fs-v1",
+    "field": "secp256k1-scalar",
+    "code": "brakedown",
+    "message_log": "22",
+    "eta": "6",
+    "seed": "2025",
+    "threads": "8",
+    "queries": "1974",
+    "block_length": "131072",
+    "proof_bytes": "6438728",
+    "commitment_bytes": "32",
+    "accepted": "true",
+    "samples": 3,
+    "setup_ms": {
+      "median": 434.990208,
+      "min": 434.990208,
+      "max": 434.990208
+    },
+    "commit_ms": {
+      "median": 1179.93225,
+      "min": 1177.948625,
+      "max": 1191.67025
+    },
+    "prove_ms": {
+      "median": 711.053667,
+      "min": 703.771125,
+      "max": 734.233542
+    },
+    "verify_ms": {
+      "median": 122.15525,
+      "min": 120.661667,
+      "max": 122.753334
+    }
+  },
+  {
+    "protocol": "interleaved-fs-v1",
+    "field": "secp256k1-scalar",
+    "code": "ea",
+    "message_log": "22",
+    "eta": "6",
+    "seed": "2025",
+    "threads": "8",
+    "queries": "1974",
+    "block_length": "131072",
+    "proof_bytes": "6443944",
+    "commitment_bytes": "32",
+    "accepted": "true",
+    "samples": 3,
+    "setup_ms": {
+      "median": 2002.328,
+      "min": 2002.328,
+      "max": 2002.328
+    },
+    "commit_ms": {
+      "median": 8524.393958,
+      "min": 8500.134167,
+      "max": 8592.259125
+    },
+    "prove_ms": {
+      "median": 763.297,
+      "min": 740.435416,
+      "max": 769.998292
+    },
+    "verify_ms": {
+      "median": 617.407333,
+      "min": 615.576084,
+      "max": 727.339333
+    }
+  },
+  {
+    "protocol": "interleaved-fs-v1",
+    "field": "secp256k1-scalar",
+    "code": "era",
+    "message_log": "22",
+    "eta": "6",
+    "seed": "2025",
+    "threads": "8",
+    "queries": "836",
+    "block_length": "275248",
+    "proof_bytes": "4010824",
+    "commitment_bytes": "32",
+    "accepted": "true",
+    "samples": 3,
+    "setup_ms": {
+      "median": 503.20825,
+      "min": 503.20825,
+      "max": 503.20825
+    },
+    "commit_ms": {
+      "median": 731.398083,
+      "min": 726.011791,
+      "max": 752.088125
+    },
+    "prove_ms": {
+      "median": 713.131083,
+      "min": 704.156292,
+      "max": 816.234209
+    },
+    "verify_ms": {
+      "median": 52.291167,
+      "min": 51.917125,
+      "max": 56.700334
+    }
+  }
+]

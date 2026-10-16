@@ -1,0 +1,266 @@
+{
+  "field": "secp256k1 scalar field",
+  "field_modulus": "115792089237316195423570985008687907852837564279074904382605163141518161494337",
+  "field_log2_lower_bound": 255.999,
+  "row_message_length": 65536,
+  "basefold": {
+    "setup_bits": 102,
+    "per_level_lambda": 106,
+    "numerical_distance": 0.20106193534326489,
+    "distance_used": 0.20106,
+    "queries": 927
+  },
+  "brakedown": {
+    "bound_passes": true,
+    "scope": "numerical sufficient bound for ideal independent uniform sampling",
+    "distance_target": 0.1,
+    "setup_bits": 102,
+    "events": 24,
+    "per_event_bits": 107,
+    "base_rs_passes": true,
+    "base_rs_dimensions": [
+      48,
+      96
+    ],
+    "base_case": "rs",
+    "base_dimensions": [
+      48,
+      96
+    ],
+    "base_absolute_distance": 49,
+    "base_code_passes": true,
+    "levels": [
+      {
+        "message_length": 65536,
+        "block_length": 131072,
+        "A_dimensions": [
+          65536,
+          19661
+        ],
+        "B_dimensions": [
+          39322,
+          26214
+        ],
+        "A": {
+          "passes": true,
+          "weights": 13107,
+          "worst_weight": 13,
+          "graph_log2_bound_per_weight": -1784.5307116680046,
+          "required_log2_bound_per_weight": -121.000001
+        },
+        "B": {
+          "passes": true,
+          "weights": 9175,
+          "worst_weight": 13107,
+          "graph_log2_bound_per_weight": -28888.333696050293,
+          "required_log2_bound_per_weight": -121.000001
+        }
+      },
+      {
+        "message_length": 19661,
+        "block_length": 39322,
+        "A_dimensions": [
+          19661,
+          5899
+        ],
+        "B_dimensions": [
+          11798,
+          7863
+        ],
+        "A": {
+          "passes": true,
+          "weights": 3932,
+          "worst_weight": 13,
+          "graph_log2_bound_per_weight": -1515.146501628514,
+          "required_log2_bound_per_weight": -119.000001
+        },
+        "B": {
+          "passes": true,
+          "weights": 2753,
+          "worst_weight": 3932,
+          "graph_log2_bound_per_weight": -8694.887711111682,
+          "required_log2_bound_per_weight": -119.000001
+        }
+      },
+      {
+        "message_length": 5899,
+        "block_length": 11798,
+        "A_dimensions": [
+          5899,
+          1770
+        ],
+        "B_dimensions": [
+          3540,
+          2359
+        ],
+        "A": {
+          "passes": true,
+          "weights": 1179,
+          "worst_weight": 14,
+          "graph_log2_bound_per_weight": -1289.6964740321514,
+          "required_log2_bound_per_weight": -118.000001
+        },
+        "B": {
+          "passes": true,
+          "weights": 825,
+          "worst_weight": 1179,
+          "graph_log2_bound_per_weight": -2648.018717017024,
+          "required_log2_bound_per_weight": -117.000001
+        }
+      },
+      {
+        "message_length": 1770,
+        "block_length": 3540,
+        "A_dimensions": [
+          1770,
+          531
+        ],
+        "B_dimensions": [
+          1062,
+          708
+        ],
+        "A": {
+          "passes": true,
+          "weights": 354,
+          "worst_weight": 14,
+          "graph_log2_bound_per_weight": -1057.2275480734288,
+          "required_log2_bound_per_weight": -116.000001
+        },
+        "B": {
+          "passes": true,
+          "weights": 248,
+          "worst_weight": 354,
+          "graph_log2_bound_per_weight": -842.2306745391352,
+          "required_log2_bound_per_weight": -115.000001
+        }
+      },
+      {
+        "message_length": 531,
+        "block_length": 1062,
+        "A_dimensions": [
+          531,
+          160
+        ],
+        "B_dimensions": [
+          320,
+          211
+        ],
+        "A": {
+          "passes": true,
+          "weights": 106,
+          "worst_weight": 106,
+          "graph_log2_bound_per_weight": -386.6712323769741,
+          "required_log2_bound_per_weight": -114.000001
+        },
+        "B": {
+          "passes": true,
+          "weights": 74,
+          "worst_weight": 106,
+          "graph_log2_bound_per_weight": -274.3422875137101,
+          "required_log2_bound_per_weight": -114.000001
+        }
+      },
+      {
+        "message_length": 160,
+        "block_length": 320,
+        "A_dimensions": [
+          160,
+          48
+        ],
+        "B_dimensions": [
+          96,
+          64
+        ],
+        "A": {
+          "passes": true,
+          "weights": 32,
+          "worst_weight": 32,
+          "graph_log2_bound_per_weight": -167.08298013618807,
+          "required_log2_bound_per_weight": -112.000001
+        },
+        "B": {
+          "passes": true,
+          "weights": 23,
+          "worst_weight": 32,
+          "graph_log2_bound_per_weight": -142.859940731227,
+          "required_log2_bound_per_weight": -112.000001
+        }
+      }
+    ],
+    "distance_used": 0.1,
+    "queries": 1974
+  },
+  "ea": {
+    "inverse_rate": 2,
+    "prob_multiplier": 18,
+    "distance_used": 0.1,
+    "queries": 1974,
+    "scope": "inherited distance assumption; no new finite-length setup certificate"
+  },
+  "era": {
+    "base": {
+      "bound_passes": true,
+      "scope": "numerical sufficient bound for ideal independent uniform sampling",
+      "distance_target": 0.0009,
+      "setup_bits": 102,
+      "events": 4,
+      "per_event_bits": 104,
+      "base_rs_passes": true,
+      "base_rs_dimensions": [
+        2622,
+        2753
+      ],
+      "base_case": "rs",
+      "base_dimensions": [
+        2622,
+        2753
+      ],
+      "base_absolute_distance": 132,
+      "base_code_passes": true,
+      "levels": [
+        {
+          "message_length": 65536,
+          "block_length": 68812,
+          "A_dimensions": [
+            65536,
+            2622
+          ],
+          "B_dimensions": [
+            2753,
+            523
+          ],
+          "A": {
+            "passes": true,
+            "weights": 61,
+            "worst_weight": 5,
+            "graph_log2_bound_per_weight": -126.3865660810747,
+            "required_log2_bound_per_weight": -110.000001
+          },
+          "B": {
+            "passes": true,
+            "weights": 59,
+            "worst_weight": 3,
+            "graph_log2_bound_per_weight": -137.16767357314973,
+            "required_log2_bound_per_weight": -110.000001
+          }
+        }
+      ]
+    },
+    "calcdist_bits": 102,
+    "c": 1.0890071157378098,
+    "gamma": 0.0008151311009640017,
+    "delta": 0.22037045020625676,
+    "delta1": 0.2471814143612239,
+    "d1_at_delta1": 0.014407599549379417,
+    "delta2": 0.22037045020625676,
+    "critical_point": [
+      0.05265006205549293,
+      0.12224439163363347,
+      0.22037045020625676
+    ],
+    "scope": "numerical CalcDist candidate; no certified all-roots isolation",
+    "distance_used": 0.22037,
+    "queries": 836
+  },
+  "scope": "numerical ideal-ensemble bounds; ERA has no certified all-roots isolation; not complete FS soundness"
+}

@@ -3,17 +3,12 @@
 This audit found defects that invalidate treating the historical measurements as
 validated, serialized 100-bit proofs. The new implementation executes complete
 Fiat–Shamir proofs and independent verification. It is a research implementation,
-not a completed formal soundness audit or a submission-ready artifact.
+not a completed formal soundness audit. This report predates final packaging.
 
-Subsequent updates added the [same-field Bolt-min adaptation](bolt-adaptation.md)
-and replaced the paper's interleaved table with the serialized measurements.
-The new row uses a BaseFold syndrome code, has its own kernel-ensemble bound,
-and retains the conditional-security qualifications below. The earlier
-upstream binary-field commitment baseline is separate reference data.
-The [Bolt-max adaptation](bolt-max-adaptation.md) adds the all-one degree-8
-sketch, with an explicitly unproved prime-field kernel-distance assumption
-0.013 (complete-code distance 0.0104, 19,891 queries). The Bolt-min
-random-coefficient certificate does not apply to this new row.
+This report records the prototype corrections. Current scope and limitations
+are in [artifact/changes.md](../artifact/changes.md); final reproduction and
+licensing are in [the artifact guide](../artifact/README.md). Superseded Bolt
+adaptations have been archived and are outside the retained comparison.
 
 ## Findings and implemented repairs
 
@@ -125,9 +120,9 @@ There are deliberate differences from the paper's optimized cost model:
   online row are counted in the real proof.
 - The tensor sumcheck uses a generic cubic bound, even though a specialized
   implementation can exploit disjoint variables to reduce it to quadratic.
-- Public packed weight vectors are currently materialized by the verifier.
-  Consequently this implementation does **not** realize the paper's
-  polylogarithmic verifier. Its measured verifier time includes that work.
+- The original verifier materialized public packed weights. The final
+  [compact evaluator](era-compact-verifier.md) removes these large arrays;
+  the non-power-of-two tensor still has a non-polylogarithmic evaluation cost.
 - Initial virtual BaseFold oracles require opening both butterfly coordinates
   from every contributing stack. The transport counts those actual openings.
 - Parameters are a documented finite-size adaptation, not a fresh global search
@@ -206,9 +201,9 @@ metadata, the paper PDF, and a fixed version reference. The new README, scripts,
 lockfile, results, and `AI_DISCLOSURE.md` address the technical packaging work.
 The submission deadline is 15 October 2026.
 
-Still required before claiming submission readiness: owner-selected LICENSE,
-confirmed upstream comparison, reviewed security/parameter claims and paper
-updates, actual 32-core AWS measurements, final paper/author/contact metadata,
-third-party licensing review, a submission commit/tag, and an archival bundle.
-No artifact was uploaded, no AWS instance was provisioned, and no scientific
-claim was marked independently reproduced.
+The subsequent [submission package](artifact-submission.md) supplies the
+MIT license, author metadata, dependency notices, fixed source snapshots,
+Docker validation and the completed 16-worker on-demand AWS measurements.
+It has not been uploaded. An optimized upstream BaseFold comparison and the
+scientific qualifications above were not resolved by packaging; they remain
+explicitly outside the claims of the delivered artifact.

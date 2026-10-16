@@ -1,7 +1,0 @@
-Adapter test passed: scalar comparison at widths 2,16,64 with 1 and 4 workers; SHA-256 and BLAKE3 Merkle authentication/tampering checks.
-Formatting and clippy --all-targets -- -D warnings passed.
-32-worker smoke passed (both hashes). SHA-256 smoke roots identical for 1 and 32 workers.
-Every measured full-size commitment checked against two scalar-encoded parity vectors and authenticated openings. No full Bolt IOPP verification is claimed.
-Top-level reproduction smoke including Bolt passed (2 workers); logs under results/bolt-integration-smoke-20261014.
-Paper compiled using pdfLaTeX/Biber and two additional pdfLaTeX passes; 77 pages. Table on page 63 visually inspected; existing bibliography/layout warnings remain.
-Measured adapter source matches current manifest, lockfile, and Rust source byte for byte.

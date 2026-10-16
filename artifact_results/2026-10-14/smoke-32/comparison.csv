@@ -1,3 +1,0 @@
-protocol,message_log,eta,output_log,output_log_rate,terminal_log,seed,threads,sample,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,index_rows,online_rows,accepted
-era-corrected,10,2,6,3,2,2025,32,0,3.267000,0.887875,30.442459,2.820667,232712,81,47,true
-basefold-local,10,2,8,1,2,2025,32,0,0.118292,0.533833,3.770666,0.258125,17192,0,4,true

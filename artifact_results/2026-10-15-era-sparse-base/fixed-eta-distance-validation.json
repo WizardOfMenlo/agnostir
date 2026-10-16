@@ -1,0 +1,189 @@
+{
+  "brakedown_exact_checks": [
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 1,
+      "expansion_threshold": 1,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 2,
+      "expansion_threshold": 2,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 3,
+      "expansion_threshold": 3,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 4,
+      "expansion_threshold": 4,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 5,
+      "expansion_threshold": 5,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 6,
+      "expansion_threshold": 6,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 7,
+      "expansion_threshold": 7,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "A",
+      "input": 512,
+      "output": 14,
+      "degree": 9,
+      "weight": 8,
+      "expansion_threshold": 8,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 1,
+      "expansion_threshold": 9,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 2,
+      "expansion_threshold": 10,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 3,
+      "expansion_threshold": 11,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 4,
+      "expansion_threshold": 12,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 5,
+      "expansion_threshold": 13,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 6,
+      "expansion_threshold": 14,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 7,
+      "expansion_threshold": 15,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    },
+    {
+      "matrix": "B",
+      "input": 15,
+      "output": 23,
+      "degree": 16,
+      "weight": 8,
+      "expansion_threshold": 16,
+      "bits": 107,
+      "graph_passes_exact": true,
+      "coefficients_pass_exact": true
+    }
+  ],
+  "setup_bits": 102,
+  "base_distance": "1477/100000",
+  "terminal_distance": "1/15",
+  "era_distance": 0.218307,
+  "tensor_distance": 0.0002181529,
+  "exponent_maximum_found": -0.000646473863205807,
+  "exponent_maximizer_d0": 0.0002181529,
+  "required_exponent_upper_bound": -0.00019778938570380266,
+  "scope": "Brakedown rational probability inequalities for the ideal sampler. ERA numerical falsification check, not an interval or all-roots certificate."
+}

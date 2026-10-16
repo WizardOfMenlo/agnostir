@@ -1,0 +1,13 @@
+{
+  "verified_result_files": 9,
+  "measured_rows": 1,
+  "verified_proofs": 1,
+  "source_checks": [
+    {
+      "group": "full-n28",
+      "matched_source_files": 51,
+      "source_sha256": "3b6634fdabc68f8d653cfc5b37aea943f5c38e1ddaa311a97addd390f8822f37"
+    }
+  ],
+  "default_consuming_proof_identical_to_previous_borrowed": true
+}

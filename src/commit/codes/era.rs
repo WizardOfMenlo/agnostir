@@ -40,7 +40,7 @@ fn prefetch_read<T>(ptr: *const T) {
 fn chunk_len_override() -> Option<usize> {
     static OVERRIDE: OnceLock<Option<usize>> = OnceLock::new();
     *OVERRIDE.get_or_init(|| {
-        std::env::var("AGNOSTIR_CHUNK_LEN")
+        std::env::var("ERA_CHUNK_LEN")
             .ok()
             .and_then(|value| value.parse::<usize>().ok())
             .filter(|&value| value > 0)

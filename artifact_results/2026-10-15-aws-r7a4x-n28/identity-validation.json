@@ -1,0 +1,14 @@
+[
+  {
+    "proof": "era-corrected.proof",
+    "bytes": 2893224,
+    "sha256": "15b34a2b15a325ce94b0e01140e9844a1514ea719de6eace6fb8b32ad75a1aac",
+    "byte_identical_to_mac_reference": true
+  },
+  {
+    "proof": "basefold-local.proof",
+    "bytes": 2965224,
+    "sha256": "48432cc100916c89c8ab8563c3eb610252ace78c10ecb262b4ea930b439eac4b",
+    "byte_identical_to_mac_reference": true
+  }
+]

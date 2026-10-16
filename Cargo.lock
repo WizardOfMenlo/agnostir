@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "agnostir"
+name = "era-codes"
 version = "0.1.0"
 dependencies = [
  "ark-bls12-381",

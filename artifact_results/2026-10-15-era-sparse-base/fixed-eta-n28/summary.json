@@ -1,0 +1,14 @@
+[
+  {
+    "protocol": "era-codeswitch",
+    "message_log": 28,
+    "eta": 10,
+    "estimated_proof_bytes": 31771221.54358744,
+    "proof_bytes": 31785384,
+    "estimate_relative_error": -0.00044556505633408516,
+    "peak_rss_bytes": 68343017472,
+    "exit_code": 0,
+    "user_seconds": 982.219534,
+    "system_seconds": 98.495531
+  }
+]

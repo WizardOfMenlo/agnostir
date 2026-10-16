@@ -1,0 +1,48 @@
+{
+  "title": "Field-Agnostic SNARKs with Small Proofs via Encode-Repeat-Accumulate (ERA) Codes",
+  "authors": [
+    {
+      "name": "Anubhav Baweja",
+      "affiliation": "University of Pennsylvania",
+      "email": "abaweja@upenn.edu"
+    },
+    {
+      "name": "Giacomo Fenzi",
+      "affiliation": "EPFL",
+      "email": "giacomo.fenzi@epfl.ch"
+    },
+    {
+      "name": "Pratyush Mishra",
+      "affiliation": "University of Pennsylvania",
+      "email": "prat@upenn.edu"
+    },
+    {
+      "name": "Tushar Mopuri",
+      "affiliation": "University of Pennsylvania",
+      "email": "tmopuri@upenn.edu"
+    }
+  ],
+  "artifact_contact": "abaweja@upenn.edu",
+  "version": "era-codes-artifact-2026-10-16-final",
+  "paper_file": "paper/paper.pdf",
+  "metadata_source": "Authors/affiliations/emails from sibling paper TeX; included PDF retains anonymous review formatting.",
+  "license": "MIT",
+  "submission_status": "prepared locally, not uploaded",
+  "paper_abstract_file": "artifact/paper-abstract.txt",
+  "submission_form_text": "artifact/submission-form.txt",
+  "requirements_url": "https://asiacrypt.iacr.org/2026/artifacts.php",
+  "submission_url": "https://submit.iacr.org/ac2026artifact/",
+  "published_deadline": "2026-10-15 (timezone not stated on requirements page; portal availability not verified)",
+  "acquisition": "Attached era-codes-artifact-20261016-final.tar.gz source archive; see README.md for reproduction.",
+  "ai_disclosure": {
+    "model": "GPT-6 Astra",
+    "interface": "OpenAI Codex",
+    "dated_model_snapshot": null,
+    "scope": "Generated or substantially revised nearly all final project-specific code and original repository content, including implementation, auditing and proposed corrections, optimization, parameter searches, tests, experiment execution and analysis, documentation, and submission packaging.",
+    "human_source": "Human-written algorithm descriptions and details in the paper, supplemented by human instructions, parameter choices, corrections, and experimental goals.",
+    "exclusions": "Third-party dependencies and the paper's human-written algorithm descriptions are not attributed to the AI. Benchmark measurements are program-execution outputs.",
+    "responsibility": "The human authors retain responsibility for the scientific claims, implementation, content, and final submission.",
+    "supplement": "AI_DISCLOSURE.md",
+    "policy_url": "https://asiacrypt.iacr.org/2026/aipolicy.php"
+  }
+}

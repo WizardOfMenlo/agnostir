@@ -1,3 +1,5 @@
 /target
-/comparisons/*/target
 /results/
+__pycache__/
+*.py[cod]
+*.DS_Store

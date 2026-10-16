@@ -1,4 +1,0 @@
-code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted
-bolt-max,22,6,2025,8,0,19891,81920,8.560417,293.512792,1013.154291,269.452583,39119368,32,true
-bolt-max,22,6,2025,8,1,19891,81920,8.560417,207.072250,1047.410334,267.976000,39119368,32,true
-bolt-max,22,6,2025,8,2,19891,81920,8.560417,202.939917,1020.784166,266.282083,39119368,32,true

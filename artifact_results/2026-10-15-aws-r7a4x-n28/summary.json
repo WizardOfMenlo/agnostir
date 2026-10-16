@@ -1,0 +1,74 @@
+[
+  {
+    "protocol": "interleaved-era",
+    "message_log": 28,
+    "eta": 8,
+    "estimated_proof_bytes": 40541941.892282516,
+    "proof_bytes": 40541384,
+    "estimate_relative_error": 1.3761056665284599e-05,
+    "peak_rss_bytes": 63153774592,
+    "exit_code": 0,
+    "user_seconds": 1098.266511,
+    "system_seconds": 91.320741
+  },
+  {
+    "protocol": "interleaved-basefold",
+    "message_log": 28,
+    "eta": 9,
+    "estimated_proof_bytes": 33997083.196854144,
+    "proof_bytes": 33989320,
+    "estimate_relative_error": 0.0002284010640443146,
+    "peak_rss_bytes": 43115290624,
+    "exit_code": 0,
+    "user_seconds": 766.201251,
+    "system_seconds": 37.020891
+  },
+  {
+    "protocol": "interleaved-brakedown",
+    "message_log": 28,
+    "eta": 9,
+    "estimated_proof_bytes": 49607396.0726656,
+    "proof_bytes": 49624040,
+    "estimate_relative_error": -0.00033540049005276185,
+    "peak_rss_bytes": 44182974464,
+    "exit_code": 0,
+    "user_seconds": 2895.519083,
+    "system_seconds": 47.023596
+  },
+  {
+    "protocol": "interleaved-ea",
+    "message_log": 28,
+    "eta": 9,
+    "estimated_proof_bytes": 49607396.0726656,
+    "proof_bytes": 49622792,
+    "estimate_relative_error": -0.0003102591916713804,
+    "peak_rss_bytes": 52141342720,
+    "exit_code": 0,
+    "user_seconds": 29973.314915,
+    "system_seconds": 58.654731
+  },
+  {
+    "protocol": "era-codeswitch",
+    "message_log": 28,
+    "eta": 10,
+    "estimated_proof_bytes": 30335919.407299496,
+    "proof_bytes": 30348584,
+    "estimate_relative_error": -0.00041730423734109845,
+    "peak_rss_bytes": 70703632384,
+    "exit_code": 0,
+    "user_seconds": 2454.929989,
+    "system_seconds": 101.542155
+  },
+  {
+    "protocol": "basefold-local",
+    "message_log": 28,
+    "eta": 4,
+    "estimated_proof_bytes": 5975705.002763543,
+    "proof_bytes": 6004040,
+    "estimate_relative_error": -0.00471932186268853,
+    "peak_rss_bytes": 47541952512,
+    "exit_code": 0,
+    "user_seconds": 878.602613,
+    "system_seconds": 40.724751
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "verified_result_files": 23,
+  "measured_rows": 3,
+  "verified_proofs": 3,
+  "source_checks": [
+    {
+      "group": "full-n28",
+      "matched_source_files": 52,
+      "source_sha256": "f282c45f3e9b0b11a38a851a0cc55bcf5c7432aa3d4febdf94473202c59b673c"
+    },
+    {
+      "group": "fixed-eta-n28",
+      "matched_source_files": 52,
+      "source_sha256": "a45a7974f7d73e146626d6fc03b8e766dc7ae1bd9e112fd6713487c8dbf6bdb8"
+    }
+  ],
+  "default_proofs_identical": true,
+  "full_basefold_proof_identical_to_previous_campaign": true
+}

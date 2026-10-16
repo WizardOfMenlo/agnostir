@@ -1,1 +1,0 @@
-protocol=interleaved-fs-v1 hash=BLAKE3-256 field=secp256k1_scalar threads=8 setup_ms=1368.259 assumed_delta=0.228 query_model=conditional-100-bit (distance/setup bounds require separate certification)

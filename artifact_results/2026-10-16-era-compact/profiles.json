@@ -1,0 +1,820 @@
+{
+  "era-codeswitch/prove": {
+    "prove": {
+      "inclusive_s": 57.530575193,
+      "exclusive_s": 0.942419228,
+      "inclusive_bytes": 3622568,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/public_evaluation": {
+      "inclusive_s": 4.359486636,
+      "exclusive_s": 4.359486636,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/header": {
+      "inclusive_s": 1.1900000000000001e-05,
+      "exclusive_s": 1.1900000000000001e-05,
+      "inclusive_bytes": 40,
+      "exclusive_bytes": 40,
+      "calls": 1
+    },
+    "prove/starting_sumcheck": {
+      "inclusive_s": 8.604027868,
+      "exclusive_s": 5.270661294000001,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/starting_sumcheck/polynomial_evaluation": {
+      "inclusive_s": 1.9716920080000002,
+      "exclusive_s": 1.9716920080000002,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 2688,
+      "calls": 28
+    },
+    "prove/starting_sumcheck/table_folding": {
+      "inclusive_s": 1.3616745660000003,
+      "exclusive_s": 1.3616745660000003,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 28
+    },
+    "prove/interleaved_row_fold": {
+      "inclusive_s": 0.691999059,
+      "exclusive_s": 0.691999059,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/auxiliary_witness": {
+      "inclusive_s": 2.059780846,
+      "exclusive_s": 2.059780846,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/online_commitment": {
+      "inclusive_s": 16.904423535000003,
+      "exclusive_s": 0.750681572,
+      "inclusive_bytes": 32,
+      "exclusive_bytes": 32,
+      "calls": 1
+    },
+    "prove/online_commitment/encode": {
+      "inclusive_s": 14.653968938,
+      "exclusive_s": 14.653968938,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/online_commitment/merkle": {
+      "inclusive_s": 1.4997730249999999,
+      "exclusive_s": 1.4997730249999999,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/initial_claims_and_oods": {
+      "inclusive_s": 0.862908356,
+      "exclusive_s": 0.862908356,
+      "inclusive_bytes": 800,
+      "exclusive_bytes": 800,
+      "calls": 1
+    },
+    "prove/era_openings": {
+      "inclusive_s": 2.130831244,
+      "exclusive_s": 2.1167703529999997,
+      "inclusive_bytes": 2199424,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/era_openings/columns": {
+      "inclusive_s": 0.011277963,
+      "exclusive_s": 0.011277963,
+      "inclusive_bytes": 1818624,
+      "exclusive_bytes": 1818624,
+      "calls": 1
+    },
+    "prove/era_openings/authentication_hashes": {
+      "inclusive_s": 0.002782928,
+      "exclusive_s": 0.002782928,
+      "inclusive_bytes": 380800,
+      "exclusive_bytes": 380800,
+      "calls": 1
+    },
+    "prove/tensor_check": {
+      "inclusive_s": 0.78789818,
+      "exclusive_s": 0.6986219499999999,
+      "inclusive_bytes": 3296,
+      "exclusive_bytes": 480,
+      "calls": 1
+    },
+    "prove/tensor_check/polynomial_evaluation": {
+      "inclusive_s": 0.059382517,
+      "exclusive_s": 0.059382517,
+      "inclusive_bytes": 2816,
+      "exclusive_bytes": 2816,
+      "calls": 22
+    },
+    "prove/tensor_check/table_folding": {
+      "inclusive_s": 0.029893713,
+      "exclusive_s": 0.029893713,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 22
+    },
+    "prove/permutation_checks": {
+      "inclusive_s": 14.384448538000001,
+      "exclusive_s": 1.047e-05,
+      "inclusive_bytes": 53184,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/permutation_checks/denominators": {
+      "inclusive_s": 0.45346992999999997,
+      "exclusive_s": 0.45346992999999997,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/permutation_checks/logup_gkr": {
+      "inclusive_s": 11.844891708999999,
+      "exclusive_s": 0.00032945200000000004,
+      "inclusive_bytes": 51456,
+      "exclusive_bytes": 13056,
+      "calls": 1
+    },
+    "prove/permutation_checks/logup_gkr/fraction_trees": {
+      "inclusive_s": 0.969819394,
+      "exclusive_s": 0.969819394,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/permutation_checks/logup_gkr/layer_tables": {
+      "inclusive_s": 2.035931534,
+      "exclusive_s": 2.035931534,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 25
+    },
+    "prove/permutation_checks/logup_gkr/layer_sumchecks": {
+      "inclusive_s": 8.838811329,
+      "exclusive_s": 0.9852989030000001,
+      "inclusive_bytes": 38400,
+      "exclusive_bytes": 0,
+      "calls": 25
+    },
+    "prove/permutation_checks/logup_gkr/layer_sumchecks/polynomial_evaluation": {
+      "inclusive_s": 6.523829043,
+      "exclusive_s": 6.523829043,
+      "inclusive_bytes": 38400,
+      "exclusive_bytes": 38400,
+      "calls": 300
+    },
+    "prove/permutation_checks/logup_gkr/layer_sumchecks/table_folding": {
+      "inclusive_s": 1.3296833830000003,
+      "exclusive_s": 1.3296833830000003,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 300
+    },
+    "prove/permutation_checks/terminal_linear_claims": {
+      "inclusive_s": 2.0860764290000002,
+      "exclusive_s": 2.0860764290000002,
+      "inclusive_bytes": 1728,
+      "exclusive_bytes": 1728,
+      "calls": 1
+    },
+    "prove/accumulator_claims": {
+      "inclusive_s": 0.30561253699999996,
+      "exclusive_s": 0.30561253699999996,
+      "inclusive_bytes": 288,
+      "exclusive_bytes": 288,
+      "calls": 1
+    },
+    "prove/claim_reduction": {
+      "inclusive_s": 5.496727266,
+      "exclusive_s": 3.1261e-05,
+      "inclusive_bytes": 1362816,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/build_tables": {
+      "inclusive_s": 0.8971103100000001,
+      "exclusive_s": 0.8971103100000001,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/batched_sumcheck": {
+      "inclusive_s": 2.453843374,
+      "exclusive_s": 0.45501887599999996,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/batched_sumcheck/polynomial_evaluation": {
+      "inclusive_s": 1.355625952,
+      "exclusive_s": 1.355625952,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 2688,
+      "calls": 21
+    },
+    "prove/claim_reduction/batched_sumcheck/table_folding": {
+      "inclusive_s": 0.6431985460000001,
+      "exclusive_s": 0.6431985460000001,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 21
+    },
+    "prove/claim_reduction/endpoint_checks": {
+      "inclusive_s": 0.008690697,
+      "exclusive_s": 0.008690697,
+      "inclusive_bytes": 1984,
+      "exclusive_bytes": 1984,
+      "calls": 1
+    },
+    "prove/claim_reduction/oracle_fold": {
+      "inclusive_s": 0.26983970599999996,
+      "exclusive_s": 0.26983970599999996,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold": {
+      "inclusive_s": 1.867211918,
+      "exclusive_s": 0.149988603,
+      "inclusive_bytes": 1358144,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/virtual_codeword": {
+      "inclusive_s": 0.860238139,
+      "exclusive_s": 0.860238139,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/fold_sumchecks": {
+      "inclusive_s": 0.054696811000000005,
+      "exclusive_s": 0.054696811000000005,
+      "inclusive_bytes": 960,
+      "exclusive_bytes": 960,
+      "calls": 10
+    },
+    "prove/claim_reduction/terminal_basefold/fold_commitments": {
+      "inclusive_s": 0.788355084,
+      "exclusive_s": 0.788355084,
+      "inclusive_bytes": 288,
+      "exclusive_bytes": 288,
+      "calls": 10
+    },
+    "prove/claim_reduction/terminal_basefold/terminal_message": {
+      "inclusive_s": 0.0005409049999999999,
+      "exclusive_s": 0.0005409049999999999,
+      "inclusive_bytes": 65536,
+      "exclusive_bytes": 65536,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/source_0_openings": {
+      "inclusive_s": 0.005206853,
+      "exclusive_s": 0.000369814,
+      "inclusive_bytes": 462752,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/source_0_openings/columns": {
+      "inclusive_s": 0.004187212,
+      "exclusive_s": 0.004187212,
+      "inclusive_bytes": 389376,
+      "exclusive_bytes": 389376,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/source_0_openings/authentication_hashes": {
+      "inclusive_s": 0.0006498270000000001,
+      "exclusive_s": 0.0006498270000000001,
+      "inclusive_bytes": 73376,
+      "exclusive_bytes": 73376,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/source_1_openings": {
+      "inclusive_s": 0.002459265,
+      "exclusive_s": 0.000226813,
+      "inclusive_bytes": 303008,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/source_1_openings/columns": {
+      "inclusive_s": 0.001593096,
+      "exclusive_s": 0.001593096,
+      "inclusive_bytes": 229632,
+      "exclusive_bytes": 229632,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/source_1_openings/authentication_hashes": {
+      "inclusive_s": 0.000639356,
+      "exclusive_s": 0.000639356,
+      "inclusive_bytes": 73376,
+      "exclusive_bytes": 73376,
+      "calls": 1
+    },
+    "prove/claim_reduction/terminal_basefold/folded_oracle_openings": {
+      "inclusive_s": 0.004203693,
+      "exclusive_s": 4.843100000000001e-05,
+      "inclusive_bytes": 525600,
+      "exclusive_bytes": 0,
+      "calls": 9
+    },
+    "prove/claim_reduction/terminal_basefold/folded_oracle_openings/columns": {
+      "inclusive_s": 0.001191782,
+      "exclusive_s": 0.001191782,
+      "inclusive_bytes": 89792,
+      "exclusive_bytes": 89792,
+      "calls": 9
+    },
+    "prove/claim_reduction/terminal_basefold/folded_oracle_openings/authentication_hashes": {
+      "inclusive_s": 0.0029634799999999997,
+      "exclusive_s": 0.0029634799999999997,
+      "inclusive_bytes": 435808,
+      "exclusive_bytes": 435808,
+      "calls": 9
+    },
+    "prove/claim_reduction/terminal_basefold/terminal_encoding": {
+      "inclusive_s": 0.001522565,
+      "exclusive_s": 0.001522565,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    }
+  },
+  "era-codeswitch/verify": {
+    "verify": {
+      "inclusive_s": 0.038489109,
+      "exclusive_s": 2.3401000000000002e-05,
+      "inclusive_bytes": 3622568,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/header": {
+      "inclusive_s": 1.011e-05,
+      "exclusive_s": 1.011e-05,
+      "inclusive_bytes": 40,
+      "exclusive_bytes": 40,
+      "calls": 1
+    },
+    "verify/starting_sumcheck": {
+      "inclusive_s": 7.4471e-05,
+      "exclusive_s": 1.9810000000000002e-05,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/starting_sumcheck/polynomial_evaluation": {
+      "inclusive_s": 1.8801000000000002e-05,
+      "exclusive_s": 1.8801000000000002e-05,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 2688,
+      "calls": 28
+    },
+    "verify/starting_sumcheck/table_folding": {
+      "inclusive_s": 3.586e-05,
+      "exclusive_s": 3.586e-05,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 28
+    },
+    "verify/interleaved_row_fold": {
+      "inclusive_s": 1.172e-05,
+      "exclusive_s": 1.172e-05,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/auxiliary_witness": {
+      "inclusive_s": 1.3e-07,
+      "exclusive_s": 1.3e-07,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/online_commitment": {
+      "inclusive_s": 2.2e-07,
+      "exclusive_s": 2.2e-07,
+      "inclusive_bytes": 32,
+      "exclusive_bytes": 32,
+      "calls": 1
+    },
+    "verify/initial_claims_and_oods": {
+      "inclusive_s": 0.000252672,
+      "exclusive_s": 0.000252672,
+      "inclusive_bytes": 800,
+      "exclusive_bytes": 800,
+      "calls": 1
+    },
+    "verify/era_openings": {
+      "inclusive_s": 0.016034942,
+      "exclusive_s": 0.0022059920000000004,
+      "inclusive_bytes": 2199424,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/era_openings/columns": {
+      "inclusive_s": 0.01085733,
+      "exclusive_s": 0.01085733,
+      "inclusive_bytes": 1818624,
+      "exclusive_bytes": 1818624,
+      "calls": 1
+    },
+    "verify/era_openings/authentication_hashes": {
+      "inclusive_s": 0.0029716200000000003,
+      "exclusive_s": 0.0029716200000000003,
+      "inclusive_bytes": 380800,
+      "exclusive_bytes": 380800,
+      "calls": 1
+    },
+    "verify/tensor_check": {
+      "inclusive_s": 8.597100000000001e-05,
+      "exclusive_s": 6.3771e-05,
+      "inclusive_bytes": 3296,
+      "exclusive_bytes": 480,
+      "calls": 1
+    },
+    "verify/tensor_check/polynomial_evaluation": {
+      "inclusive_s": 2.001e-05,
+      "exclusive_s": 2.001e-05,
+      "inclusive_bytes": 2816,
+      "exclusive_bytes": 2816,
+      "calls": 22
+    },
+    "verify/tensor_check/table_folding": {
+      "inclusive_s": 2.1900000000000006e-06,
+      "exclusive_s": 2.1900000000000006e-06,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 22
+    },
+    "verify/permutation_checks": {
+      "inclusive_s": 0.000799338,
+      "exclusive_s": 3.47e-06,
+      "inclusive_bytes": 53184,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/permutation_checks/denominators": {
+      "inclusive_s": 4.2e-07,
+      "exclusive_s": 4.2e-07,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/permutation_checks/logup_gkr": {
+      "inclusive_s": 0.000779338,
+      "exclusive_s": 0.00017777100000000002,
+      "inclusive_bytes": 51456,
+      "exclusive_bytes": 13056,
+      "calls": 1
+    },
+    "verify/permutation_checks/logup_gkr/fraction_trees": {
+      "inclusive_s": 3.7e-07,
+      "exclusive_s": 3.7e-07,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/permutation_checks/logup_gkr/layer_tables": {
+      "inclusive_s": 1.9442e-05,
+      "exclusive_s": 1.9442e-05,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 25
+    },
+    "verify/permutation_checks/logup_gkr/layer_sumchecks": {
+      "inclusive_s": 0.000581755,
+      "exclusive_s": 0.000349352,
+      "inclusive_bytes": 38400,
+      "exclusive_bytes": 0,
+      "calls": 25
+    },
+    "verify/permutation_checks/logup_gkr/layer_sumchecks/polynomial_evaluation": {
+      "inclusive_s": 0.00019699300000000002,
+      "exclusive_s": 0.00019699300000000002,
+      "inclusive_bytes": 38400,
+      "exclusive_bytes": 38400,
+      "calls": 300
+    },
+    "verify/permutation_checks/logup_gkr/layer_sumchecks/table_folding": {
+      "inclusive_s": 3.541000000000003e-05,
+      "exclusive_s": 3.541000000000003e-05,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 300
+    },
+    "verify/permutation_checks/terminal_linear_claims": {
+      "inclusive_s": 1.611e-05,
+      "exclusive_s": 1.611e-05,
+      "inclusive_bytes": 1728,
+      "exclusive_bytes": 1728,
+      "calls": 1
+    },
+    "verify/accumulator_claims": {
+      "inclusive_s": 4.9541e-05,
+      "exclusive_s": 4.9541e-05,
+      "inclusive_bytes": 288,
+      "exclusive_bytes": 288,
+      "calls": 1
+    },
+    "verify/claim_reduction": {
+      "inclusive_s": 0.021146592999999998,
+      "exclusive_s": 1.401e-05,
+      "inclusive_bytes": 1362816,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/build_tables": {
+      "inclusive_s": 2.372e-05,
+      "exclusive_s": 2.372e-05,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/batched_sumcheck": {
+      "inclusive_s": 3.967e-05,
+      "exclusive_s": 2.317e-05,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/batched_sumcheck/polynomial_evaluation": {
+      "inclusive_s": 1.4160000000000003e-05,
+      "exclusive_s": 1.4160000000000003e-05,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 2688,
+      "calls": 21
+    },
+    "verify/claim_reduction/batched_sumcheck/table_folding": {
+      "inclusive_s": 2.3400000000000005e-06,
+      "exclusive_s": 2.3400000000000005e-06,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 21
+    },
+    "verify/claim_reduction/endpoint_checks": {
+      "inclusive_s": 0.008513736,
+      "exclusive_s": 0.008513736,
+      "inclusive_bytes": 1984,
+      "exclusive_bytes": 1984,
+      "calls": 1
+    },
+    "verify/claim_reduction/oracle_fold": {
+      "inclusive_s": 1.5841e-05,
+      "exclusive_s": 1.5841e-05,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold": {
+      "inclusive_s": 0.012539616,
+      "exclusive_s": 0.000701457,
+      "inclusive_bytes": 1358144,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/virtual_codeword": {
+      "inclusive_s": 5.4e-07,
+      "exclusive_s": 5.4e-07,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/fold_sumchecks": {
+      "inclusive_s": 1.4999999999999999e-05,
+      "exclusive_s": 1.4999999999999999e-05,
+      "inclusive_bytes": 960,
+      "exclusive_bytes": 960,
+      "calls": 10
+    },
+    "verify/claim_reduction/terminal_basefold/fold_commitments": {
+      "inclusive_s": 2.25e-06,
+      "exclusive_s": 2.25e-06,
+      "inclusive_bytes": 288,
+      "exclusive_bytes": 288,
+      "calls": 10
+    },
+    "verify/claim_reduction/terminal_basefold/terminal_message": {
+      "inclusive_s": 0.000491345,
+      "exclusive_s": 0.000491345,
+      "inclusive_bytes": 65536,
+      "exclusive_bytes": 65536,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/source_0_openings": {
+      "inclusive_s": 0.003313533,
+      "exclusive_s": 0.00036067300000000005,
+      "inclusive_bytes": 462752,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/source_0_openings/columns": {
+      "inclusive_s": 0.002351664,
+      "exclusive_s": 0.002351664,
+      "inclusive_bytes": 389376,
+      "exclusive_bytes": 389376,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/source_0_openings/authentication_hashes": {
+      "inclusive_s": 0.0006011959999999999,
+      "exclusive_s": 0.0006011959999999999,
+      "inclusive_bytes": 73376,
+      "exclusive_bytes": 73376,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/source_1_openings": {
+      "inclusive_s": 0.002168012,
+      "exclusive_s": 0.000225352,
+      "inclusive_bytes": 303008,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/source_1_openings/columns": {
+      "inclusive_s": 0.001350964,
+      "exclusive_s": 0.001350964,
+      "inclusive_bytes": 229632,
+      "exclusive_bytes": 229632,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/source_1_openings/authentication_hashes": {
+      "inclusive_s": 0.000591696,
+      "exclusive_s": 0.000591696,
+      "inclusive_bytes": 73376,
+      "exclusive_bytes": 73376,
+      "calls": 1
+    },
+    "verify/claim_reduction/terminal_basefold/folded_oracle_openings": {
+      "inclusive_s": 0.0045149560000000005,
+      "exclusive_s": 4.979e-05,
+      "inclusive_bytes": 525600,
+      "exclusive_bytes": 0,
+      "calls": 9
+    },
+    "verify/claim_reduction/terminal_basefold/folded_oracle_openings/columns": {
+      "inclusive_s": 0.000769608,
+      "exclusive_s": 0.000769608,
+      "inclusive_bytes": 89792,
+      "exclusive_bytes": 89792,
+      "calls": 9
+    },
+    "verify/claim_reduction/terminal_basefold/folded_oracle_openings/authentication_hashes": {
+      "inclusive_s": 0.003695558,
+      "exclusive_s": 0.003695558,
+      "inclusive_bytes": 435808,
+      "exclusive_bytes": 435808,
+      "calls": 9
+    },
+    "verify/claim_reduction/terminal_basefold/terminal_encoding": {
+      "inclusive_s": 0.001332523,
+      "exclusive_s": 0.001332523,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    }
+  },
+  "basefold-local/prove": {
+    "prove": {
+      "inclusive_s": 18.578572392999998,
+      "exclusive_s": 0.029123256,
+      "inclusive_bytes": 6004040,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/public_evaluation": {
+      "inclusive_s": 4.364724712999999,
+      "exclusive_s": 4.364724712999999,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/header": {
+      "inclusive_s": 1.719e-05,
+      "exclusive_s": 1.719e-05,
+      "inclusive_bytes": 40,
+      "exclusive_bytes": 40,
+      "calls": 1
+    },
+    "prove/starting_sumcheck": {
+      "inclusive_s": 8.572027346999999,
+      "exclusive_s": 5.288966499,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/starting_sumcheck/polynomial_evaluation": {
+      "inclusive_s": 1.9586941739999995,
+      "exclusive_s": 1.9586941739999995,
+      "inclusive_bytes": 2688,
+      "exclusive_bytes": 2688,
+      "calls": 28
+    },
+    "prove/starting_sumcheck/table_folding": {
+      "inclusive_s": 1.324366674,
+      "exclusive_s": 1.324366674,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 28
+    },
+    "prove/interleaved_row_fold": {
+      "inclusive_s": 0.846001204,
+      "exclusive_s": 0.846001204,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/recursive_basefold": {
+      "inclusive_s": 4.766678683,
+      "exclusive_s": 0.732033991,
+      "inclusive_bytes": 6001312,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/recursive_basefold/virtual_codeword": {
+      "inclusive_s": 2.015979067,
+      "exclusive_s": 2.015979067,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/recursive_basefold/fold_sumchecks": {
+      "inclusive_s": 0.4008649900000001,
+      "exclusive_s": 0.4008649900000001,
+      "inclusive_bytes": 1152,
+      "exclusive_bytes": 1152,
+      "calls": 12
+    },
+    "prove/recursive_basefold/fold_commitments": {
+      "inclusive_s": 1.5706558560000003,
+      "exclusive_s": 1.5706558560000003,
+      "inclusive_bytes": 352,
+      "exclusive_bytes": 352,
+      "calls": 12
+    },
+    "prove/recursive_basefold/terminal_message": {
+      "inclusive_s": 0.00099731,
+      "exclusive_s": 0.00099731,
+      "inclusive_bytes": 131072,
+      "exclusive_bytes": 131072,
+      "calls": 1
+    },
+    "prove/recursive_basefold/source_0_openings": {
+      "inclusive_s": 0.014714169999999999,
+      "exclusive_s": 0.001254303,
+      "inclusive_bytes": 1850976,
+      "exclusive_bytes": 0,
+      "calls": 1
+    },
+    "prove/recursive_basefold/source_0_openings/columns": {
+      "inclusive_s": 0.009379526000000001,
+      "exclusive_s": 0.009379526000000001,
+      "inclusive_bytes": 1320960,
+      "exclusive_bytes": 1320960,
+      "calls": 1
+    },
+    "prove/recursive_basefold/source_0_openings/authentication_hashes": {
+      "inclusive_s": 0.0040803409999999995,
+      "exclusive_s": 0.0040803409999999995,
+      "inclusive_bytes": 530016,
+      "exclusive_bytes": 530016,
+      "calls": 1
+    },
+    "prove/recursive_basefold/folded_oracle_openings": {
+      "inclusive_s": 0.030494639999999993,
+      "exclusive_s": 0.00044802499999999995,
+      "inclusive_bytes": 4017760,
+      "exclusive_bytes": 0,
+      "calls": 11
+    },
+    "prove/recursive_basefold/folded_oracle_openings/columns": {
+      "inclusive_s": 0.010181935000000003,
+      "exclusive_s": 0.010181935000000003,
+      "inclusive_bytes": 896832,
+      "exclusive_bytes": 896832,
+      "calls": 11
+    },
+    "prove/recursive_basefold/folded_oracle_openings/authentication_hashes": {
+      "inclusive_s": 0.019864680000000003,
+      "exclusive_s": 0.019864680000000003,
+      "inclusive_bytes": 3120928,
+      "exclusive_bytes": 3120928,
+      "calls": 11
+    },
+    "prove/recursive_basefold/terminal_encoding": {
+      "inclusive_s": 0.000938659,
+      "exclusive_s": 0.000938659,
+      "inclusive_bytes": 0,
+      "exclusive_bytes": 0,
+      "calls": 1
+    }
+  }
+}

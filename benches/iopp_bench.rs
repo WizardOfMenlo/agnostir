@@ -1,4 +1,5 @@
-use agnostir::{
+use criterion::{Criterion, criterion_group, criterion_main};
+use era_codes::{
     ErrorCorrectingCode,
     interleaved_iopp::fs::{Parameters, prove, verify},
     iopp_experiment::{
@@ -7,7 +8,6 @@ use agnostir::{
     },
     proof::merkle::Commitment,
 };
-use criterion::{Criterion, criterion_group, criterion_main};
 use rayon::{current_num_threads, prelude::*};
 use std::{env, hint::black_box};
 
@@ -18,32 +18,13 @@ fn env_number<T: std::str::FromStr>(name: &str, default: T) -> T {
     })
 }
 
-fn env_bool(name: &str) -> bool {
-    env::var(name).is_ok_and(|raw| match raw.trim().to_ascii_lowercase().as_str() {
-        "1" | "true" | "yes" | "y" | "on" => true,
-        "0" | "false" | "no" | "n" | "off" => false,
-        _ => panic!("invalid boolean {name}='{raw}'"),
-    })
-}
-
 fn bench_iopp(c: &mut Criterion) {
     let config = ExperimentConfig {
         message_log: env_number("IOPP_MESSAGE_LOG", DEFAULT_MESSAGE_LOG),
         eta: env_number("IOPP_ETA", DEFAULT_ETA),
         seed: env_number("IOPP_SEED", DEFAULT_SEED),
     };
-    let only_conjectured = env_bool("IOPP_ONLY_CONJECTURED_ERA");
-    let mut kinds = if only_conjectured {
-        Vec::new()
-    } else {
-        CodeKind::STANDARD.to_vec()
-    };
-    if env_bool("IOPP_SKIP_EA") {
-        kinds.retain(|kind| *kind != CodeKind::Ea);
-    }
-    if only_conjectured || env_bool("IOPP_INCLUDE_CONJECTURED_ERA") {
-        kinds.push(CodeKind::ConjecturedEra);
-    }
+    let kinds = CodeKind::STANDARD.to_vec();
     for &kind in &kinds {
         config
             .validate(kind)
@@ -57,7 +38,7 @@ fn bench_iopp(c: &mut Criterion) {
         config.rows(),
         config.seed,
         current_num_threads(),
-        env::var("AGNOSTIR_CHUNK_LEN").unwrap_or_else(|_| "8192 (default)".into())
+        env::var("ERA_CHUNK_LEN").unwrap_or_else(|_| "8192 (default)".into())
     );
     let (message, point) = config.message_and_point();
     let sequential_era = current_num_threads() <= config.rows();
@@ -68,11 +49,6 @@ fn bench_iopp(c: &mut Criterion) {
             .expect("validated code configuration");
         let delta = kind.assumed_distance(config.message_log - config.eta);
         let queries = num_queries_from_delta(delta);
-        if kind == CodeKind::BoltMax {
-            eprintln!(
-                "bolt-max adaptation assumes prime-field kernel distance 0.013; setup failure is not certified"
-            );
-        }
         let encode_segments = |input: &[ark_secp256k1::Fr]| -> Vec<_> {
             input
                 .par_chunks(code.message_size())

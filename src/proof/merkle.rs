@@ -44,6 +44,7 @@ pub fn open(
     ensure(indices.last().is_some_and(|&index| index < block_len))?;
     let mut columns = Vec::with_capacity(indices.len());
     let mut frontier = Vec::with_capacity(indices.len());
+    let span = channel.profile_start("columns");
     for &index in &indices {
         let values = commitment.map(|tree| tree.rows.iter().map(|r| r[index]).collect::<Vec<_>>());
         let values = channel.fields(values.as_deref(), row_count)?;
@@ -53,6 +54,8 @@ pub fn open(
         ));
         columns.push((index, values));
     }
+    channel.profile_end(span);
+    let span = channel.profile_start("authentication_hashes");
     for level in 0..leaves.ilog2() as usize {
         let mut parents = Vec::with_capacity(frontier.len());
         let mut position = 0;
@@ -78,5 +81,6 @@ pub fn open(
         frontier = parents;
     }
     ensure(frontier.len() == 1 && frontier[0] == (0, root))?;
+    channel.profile_end(span);
     Ok(columns)
 }

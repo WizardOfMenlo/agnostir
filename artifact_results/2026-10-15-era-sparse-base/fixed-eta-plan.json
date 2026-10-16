@@ -1,0 +1,67 @@
+{
+  "ram_gib": 128,
+  "threads": 16,
+  "headroom": 0.15,
+  "scope": "Controlled comparison at the previous eta=10; sparse base with no RS. Numerical sufficient ideal-ensemble bounds; ERA CalcDist is not an all-roots certificate. Finite parameter grid, minimum root degrees, then full recursion checks. Fastest multiplication-count base per row size, then minimum expected proof size.",
+  "maximum_fitting_log": {
+    "codeswitching": 28
+  },
+  "results": {
+    "28": {
+      "codeswitching": {
+        "fits": true,
+        "protocols": {
+          "era-codeswitch": {
+            "best": {
+              "protocol": "era-codeswitch",
+              "message_log": 28,
+              "eta": 10,
+              "row_log": 18,
+              "output_log": 15,
+              "output_log_rate": 3,
+              "terminal_log": 12,
+              "queries": 879,
+              "terminal_queries": 147,
+              "terminal_distance": 0.772359,
+              "index_rows": 157,
+              "online_rows": 92,
+              "estimated_proof_bytes": 31771221.54358744,
+              "estimated_live_bytes": 67165488056,
+              "block_length": 1210000,
+              "distance": 0.218307,
+              "numerical_distance": 0.2183078471670993,
+              "code_storage_bytes": 96994232,
+              "distance_details": {
+                "inner_k": 512,
+                "inner_n": 550,
+                "inner_distance": 0.01477,
+                "tensor_feasibility_threshold": 0.0001977930492668152,
+                "base_distance": 0.0002181529,
+                "c": 1.0964371650944804,
+                "gamma": 0.00019778938570380266,
+                "delta": 0.2183078471670993,
+                "delta1": 0.25266868377588736,
+                "d1_at_delta1": 0.008092247473275015,
+                "delta2": 0.2183078471670993,
+                "critical_point": [
+                  0.05266263234961908,
+                  0.1214197129907981,
+                  0.2183078471670993
+                ],
+                "scope": "numerical CalcDist candidate; no certified all-roots isolation"
+              },
+              "base_parameters": {
+                "alpha": 0.026,
+                "inverse_rate": 1.075,
+                "cn": 9,
+                "dn": 16,
+                "base_case": "zero-pad"
+              },
+              "estimated_peak_with_margin_bytes": 77240311265
+            }
+          }
+        }
+      }
+    }
+  }
+}

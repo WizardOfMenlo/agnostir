@@ -1,0 +1,26 @@
+[
+  {
+    "protocol": "era-codeswitch",
+    "message_log": 28,
+    "eta": 6,
+    "estimated_proof_bytes": 3629890.705544496,
+    "proof_bytes": 3622568,
+    "estimate_relative_error": 0.002021412860847782,
+    "peak_rss_bytes": 93679845376,
+    "exit_code": 0,
+    "user_seconds": 2065.231364,
+    "system_seconds": 182.039226
+  },
+  {
+    "protocol": "basefold-local",
+    "message_log": 28,
+    "eta": 4,
+    "estimated_proof_bytes": 5975705.002763543,
+    "proof_bytes": 6004040,
+    "estimate_relative_error": -0.00471932186268853,
+    "peak_rss_bytes": 47542009856,
+    "exit_code": 0,
+    "user_seconds": 872.38834,
+    "system_seconds": 41.332073
+  }
+]

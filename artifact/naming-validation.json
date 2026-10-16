@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-16",
+  "crate": "era-codes",
+  "rust_import": "era_codes",
+  "changed_source_or_manifest_files": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "src/iopp_experiment.rs",
+    "src/optimized_era.rs",
+    "src/proof.rs",
+    "src/bin/profile_era_steps.rs",
+    "src/bin/interleaved_iopp.rs",
+    "src/bin/main.rs",
+    "src/bin/compare_iopps.rs",
+    "src/bin/profile_era_commit_split.rs",
+    "src/commit/codes/era.rs",
+    "benches/compare_codes.rs",
+    "benches/iopp_bench.rs"
+  ],
+  "protocol_domain_labels_unchanged": true,
+  "proof_parameters_unchanged": true,
+  "serialized_format_unchanged": true,
+  "default_rust_tests": 204,
+  "serial_rust_tests": 203,
+  "distance_tests": 18,
+  "model_tests": 2,
+  "smoke_proofs_accepted": 6,
+  "iopp_smoke_proofs_byte_identical": 2,
+  "paper22_reference_hash_matches": 4,
+  "samples": 1,
+  "warmups": 1,
+  "all_targets_check_passed": true
+}

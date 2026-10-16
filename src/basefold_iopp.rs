@@ -71,29 +71,16 @@ pub fn prove_or_verify(
     let rounds = log_message - terminal_log;
     let mut msg = message.map(<[Scalar]>::to_vec);
     let mut eq_table = message.map(|_| sumcheck::eq_weights(point));
-    let mut word = message.map(|_| {
-        (0..setup.code.codeword_length())
-            .into_par_iter()
-            .map(|i| {
-                sources
-                    .iter()
-                    .map(|s| {
-                        s.commitment
-                            .unwrap()
-                            .rows
-                            .iter()
-                            .zip(&s.weights)
-                            .map(|(row, &w)| row[i] * w)
-                            .sum::<Scalar>()
-                    })
-                    .sum::<Scalar>()
-            })
-            .collect::<Vec<_>>()
-    });
+    let span = channel.profile_start("virtual_codeword");
+    // All sources use the same linear code. The combined message is already
+    // available, so one encoding gives exactly the old weighted codeword.
+    let mut word = message.map(|m| setup.code.encode(m));
+    channel.profile_end(span);
     let mut trees = Vec::with_capacity(rounds - 1);
     let mut roots = Vec::with_capacity(rounds - 1);
     let mut challenges = Vec::with_capacity(rounds);
     for round in 0..rounds {
+        let span = channel.profile_start("fold_sumchecks");
         let poly = msg.as_ref().map(|msg| {
             let weights = eq_table.as_ref().unwrap();
             let half = msg.len() / 2;
@@ -121,6 +108,8 @@ pub fn prove_or_verify(
         if let Some(eq) = &mut eq_table {
             sumcheck::fold(eq, r);
         }
+        channel.profile_end(span);
+        let span = channel.profile_start("fold_commitments");
         if round + 1 < rounds {
             if let Some(old_word) = word.take() {
                 let inverse = &setup.inverse_tables[log_message - round - 1];
@@ -141,13 +130,16 @@ pub fn prove_or_verify(
                 roots.push(channel.bytes(None)?);
             }
         }
+        channel.profile_end(span);
     }
+    let span = channel.profile_start("terminal_message");
     let terminal = channel.fields(msg.as_deref(), 1 << terminal_log)?;
     ensure(
         sumcheck::eq(&point[..rounds], &challenges)
             * sumcheck::evaluate(&terminal, &point[rounds..])
             == claim,
     )?;
+    channel.profile_end(span);
     let mut indices = channel.queries(setup.code.codeword_length() / 2, query_count)?;
     let mut expected: Vec<(usize, Scalar)> = Vec::new();
     for round in 0..rounds {
@@ -157,7 +149,16 @@ pub fn prove_or_verify(
         pair_indices.dedup();
         let values = if round == 0 {
             let mut values = vec![Scalar::ZERO; pair_indices.len()];
-            for source in sources {
+            for (source_index, source) in sources.iter().enumerate() {
+                // Source 0 is the preprocessed index for ERA, or the original
+                // committed stack for the direct BaseFold baseline.
+                let span = channel.profile_start(if source_index == 0 {
+                    "source_0_openings"
+                } else if source_index == 1 {
+                    "source_1_openings"
+                } else {
+                    "source_2_openings"
+                });
                 let columns = merkle::open(
                     channel,
                     source.commitment,
@@ -169,10 +170,12 @@ pub fn prove_or_verify(
                 for (v, (_, column)) in values.iter_mut().zip(columns) {
                     *v += sumcheck::dot(&column, &source.weights);
                 }
+                channel.profile_end(span);
             }
             values
         } else {
-            merkle::open(
+            let span = channel.profile_start("folded_oracle_openings");
+            let columns = merkle::open(
                 channel,
                 trees.get(round - 1),
                 roots[round - 1],
@@ -182,7 +185,9 @@ pub fn prove_or_verify(
             )?
             .into_iter()
             .map(|(_, c)| c[0])
-            .collect()
+            .collect();
+            channel.profile_end(span);
+            columns
         };
         for (index, value) in expected {
             ensure(
@@ -212,12 +217,15 @@ pub fn prove_or_verify(
             *index /= 2;
         }
     }
+    let span = channel.profile_start("terminal_encoding");
     let encoded_terminal = setup.code.encode_lower(&terminal);
     ensure(
         expected
             .iter()
             .all(|&(i, value)| encoded_terminal[i] == value),
-    )
+    )?;
+    channel.profile_end(span);
+    Ok(())
 }
 
 #[cfg(test)]
@@ -225,6 +233,42 @@ mod tests {
     use super::*;
     use crate::BasefoldParams;
     use rand::{SeedableRng, rngs::SmallRng};
+
+    #[test]
+    fn profiled_interleaved_proof_is_byte_identical() {
+        let setup = FoldingSetup::new(BasefoldCode::new(
+            64,
+            BasefoldParams { log_rate: 1 },
+            &mut SmallRng::seed_from_u64(1),
+        ));
+        let parameters = InterleavedParameters {
+            message_log: 8,
+            eta: 2,
+            terminal_log: 2,
+            queries: 24,
+            code_id: [1; 32],
+        };
+        let message: Vec<_> = (0..256).map(Scalar::from).collect();
+        let point = vec![Scalar::from(7); 8];
+        let tree = Commitment::new(message.chunks(64).map(|m| setup.code.encode(m)).collect());
+        let (value, proof) =
+            prove_interleaved(&setup, parameters, &tree, &message, &point).unwrap();
+        let (profiled_value, profiled_proof, profile) =
+            prove_interleaved_with_profile(&setup, parameters, &tree, &message, &point, true)
+                .unwrap();
+        assert_eq!((profiled_value, profiled_proof), (value, proof.clone()));
+        profile.assert_complete(proof.len());
+        assert_eq!(profile.measurements[0].inclusive_bytes, proof.len());
+        assert_eq!(
+            profile
+                .measurements
+                .iter()
+                .map(|m| m.exclusive)
+                .sum::<std::time::Duration>(),
+            profile.measurements[0].inclusive
+        );
+        verify_interleaved(&setup, parameters, tree.root(), &point, value, &proof).unwrap();
+    }
 
     #[test]
     fn folding_matches_independent_encoding_and_rejects_tampering() {
@@ -312,6 +356,7 @@ fn interleaved_execute(
     point: &[Scalar],
     value: Scalar,
     witness: Option<(&[Scalar], &Commitment)>,
+    evaluation_weights: Option<Vec<Scalar>>,
 ) -> ProofResult<()> {
     let p = parameters;
     ensure(
@@ -320,6 +365,7 @@ fn interleaved_execute(
             && point.len() == p.message_log,
     )?;
     ensure(setup.code.message_size() == 1usize << (p.message_log - p.eta))?;
+    let span = channel.profile_start("header");
     ensure(channel.bytes(Some(*b"AGNBFIv1"))? == *b"AGNBFIv1")?;
     channel.bind(b"code-id", &p.code_id);
     channel.bind(b"root", &root);
@@ -328,18 +374,29 @@ fn interleaved_execute(
     }
     channel.bind_fields(b"point", point);
     ensure(channel.field(Some(value))? == value)?;
+    channel.profile_end(span);
+    let span = channel.profile_start("starting_sumcheck");
     let (r, claim, _) = sumcheck::sumcheck(
         channel,
-        witness.map(|(m, _)| vec![m.to_vec(), sumcheck::eq_weights(point)]),
+        witness.map(|(m, _)| {
+            vec![
+                m.to_vec(),
+                evaluation_weights.unwrap_or_else(|| sumcheck::eq_weights(point)),
+            ]
+        }),
         &[(Scalar::ONE, vec![0, 1])],
         p.message_log,
         value,
     )?;
+    channel.profile_end(span);
+    let span = channel.profile_start("interleaved_row_fold");
     let weights = sumcheck::eq_weights(&r[..p.eta]);
     let message = witness.map(|(m, _)| crate::interleaved_iopp::fs::fold_rows(m, &weights));
     let value = claim
         * FieldElement::inverse(sumcheck::eq(point, &r))
             .ok_or(crate::proof::ProofError::Invalid)?;
+    channel.profile_end(span);
+    let span = channel.profile_start("recursive_basefold");
     prove_or_verify(
         channel,
         setup,
@@ -353,7 +410,9 @@ fn interleaved_execute(
         value,
         p.terminal_log,
         p.queries,
-    )
+    )?;
+    channel.profile_end(span);
+    Ok(())
 }
 
 pub fn prove_interleaved(
@@ -363,13 +422,34 @@ pub fn prove_interleaved(
     message: &[Scalar],
     point: &[Scalar],
 ) -> ProofResult<(Scalar, Vec<u8>)> {
+    let (value, proof, _) =
+        prove_interleaved_with_profile(setup, parameters, tree, message, point, false)?;
+    Ok((value, proof))
+}
+
+/// Same proof and transcript as `prove_interleaved`, with optional measurements.
+pub fn prove_interleaved_with_profile(
+    setup: &FoldingSetup,
+    parameters: InterleavedParameters,
+    tree: &Commitment,
+    message: &[Scalar],
+    point: &[Scalar],
+    enabled: bool,
+) -> ProofResult<(Scalar, Vec<u8>, crate::proof::profile::Profile)> {
+    let mut channel = Channel::new(b"basefold-local-interleaved-v1", None);
+    if enabled {
+        channel.enable_profile();
+    }
+    let total = channel.profile_start("prove");
     ensure(
         parameters.message_log < usize::BITS as usize
             && point.len() == parameters.message_log
             && message.len() == 1usize << parameters.message_log,
     )?;
-    let value = sumcheck::evaluate(message, point);
-    let mut channel = Channel::new(b"basefold-local-interleaved-v1", None);
+    let span = channel.profile_start("public_evaluation");
+    let evaluation_weights = sumcheck::eq_weights(point);
+    let value = sumcheck::dot(message, &evaluation_weights);
+    channel.profile_end(span);
     interleaved_execute(
         &mut channel,
         setup,
@@ -378,8 +458,11 @@ pub fn prove_interleaved(
         point,
         value,
         Some((message, tree)),
+        Some(evaluation_weights),
     )?;
-    Ok((value, channel.finish()?))
+    channel.profile_end(total);
+    let (proof, profile) = channel.finish_profiled()?;
+    Ok((value, proof, profile))
 }
 
 pub fn verify_interleaved(
@@ -391,6 +474,15 @@ pub fn verify_interleaved(
     proof: &[u8],
 ) -> ProofResult<()> {
     let mut channel = Channel::new(b"basefold-local-interleaved-v1", Some(proof));
-    interleaved_execute(&mut channel, setup, parameters, root, point, value, None)?;
+    interleaved_execute(
+        &mut channel,
+        setup,
+        parameters,
+        root,
+        point,
+        value,
+        None,
+        None,
+    )?;
     channel.finish().map(|_| ())
 }

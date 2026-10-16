@@ -1,0 +1,1218 @@
+--- before/src/era_iopp.rs
++++ after/src/era_iopp.rs
+@@ -11,6 +11,7 @@
+         Channel, ProofResult, Scalar, ensure, fractional,
+         merkle::{self, Commitment},
+         sumcheck,
++        weights::{Weights, prefix_index_moment},
+     },
+     random_permutation,
+ };
+@@ -408,9 +409,27 @@
+         value: Scalar,
+         bytes: &[u8],
+     ) -> ProofResult<()> {
++        self.verify_with_profile(root, point, value, bytes, false)
++            .map(|_| ())
++    }
++
++    /// Profile verifier work separately; it reads exactly the same proof bytes.
++    pub fn verify_with_profile(
++        &self,
++        root: [u8; 32],
++        point: &[Scalar],
++        value: Scalar,
++        bytes: &[u8],
++        enabled: bool,
++    ) -> ProofResult<crate::proof::profile::Profile> {
+         let mut channel = Channel::new(self.domain(), Some(bytes));
++        if enabled {
++            channel.enable_profile();
++        }
++        let total = channel.profile_start("verify");
+         self.execute(&mut channel, root, point, value, None, None)?;
+-        channel.finish().map(|_| ())
++        channel.profile_end(total);
++        channel.finish_profiled().map(|(_, profile)| profile)
+     }
+ 
+     fn execute(
+@@ -492,26 +511,28 @@
+         channel.profile_end(span);
+         let span = channel.profile_start("initial_claims_and_oods");
+         let all_messages = online_messages.as_ref().map(|rows| {
+-            let mut all = self.index_messages.clone();
+-            all.extend(rows.clone());
+-            all
++            self.index_messages
++                .iter()
++                .chain(rows)
++                .map(Vec::as_slice)
++                .collect::<Vec<_>>()
+         });
+         let mut claims = Claims::new(width, all_messages.as_deref());
+         claims.ip(
+             channel,
+             l.message,
+-            sumcheck::eq_weights(&r[p.eta..]),
++            Weights::equality(&r[p.eta..], l.message.len, claims.rows.is_some()),
+             reduced_value,
+         )?;
+         // One OOD evaluation per split online oracle avoids relying on unproved
+         // uniqueness of a packed family's zero-padded representation.
+         for row in l.index_rows..l.rows {
+             let z = channel.point(b"online-ood", p.output_log);
+-            let weights = sumcheck::eq_weights(&z);
++            let weights = Weights::equality(&z, width, claims.rows.is_some());
+             let y = channel.field(
+                 all_messages
+                     .as_ref()
+-                    .map(|rows| sumcheck::dot(&rows[row], &weights)),
++                    .map(|rows| weights.dot(rows[row], None)),
+             )?;
+             claims.terms.push(Claim {
+                 row1: row,
+@@ -562,13 +583,14 @@
+         let beta = channel.challenge(b"codeswitch-query-batch");
+         let mut power = Scalar::ONE;
+         let mut target = Scalar::ZERO;
+-        let mut weights = vec![Scalar::ZERO; self.era.block_length()];
++        let mut entries = Vec::with_capacity(queries.len());
+         for (&index, &answer) in queries.iter().zip(&answers) {
+-            weights[index] += power;
++            entries.push((index, power));
+             target += power * answer;
+             power *= beta;
+         }
+-        suffix_sum(&mut weights);
++        let weights =
++            Weights::sparse_suffix(entries, self.era.block_length(), claims.rows.is_some());
+         claims.tip(channel, l.perm2, l.mult2, weights, target)?;
+         channel.profile_end(span);
+         let span = channel.profile_start("claim_reduction");
+@@ -600,24 +622,19 @@
+         let n = inner.block_length();
+         let rx = channel.point(b"tensor-row", n.next_power_of_two().ilog2() as usize);
+         let ry = channel.point(b"tensor-column", rx.len());
+-        let ex = sumcheck::eq_weights(&rx);
+-        let ey = sumcheck::eq_weights(&ry);
+-        let base_weights: Vec<_> = (0..n)
+-            .flat_map(|i| {
+-                ey[..n].iter().map({
+-                    let ex = &ex;
+-                    move |&y| ex[i] * y
+-                })
+-            })
+-            .collect();
+-        let base_value = channel.field(base.map(|b| sumcheck::dot(b, &base_weights)))?;
++        let base_weights = Weights::tensor(&rx, &ry, n, n, claims.rows.is_some());
++        let base_value = channel.field(base.map(|b| base_weights.dot(b, None)))?;
+         claims.ip(channel, l.base, base_weights, base_value)?;
+         let tables = message.map(|m| {
++            let ex = sumcheck::eq_weights(&rx);
++            let ey = sumcheck::eq_weights(&ry);
+             let g = flatten_family(claims.rows.unwrap(), l.generator);
+             let g1: Vec<_> = (0..k)
++                .into_par_iter()
+                 .map(|j| (0..n).map(|i| ex[i] * g[i * k + j]).sum::<Scalar>())
+                 .collect();
+             let g2: Vec<_> = (0..k)
++                .into_par_iter()
+                 .map(|j| (0..n).map(|i| ey[i] * g[i * k + j]).sum::<Scalar>())
+                 .collect();
+             vec![
+@@ -635,27 +652,17 @@
+         )?;
+         let values = channel.fields(evals.as_deref(), 3)?;
+         ensure(values.iter().copied().product::<Scalar>() == claim)?;
+-        let e1 = sumcheck::eq_weights(&r[..r.len() / 2]);
+-        let e2 = sumcheck::eq_weights(&r[r.len() / 2..]);
+-        let g1_weights: Vec<_> = (0..n)
+-            .flat_map(|i| {
+-                e1.iter().map({
+-                    let ex = &ex;
+-                    move |&e| ex[i] * e
+-                })
+-            })
+-            .collect();
+-        let g2_weights: Vec<_> = (0..n)
+-            .flat_map(|i| {
+-                e2.iter().map({
+-                    let ey = &ey;
+-                    move |&e| ey[i] * e
+-                })
+-            })
+-            .collect();
++        let prover = claims.rows.is_some();
++        let g1_weights = Weights::tensor(&rx, &r[..r.len() / 2], n, k, prover);
++        let g2_weights = Weights::tensor(&ry, &r[r.len() / 2..], n, k, prover);
+         claims.ip(channel, l.generator, g1_weights, values[0])?;
+         claims.ip(channel, l.generator, g2_weights, values[1])?;
+-        claims.ip(channel, l.message, sumcheck::eq_weights(&r), values[2])
++        claims.ip(
++            channel,
++            l.message,
++            Weights::equality(&r, l.message.len, prover),
++            values[2],
++        )
+     }
+ 
+     fn permutation_checks(
+@@ -676,14 +683,25 @@
+         let span = channel.profile_start("denominators");
+         let denominators = online.map(|(base, p1, a1, p2)| {
+             let (pi1, pi2) = self.era.permutations();
+-            let mut d = vec![vec![Scalar::ONE; n.next_power_of_two()]; 4];
+-            for i in 0..n {
+-                d[0][i] = alpha1 + beta1 * Scalar::from(i as u64) + base[i % base_len];
+-                d[1][i] = alpha1 + beta1 * Scalar::from(pi1[i] as u64) + p1[i];
+-                d[2][i] = alpha2 + beta2 * Scalar::from(i as u64) + a1[i];
+-                d[3][i] = alpha2 + beta2 * Scalar::from(pi2[i] as u64) + p2[i];
+-            }
+-            d
++            (0..4)
++                .into_par_iter()
++                .map(|j| {
++                    (0..n.next_power_of_two())
++                        .into_par_iter()
++                        .map(|i| {
++                            if i >= n {
++                                return Scalar::ONE;
++                            }
++                            match j {
++                                0 => alpha1 + beta1 * Scalar::from(i as u64) + base[i % base_len],
++                                1 => alpha1 + beta1 * Scalar::from(pi1[i] as u64) + p1[i],
++                                2 => alpha2 + beta2 * Scalar::from(i as u64) + a1[i],
++                                _ => alpha2 + beta2 * Scalar::from(pi2[i] as u64) + p2[i],
++                            }
++                        })
++                        .collect()
++                })
++                .collect()
+         });
+         channel.profile_end(span);
+         let span = channel.profile_start("logup_gkr");
+@@ -723,12 +741,9 @@
+             let phase = channel.profile_start("checkpoint_oods");
+             for row in l.rows..l.rows + count {
+                 let z = channel.point(b"checkpoint-ood", self.parameters.output_log);
+-                let weights = sumcheck::eq_weights(&z);
+-                let value = channel.field(
+-                    claims
+-                        .rows
+-                        .map(|_| sumcheck::dot(claims.row(row), &weights)),
+-                )?;
++                let weights = Weights::equality(&z, claims.width, claims.rows.is_some());
++                let value =
++                    channel.field(claims.rows.map(|_| weights.dot(claims.row(row), None)))?;
+                 claims.terms.push(Claim {
+                     row1: row,
+                     row2: None,
+@@ -749,7 +764,11 @@
+                     channel,
+                     l.rows,
+                     entry.offset,
+-                    sumcheck::eq_weights(&evaluation.point),
++                    Weights::equality(
++                        &evaluation.point,
++                        1 << evaluation.point.len(),
++                        claims.rows.is_some(),
++                    ),
+                     evaluation.value,
+                 )?;
+             }
+@@ -766,33 +785,27 @@
+         };
+         channel.profile_end(span);
+         let span = channel.profile_start("terminal_linear_claims");
+-        let weights = sumcheck::eq_weights(&r);
+-        let weights = &weights[..n];
++        let prover = online.is_some();
++        let weights = Weights::equality(&r, n, prover);
+         let mask = fractional::prefix_weight(&r, n);
+-        let id: Scalar = weights
+-            .iter()
+-            .enumerate()
+-            .map(|(i, &w)| Scalar::from(i as u64) * w)
+-            .sum();
++        let id = prefix_index_moment(&r, n);
+         let values = online.map(|(base, p1, a1, p2)| {
+             let (pi1, pi2) = self.era.permutations();
++            let w = weights.dense();
+             vec![
+-                weights
+-                    .iter()
++                w.par_iter()
+                     .enumerate()
+                     .map(|(i, &w)| w * base[i % base_len])
+                     .sum(),
+-                sumcheck::dot(p1, weights),
+-                sumcheck::dot(a1, weights),
+-                sumcheck::dot(p2, weights),
+-                weights
+-                    .iter()
+-                    .zip(pi1)
++                sumcheck::dot(p1, w),
++                sumcheck::dot(a1, w),
++                sumcheck::dot(p2, w),
++                w.par_iter()
++                    .zip(pi1.par_iter())
+                     .map(|(&w, &i)| w * Scalar::from(i as u64))
+                     .sum(),
+-                weights
+-                    .iter()
+-                    .zip(pi2)
++                w.par_iter()
++                    .zip(pi2.par_iter())
+                     .map(|(&w, &i)| w * Scalar::from(i as u64))
+                     .sum(),
+             ]
+@@ -809,55 +822,52 @@
+         {
+             ensure(d[j] == alpha * mask + beta * label + v[j] + Scalar::ONE - mask)?;
+         }
+-        let mut repeat = vec![Scalar::ZERO; base_len];
+-        for (i, &w) in weights.iter().enumerate() {
+-            repeat[i % base_len] += w;
+-        }
+-        claims.ip(channel, l.base, repeat, v[0])?;
+-        claims.ip(channel, l.perm1, weights.to_vec(), v[1])?;
+-        let mut acc_weights = weights.to_vec();
+-        suffix_sum(&mut acc_weights);
+-        claims.tip(channel, l.perm1, l.mult1, acc_weights, v[2])?;
+-        claims.ip(channel, l.perm2, weights.to_vec(), v[3])?;
+-        claims.ip(channel, l.pi1, weights.to_vec(), v[4])?;
+-        claims.ip(channel, l.pi2, weights.to_vec(), v[5])?;
++        claims.ip(
++            channel,
++            l.base,
++            Weights::repeat(&r, base_len, 4, prover),
++            v[0],
++        )?;
++        claims.ip(channel, l.perm1, weights.clone(), v[1])?;
++        claims.tip(
++            channel,
++            l.perm1,
++            l.mult1,
++            Weights::suffix(&r, n, prover),
++            v[2],
++        )?;
++        claims.ip(channel, l.perm2, weights.clone(), v[3])?;
++        claims.ip(channel, l.pi1, weights.clone(), v[4])?;
++        claims.ip(channel, l.pi2, weights, v[5])?;
+         channel.profile_end(span);
+         Ok(checkpoint)
+     }
+ }
+ 
+-fn flatten_family(rows: &[Vec<Scalar>], family: Family) -> Vec<Scalar> {
++fn flatten_family(rows: &[&[Scalar]], family: Family) -> Vec<Scalar> {
+     rows[family.start..family.start + family.rows]
+         .iter()
+-        .flatten()
++        .flat_map(|row| row.iter())
+         .take(family.len)
+         .copied()
+         .collect()
+ }
+-fn suffix_sum(weights: &mut [Scalar]) {
+-    let mut sum = Scalar::ZERO;
+-    for w in weights.iter_mut().rev() {
+-        sum += *w;
+-        *w = sum;
+-    }
+-}
+-
+ #[derive(Debug)]
+ struct Claim {
+     row1: usize,
+     row2: Option<usize>,
+-    weights: Vec<Scalar>,
++    weights: Weights,
+     value: Scalar,
+ }
+ #[derive(Debug)]
+ struct Claims<'a> {
+     width: usize,
+-    rows: Option<&'a [Vec<Scalar>]>,
++    rows: Option<&'a [&'a [Scalar]]>,
+     extra_rows: Vec<Vec<Scalar>>,
+     terms: Vec<Claim>,
+ }
+ impl<'a> Claims<'a> {
+-    fn new(width: usize, rows: Option<&'a [Vec<Scalar>]>) -> Self {
++    fn new(width: usize, rows: Option<&'a [&'a [Scalar]]>) -> Self {
+         Self {
+             width,
+             rows,
+@@ -868,7 +878,7 @@
+     fn row(&self, index: usize) -> &[Scalar] {
+         let rows = self.rows.unwrap();
+         if index < rows.len() {
+-            &rows[index]
++            rows[index]
+         } else {
+             &self.extra_rows[index - rows.len()]
+         }
+@@ -882,26 +892,21 @@
+         ch: &mut Channel<'_>,
+         start_row: usize,
+         offset: usize,
+-        weights: Vec<Scalar>,
++        weights: Weights,
+         value: Scalar,
+     ) -> ProofResult<()> {
+-        ensure(!weights.is_empty())?;
++        ensure(weights.len() > 0)?;
+         let first = offset / self.width;
+         let last = (offset + weights.len() - 1) / self.width;
+         let mut sum = Scalar::ZERO;
+         for row in first..=last {
+             let begin = offset.max(row * self.width);
+             let end = (offset + weights.len()).min((row + 1) * self.width);
+-            let mut w = vec![Scalar::ZERO; self.width];
+-            w[begin - row * self.width..end - row * self.width]
+-                .copy_from_slice(&weights[begin - offset..end - offset]);
++            let w = weights.slice(begin - offset, end - begin, begin - row * self.width);
+             let part = if first == last {
+                 value
+             } else {
+-                ch.field(
+-                    self.rows
+-                        .map(|_| sumcheck::dot(self.row(start_row + row), &w)),
+-                )?
++                ch.field(self.rows.map(|_| w.dot(self.row(start_row + row), None)))?
+             };
+             sum += part;
+             self.terms.push(Claim {
+@@ -918,7 +923,7 @@
+         &mut self,
+         ch: &mut Channel<'_>,
+         family: Family,
+-        weights: Vec<Scalar>,
++        weights: Weights,
+         value: Scalar,
+     ) -> ProofResult<()> {
+         self.split_claim(ch, family, None, weights, value)
+@@ -928,7 +933,7 @@
+         ch: &mut Channel<'_>,
+         a: Family,
+         b: Family,
+-        weights: Vec<Scalar>,
++        weights: Weights,
+         value: Scalar,
+     ) -> ProofResult<()> {
+         ensure(a.len == b.len)?;
+@@ -939,21 +944,18 @@
+         ch: &mut Channel<'_>,
+         a: Family,
+         b: Option<Family>,
+-        weights: Vec<Scalar>,
++        weights: Weights,
+         value: Scalar,
+     ) -> ProofResult<()> {
+         ensure(weights.len() == a.len)?;
+         let mut sum = Scalar::ZERO;
+-        for (i, weights) in split(&weights, self.width).into_iter().enumerate() {
+-            let part = ch.field(self.rows.map(|rows| {
+-                weights
+-                    .iter()
+-                    .enumerate()
+-                    .map(|(j, &w)| {
+-                        w * rows[a.start + i][j] * b.map_or(Scalar::ONE, |b| rows[b.start + i][j])
+-                    })
+-                    .sum()
+-            }))?;
++        for i in 0..a.rows {
++            let start = i * self.width;
++            let weights = weights.slice(start, self.width.min(a.len - start), 0);
++            let part = ch.field(
++                self.rows
++                    .map(|rows| weights.dot(rows[a.start + i], b.map(|b| rows[b.start + i]))),
++            )?;
+             sum += part;
+             self.terms.push(Claim {
+                 row1: a.start + i,
+@@ -989,23 +991,17 @@
+         let mut claim = Scalar::ZERO;
+         // Linearity of the MLE lets claims with the same witness factors
+         // share a public weight table, without changing the batched polynomial.
+-        let mut grouped = std::collections::BTreeMap::<(usize, Option<usize>), Vec<Scalar>>::new();
+-        for t in &self.terms {
++        let mut grouped =
++            std::collections::BTreeMap::<(usize, Option<usize>), Vec<(Scalar, Weights)>>::new();
++        for t in self.terms {
+             claim += power * t.value;
+-            let target = grouped
++            grouped
+                 .entry((t.row1, t.row2))
+-                .or_insert_with(|| vec![Scalar::ZERO; self.width]);
+-            target
+-                .par_iter_mut()
+-                .zip(t.weights.par_iter())
+-                .for_each(|(dst, &weight)| {
+-                    if !weight.is_zero() {
+-                        *dst += power * weight;
+-                    }
+-                });
++                .or_default()
++                .push((power, t.weights));
+             power *= beta;
+         }
+-        let grouped: Vec<_> = grouped.into_iter().collect();
++        let mut grouped: Vec<_> = grouped.into_iter().collect();
+         let terms: Vec<_> = grouped
+             .iter()
+             .enumerate()
+@@ -1018,11 +1014,29 @@
+             })
+             .collect();
+         let tables = self.rows.map(|rows| {
+-            let mut tables = rows.to_vec();
++            let mut tables: Vec<_> = rows.par_iter().map(|r| r.to_vec()).collect();
+             tables.extend(self.extra_rows.iter().cloned());
+-            tables.extend(grouped.iter().map(|(_, w)| w.clone()));
++            // Move each dense combined weight into sumcheck; keep only shared
++            // source descriptions for the independent compact endpoint check.
++            tables.extend(
++                grouped
++                    .par_iter()
++                    .map(|(_, entries)| {
++                        let mut w = vec![Scalar::ZERO; self.width];
++                        for (scale, weights) in entries {
++                            weights.add_scaled(&mut w, *scale);
++                        }
++                        w
++                    })
++                    .collect::<Vec<_>>(),
++            );
+             tables
+         });
++        for (_, entries) in &mut grouped {
++            for (_, weight) in entries {
++                weight.discard_dense();
++            }
++        }
+         ch.profile_end(span);
+         let span = ch.profile_start("batched_sumcheck");
+         let (r, final_claim, evals) =
+@@ -1030,13 +1044,15 @@
+         ch.profile_end(span);
+         let span = ch.profile_start("endpoint_checks");
+         let values = ch.fields(evals.as_ref().map(|v| &v[..row_count]), row_count)?;
+-        let endpoint_weights = sumcheck::eq_weights(&r);
+         let expected: Scalar = grouped
+             .iter()
+-            .map(|((a, b), weights)| {
++            .map(|((a, b), entries)| {
+                 values[*a]
+                     * b.map_or(Scalar::ONE, |b| values[b])
+-                    * sumcheck::dot(weights, &endpoint_weights)
++                    * entries
++                        .iter()
++                        .map(|(scale, w)| *scale * w.evaluate(&r))
++                        .sum::<Scalar>()
+             })
+             .sum();
+         ensure(expected == final_claim)?;
+@@ -1059,7 +1075,8 @@
+                 .into_par_iter()
+                 .map(|j| {
+                     rows.iter()
+-                        .chain(&self.extra_rows)
++                        .copied()
++                        .chain(self.extra_rows.iter().map(Vec::as_slice))
+                         .zip(&weights)
+                         .map(|(row, &w)| row[j] * w)
+                         .sum()
+@@ -1106,6 +1123,48 @@
+ #[cfg(test)]
+ mod tests {
+     use super::*;
++    #[test]
++    fn compact_verifier_and_parallel_gkr_preserve_preoptimization_proofs() {
++        // Captured from the unchanged binary before compact weights/GKR edits.
++        let config = crate::iopp_experiment::ExperimentConfig {
++            message_log: 10,
++            eta: 2,
++            seed: 2025,
++        };
++        let (message, point) = config.message_and_point();
++        for (checkpoints, expected) in [
++            (
++                vec![],
++                "74d0d8e00d471360769f6870f8744bfe1c4725d1e271e351e4ade05967da170e",
++            ),
++            (
++                vec![3, 7],
++                "e6887a9acbad0373ad5c6881421d54763e4fe2730a0aa8843b3f8302b03cfcf3",
++            ),
++        ] {
++            let setup = Setup::new_with_checkpoints(
++                Parameters {
++                    message_log: 10,
++                    eta: 2,
++                    output_log: 6,
++                    output_log_rate: 3,
++                    terminal_log: 2,
++                    era_queries: 24,
++                    basefold_queries: 24,
++                    seed: 2025,
++                },
++                checkpoints,
++            )
++            .unwrap();
++            let tree = setup.commit(&message).unwrap();
++            let (value, proof) = setup.prove(&tree, &message, &point).unwrap();
++            assert_eq!(blake3::hash(&proof).to_hex().as_str(), expected);
++            setup
++                .verify_with_profile(tree.root(), &point, value, &proof, true)
++                .unwrap()
++                .assert_complete(proof.len());
++        }
++    }
+     #[test]
+     fn consuming_commitment_preserves_bytes_across_output_rates() {
+         for (output_log, rate, checkpoints) in [(6, 1, vec![]), (7, 2, vec![]), (7, 3, vec![3, 7])]
+@@ -1135,6 +1194,10 @@
+             assert_eq!((owned_value, &owned_proof), (value, &proof));
+             profile.assert_complete(owned_proof.len());
+             setup.verify(root, &point, value, &owned_proof).unwrap();
++            setup
++                .verify_with_profile(root, &point, value, &owned_proof, true)
++                .unwrap()
++                .assert_complete(owned_proof.len());
+         }
+     }
+ 
+--- before/src/proof/fractional.rs
++++ after/src/proof/fractional.rs
+@@ -10,6 +10,7 @@
+ 
+ fn tree(denominators: Vec<Scalar>, real_len: usize) -> Vec<FractionLayer> {
+     let numerators: Vec<Scalar> = (0..denominators.len())
++        .into_par_iter()
+         .map(|i| {
+             if i < real_len {
+                 Scalar::ONE
+@@ -21,12 +22,12 @@
+     let mut layers = vec![(numerators, denominators)];
+     while layers.last().unwrap().0.len() > 1 {
+         let (n, d) = layers.last().unwrap();
+-        let pairs: Vec<_> = n
++        let pair = n
+             .par_chunks_exact(2)
+             .zip(d.par_chunks_exact(2))
+             .map(|(n, d)| (n[0] * d[1] + n[1] * d[0], d[0] * d[1]))
+-            .collect();
+-        layers.push(pairs.into_iter().unzip());
++            .unzip();
++        layers.push(pair);
+     }
+     layers.reverse();
+     layers
+@@ -46,7 +47,11 @@
+         ensure(denominators.len() == 4 && denominators.iter().all(|d| d.len() == padded))?;
+     }
+     let span = channel.profile_start("fraction_trees");
+-    let trees = denominators.map(|d| d.into_iter().map(|d| tree(d, real_len)).collect::<Vec<_>>());
++    let mut trees = denominators.map(|d| {
++        d.into_par_iter()
++            .map(|d| tree(d, real_len))
++            .collect::<Vec<_>>()
++    });
+     channel.profile_end(span);
+     let roots = trees.as_ref().map(|trees| {
+         trees
+@@ -71,15 +76,23 @@
+         }
+         let claim = sumcheck::dot(&claims, &weights);
+         let span = channel.profile_start("layer_tables");
+-        let tables = trees.as_ref().map(|trees| {
+-            let mut tables = Vec::with_capacity(17);
+-            for tree in trees {
+-                let (n, d) = &tree[layer + 1];
+-                tables.push(n.iter().step_by(2).copied().collect());
+-                tables.push(n.iter().skip(1).step_by(2).copied().collect());
+-                tables.push(d.iter().step_by(2).copied().collect());
+-                tables.push(d.iter().skip(1).step_by(2).copied().collect());
+-            }
++        let tables = trees.as_mut().map(|trees| {
++            // A layer is used exactly once. Split its numerator/denominator
++            // tables in parallel, then free the original storage immediately.
++            // Indexed collection preserves the old transcript's factor order.
++            let parts: Vec<_> = trees
++                .par_iter_mut()
++                .map(|tree| {
++                    let (n, d) = std::mem::take(&mut tree[layer + 1]);
++                    let (n0, n1): (Vec<_>, Vec<_>) =
++                        n.par_chunks_exact(2).map(|v| (v[0], v[1])).unzip();
++                    drop(n);
++                    let (d0, d1): (Vec<_>, Vec<_>) =
++                        d.par_chunks_exact(2).map(|v| (v[0], v[1])).unzip();
++                    [n0, n1, d0, d1]
++                })
++                .collect();
++            let mut tables: Vec<_> = parts.into_iter().flatten().collect();
+             tables.push(sumcheck::eq_weights(&point));
+             tables
+         });
+--- before/src/proof.rs
++++ after/src/proof.rs
+@@ -8,6 +8,7 @@
+ pub mod merkle;
+ pub mod profile;
+ pub mod sumcheck;
++pub(crate) mod weights;
+ 
+ #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+ pub enum ProofError {
+@@ -91,8 +92,9 @@
+ 
+     pub fn finish_profiled(self) -> ProofResult<(Vec<u8>, profile::Profile)> {
+         ensure(self.input.is_none_or(|input| self.cursor == input.len()))?;
++        let position = self.position();
+         let profile = self.profile.unwrap_or_default();
+-        profile.assert_complete(self.output.len());
++        profile.assert_complete(position);
+         Ok((self.output, profile))
+     }
+ 
+--- before/src/bin/compare_iopps.rs
++++ after/src/bin/compare_iopps.rs
+@@ -74,6 +74,9 @@
+     /// Write nested wall-clock timings and exact serialized byte counts as CSV.
+     #[arg(long)]
+     profile_out: Option<PathBuf>,
++    /// Separate ERA verifier stage timings and consumed proof byte counts.
++    #[arg(long)]
++    verify_profile_out: Option<PathBuf>,
+     /// Save the first measured, independently verified proof of each protocol.
+     #[arg(long)]
+     proof_dir: Option<PathBuf>,
+@@ -202,6 +205,25 @@
+         .transpose()
+         .map_err(|e| e.to_string())?;
+     if let Some(output) = &mut profiles {
++        writeln!(
++            output,
++            "protocol,sample,path,inclusive_ms,exclusive_ms,inclusive_bytes,exclusive_bytes"
++        )
++        .map_err(|e| e.to_string())?;
++    }
++    let mut verifier_profiles = args
++        .verify_profile_out
++        .as_ref()
++        .map(|path| {
++            OpenOptions::new()
++                .write(true)
++                .create_new(true)
++                .open(path)
++                .map(BufWriter::new)
++        })
++        .transpose()
++        .map_err(|e| e.to_string())?;
++    if let Some(output) = &mut verifier_profiles {
+         writeln!(
+             output,
+             "protocol,sample,path,inclusive_ms,exclusive_ms,inclusive_bytes,exclusive_bytes"
+@@ -327,8 +349,8 @@
+             .map_err(|e| e.to_string())?;
+             let prove_ms = start.elapsed().as_secs_f64() * 1000.0;
+             let start = Instant::now();
+-            setup
+-                .verify(root, &point, value, &proof)
++            let verifier_profile = setup
++                .verify_with_profile(root, &point, value, &proof, verifier_profiles.is_some())
+                 .map_err(|e| e.to_string())?;
+             let verify_ms = start.elapsed().as_secs_f64() * 1000.0;
+             let online_rows = (setup.era.message_size() + (1 << output_log) - 1)
+@@ -355,6 +377,7 @@
+                 setup.checkpoint_rows()
+             );
+             save_profile(&mut profiles, &label, sample, &profile)?;
++            save_profile(&mut verifier_profiles, &label, sample, &verifier_profile)?;
+             if sample == 0 {
+                 save_proof(args.proof_dir.as_deref(), &label, &proof)?;
+             }
+--- before/scripts/run_large_iopp_plan.py
++++ after/scripts/run_large_iopp_plan.py
+@@ -52,6 +52,8 @@
+         cmd += ['--basefold-queries', str(case['queries'])]
+     if profiled:
+         cmd += ['--profile-out', str(out/'stages.csv')]
++        if protocol == 'era-codeswitch':
++            cmd += ['--verify-profile-out', str(out/'verifier-stages.csv')]
+     return cmd
+ 
+ 
+@@ -155,12 +157,14 @@
+         lengths = {int(r['proof_bytes']) for r in rows}
+         assert len(lengths) == 1
+         proof_bytes = lengths.pop()
+-        if (directory/'stages.csv').exists():
+-            with (directory/'stages.csv').open() as file:
++        for filename, root_name in [('stages.csv', 'prove'), ('verifier-stages.csv', 'verify')]:
++            if not (directory/filename).exists():
++                continue
++            with (directory/filename).open() as file:
+                 stages = list(csv.DictReader(file))
+             for r in rows:
+                 sample = [s for s in stages if s['sample'] == r['sample']]
+-                root, = [s for s in sample if s['path'] == 'prove']
++                root, = [s for s in sample if s['path'] == root_name]
+                 assert sum(int(s['exclusive_bytes']) for s in sample) == proof_bytes
+                 assert int(root['inclusive_bytes']) == proof_bytes
+                 assert abs(sum(float(s['exclusive_ms']) for s in sample)
+--- /dev/null
++++ after/src/proof/weights.rs
+@@ -0,0 +1,449 @@
++//! Public weight descriptions for packed ERA claims. Verification never expands
++//! an oracle-sized equality table. Indices and coordinates are MSB first.
++//!
++//! Shifted equality products and cumulative weights use binary carry/borrow
++//! dynamic programs (constant state, logarithmic time). A tightly packed tensor
++//! with a non-power-of-two stride uses one such evaluation per touched tensor
++//! row: O(inner dimension * log width), NOT a polylogarithmic verifier claim.
++use super::{Scalar, fractional::prefix_weight, sumcheck};
++use crate::FieldElement;
++use p3_maybe_rayon::prelude::*;
++use std::sync::Arc;
++
++#[derive(Debug)]
++enum Kind {
++    Equality(Vec<Scalar>),
++    Tensor {
++        left: Vec<Scalar>,
++        right: Vec<Scalar>,
++        columns: usize,
++    },
++    Repeat {
++        point: Vec<Scalar>,
++        copies: usize,
++    },
++    Suffix(Vec<Scalar>),
++    SparseSuffix(Vec<(usize, Scalar)>),
++}
++
++/// A slice of a public vector, placed at `offset` in a zero-padded oracle row.
++/// Only the prover carries a dense backing array; splits share that array.
++#[derive(Debug, Clone)]
++pub(crate) struct Weights {
++    kind: Arc<Kind>,
++    dense: Option<Arc<Vec<Scalar>>>,
++    total: usize,
++    start: usize,
++    len: usize,
++    offset: usize,
++}
++
++impl Weights {
++    fn new(kind: Kind, len: usize, prover: bool) -> Self {
++        let dense = prover.then(|| {
++            Arc::new(match &kind {
++                Kind::Equality(p) => {
++                    let mut w = sumcheck::eq_weights(p);
++                    w.truncate(len);
++                    w
++                }
++                Kind::Tensor {
++                    left,
++                    right,
++                    columns,
++                } => {
++                    let a = sumcheck::eq_weights(left);
++                    let b = sumcheck::eq_weights(right);
++                    (0..len)
++                        .into_par_iter()
++                        .map(|i| a[i / columns] * b[i % columns])
++                        .collect()
++                }
++                Kind::Repeat { point, copies } => {
++                    let w = sumcheck::eq_weights(point);
++                    (0..len)
++                        .into_par_iter()
++                        .map(|i| (0..*copies).map(|j| w[i + j * len]).sum())
++                        .collect()
++                }
++                Kind::Suffix(p) => {
++                    let mut w = sumcheck::eq_weights(p);
++                    w.truncate(len);
++                    suffix_sum(&mut w);
++                    w
++                }
++                Kind::SparseSuffix(entries) => {
++                    let mut w = vec![Scalar::ZERO; len];
++                    for &(i, v) in entries {
++                        w[i] += v;
++                    }
++                    suffix_sum(&mut w);
++                    w
++                }
++            })
++        });
++        Self {
++            kind: Arc::new(kind),
++            dense,
++            total: len,
++            start: 0,
++            len,
++            offset: 0,
++        }
++    }
++
++    pub(crate) fn equality(point: &[Scalar], len: usize, prover: bool) -> Self {
++        assert!(len <= 1usize << point.len());
++        Self::new(Kind::Equality(point.to_vec()), len, prover)
++    }
++    pub(crate) fn tensor(
++        left: &[Scalar],
++        right: &[Scalar],
++        rows: usize,
++        columns: usize,
++        prover: bool,
++    ) -> Self {
++        assert!(rows <= 1usize << left.len() && columns <= 1usize << right.len());
++        // Power-of-two strides are just concatenated equality points, even
++        // when the number of physical rows is not a power of two.
++        if columns == 1usize << right.len() {
++            return Self::equality(&[left, right].concat(), rows * columns, prover);
++        }
++        Self::new(
++            Kind::Tensor {
++                left: left.to_vec(),
++                right: right.to_vec(),
++                columns,
++            },
++            rows * columns,
++            prover,
++        )
++    }
++    pub(crate) fn repeat(point: &[Scalar], period: usize, copies: usize, prover: bool) -> Self {
++        assert!(period * copies <= 1usize << point.len());
++        Self::new(
++            Kind::Repeat {
++                point: point.to_vec(),
++                copies,
++            },
++            period,
++            prover,
++        )
++    }
++    pub(crate) fn suffix(point: &[Scalar], len: usize, prover: bool) -> Self {
++        assert!(len <= 1usize << point.len());
++        Self::new(Kind::Suffix(point.to_vec()), len, prover)
++    }
++    pub(crate) fn sparse_suffix(entries: Vec<(usize, Scalar)>, len: usize, prover: bool) -> Self {
++        assert!(entries.iter().all(|&(i, _)| i < len));
++        Self::new(Kind::SparseSuffix(entries), len, prover)
++    }
++    pub(crate) const fn len(&self) -> usize {
++        self.len
++    }
++    pub(crate) fn slice(&self, start: usize, len: usize, offset: usize) -> Self {
++        assert!(start + len <= self.len);
++        Self {
++            start: self.start + start,
++            len,
++            offset,
++            ..self.clone()
++        }
++    }
++    pub(crate) fn discard_dense(&mut self) {
++        self.dense = None;
++    }
++    pub(crate) fn dense(&self) -> &[Scalar] {
++        &self.dense.as_ref().unwrap()[self.start..self.start + self.len]
++    }
++    pub(crate) fn dot(&self, a: &[Scalar], b: Option<&[Scalar]>) -> Scalar {
++        let a = &a[self.offset..self.offset + self.len];
++        if let Some(b) = b {
++            let b = &b[self.offset..self.offset + self.len];
++            a.par_iter()
++                .zip(b.par_iter())
++                .zip(self.dense().par_iter())
++                .map(|((&a, &b), &w)| a * b * w)
++                .sum()
++        } else {
++            sumcheck::dot(a, self.dense())
++        }
++    }
++    pub(crate) fn add_scaled(&self, target: &mut [Scalar], scale: Scalar) {
++        target[self.offset..self.offset + self.len]
++            .par_iter_mut()
++            .zip(self.dense().par_iter())
++            .for_each(|(v, &w)| {
++                if !w.is_zero() {
++                    *v += scale * w;
++                }
++            });
++    }
++    pub(crate) fn evaluate(&self, point: &[Scalar]) -> Scalar {
++        assert!(self.offset + self.len <= 1usize << point.len());
++        match self.kind.as_ref() {
++            Kind::Equality(p) => shifted_product(p, self.start, point, self.offset, self.len),
++            Kind::Repeat { point: p, copies } => (0..*copies)
++                .map(|i| {
++                    shifted_product(p, self.start + i * self.total, point, self.offset, self.len)
++                })
++                .sum(),
++            Kind::Suffix(p) => {
++                suffix_product(p, self.total, self.start, point, self.offset, self.len)
++            }
++            Kind::SparseSuffix(entries) => entries
++                .iter()
++                .map(|&(i, w)| {
++                    let end = (i + 1).saturating_sub(self.start).min(self.len);
++                    w * (prefix_weight(point, self.offset + end)
++                        - prefix_weight(point, self.offset))
++                })
++                .sum(),
++            Kind::Tensor {
++                left,
++                right,
++                columns,
++            } => {
++                let end = self.start + self.len;
++                (self.start / columns..end.div_ceil(*columns))
++                    .into_par_iter()
++                    .map(|row| {
++                        let lo = self.start.max(row * columns);
++                        let hi = end.min((row + 1) * columns);
++                        boolean_weight(left, row)
++                            * shifted_product(
++                                right,
++                                lo - row * columns,
++                                point,
++                                self.offset + lo - self.start,
++                                hi - lo,
++                            )
++                    })
++                    .sum()
++            }
++        }
++    }
++}
++
++/// Parallel block scans preserve the exact field sum, including duplicates.
++fn suffix_sum(values: &mut [Scalar]) {
++    const BLOCK: usize = 4096;
++    let totals: Vec<_> = values
++        .par_chunks_mut(BLOCK)
++        .map(|block| {
++            let mut sum = Scalar::ZERO;
++            for x in block.iter_mut().rev() {
++                sum += *x;
++                *x = sum;
++            }
++            sum
++        })
++        .collect();
++    let mut carry = vec![Scalar::ZERO; totals.len()];
++    let mut sum = Scalar::ZERO;
++    for (c, t) in carry.iter_mut().zip(&totals).rev() {
++        *c = sum;
++        sum += t;
++    }
++    values
++        .par_chunks_mut(BLOCK)
++        .zip(carry.par_iter())
++        .for_each(|(block, &c)| {
++            if !c.is_zero() {
++                for x in block {
++                    *x += c;
++                }
++            }
++        });
++}
++
++fn bit_weight(point: &[Scalar], bit: usize, value: usize) -> Scalar {
++    if bit >= point.len() {
++        if value == 0 {
++            Scalar::ONE
++        } else {
++            Scalar::ZERO
++        }
++    } else {
++        let r = point[point.len() - bit - 1];
++        if value == 0 { Scalar::ONE - r } else { r }
++    }
++}
++fn boolean_weight(point: &[Scalar], index: usize) -> Scalar {
++    (0..point.len())
++        .map(|b| bit_weight(point, b, (index >> b) & 1))
++        .product()
++}
++const fn bits(n: usize) -> usize {
++    (usize::BITS - n.leading_zeros()) as usize
++}
++
++/// Sum_{0 <= t < len} eq(p,a+t) eq(q,b+t). LSB-first addition with
++/// two carry bits and the borrow bit of t-len; no field divisions.
++fn shifted_product(p: &[Scalar], a: usize, q: &[Scalar], b: usize, len: usize) -> Scalar {
++    if len == 0 {
++        return Scalar::ZERO;
++    }
++    let m = p.len().max(q.len()).max(bits(a + len)).max(bits(b + len)) + 1;
++    let mut dp = [Scalar::ZERO; 8];
++    dp[0] = Scalar::ONE;
++    for bit in 0..m {
++        let mut next = [Scalar::ZERO; 8];
++        for (state, &v) in dp.iter().enumerate() {
++            if v.is_zero() {
++                continue;
++            }
++            for t in 0..2 {
++                let x = t + ((a >> bit) & 1) + (state & 1);
++                let y = t + ((b >> bit) & 1) + ((state >> 1) & 1);
++                let borrow = usize::from(t < ((len >> bit) & 1) + (state >> 2));
++                next[(x >> 1) | ((y >> 1) << 1) | (borrow << 2)] +=
++                    v * bit_weight(p, bit, x & 1) * bit_weight(q, bit, y & 1);
++            }
++        }
++        dp = next;
++    }
++    dp[4]
++}
++
++/// Sum_{t<len, a+t<=j<end} eq(p,j) eq(q,b+t). The five state bits
++/// are carries for a+t,b+t and borrows for t-len,j-end,j-(a+t).
++fn suffix_product(
++    p: &[Scalar],
++    end: usize,
++    a: usize,
++    q: &[Scalar],
++    b: usize,
++    len: usize,
++) -> Scalar {
++    let m = p
++        .len()
++        .max(q.len())
++        .max(bits(a + len))
++        .max(bits(b + len))
++        .max(bits(end))
++        + 1;
++    let mut dp = [Scalar::ZERO; 32];
++    dp[0] = Scalar::ONE;
++    for bit in 0..m {
++        let mut next = [Scalar::ZERO; 32];
++        for (state, &v) in dp.iter().enumerate() {
++            if v.is_zero() {
++                continue;
++            }
++            for t in 0..2 {
++                let x = t + ((a >> bit) & 1) + (state & 1);
++                let y = t + ((b >> bit) & 1) + ((state >> 1) & 1);
++                let bt = usize::from(t < ((len >> bit) & 1) + ((state >> 2) & 1));
++                for j in 0..2 {
++                    let bj = usize::from(j < ((end >> bit) & 1) + ((state >> 3) & 1));
++                    let bx = usize::from(j < (x & 1) + ((state >> 4) & 1));
++                    let s = (x >> 1) | ((y >> 1) << 1) | (bt << 2) | (bj << 3) | (bx << 4);
++                    next[s] += v * bit_weight(p, bit, j) * bit_weight(q, bit, y & 1);
++                }
++            }
++        }
++        dp = next;
++    }
++    dp[12]
++}
++
++/// First moment of the truncated Boolean equality distribution, O(log n).
++pub(crate) fn prefix_index_moment(point: &[Scalar], end: usize) -> Scalar {
++    assert!(end <= 1usize << point.len());
++    let mut suffix_mean = vec![Scalar::ZERO; point.len() + 1];
++    for i in (0..point.len()).rev() {
++        suffix_mean[i] =
++            suffix_mean[i + 1] + point[i] * Scalar::from(1u64 << (point.len() - i - 1));
++    }
++    if end == 1usize << point.len() {
++        return suffix_mean[0];
++    }
++    let mut prefix = Scalar::ONE;
++    let mut integer = 0usize;
++    let mut sum = Scalar::ZERO;
++    for (i, &r) in point.iter().enumerate() {
++        let place = 1usize << (point.len() - i - 1);
++        if end & place != 0 {
++            sum += prefix * (Scalar::ONE - r) * (Scalar::from(integer as u64) + suffix_mean[i + 1]);
++            prefix *= r;
++            integer += place;
++        } else {
++            prefix *= Scalar::ONE - r;
++        }
++    }
++    sum
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    fn point(n: usize) -> Vec<Scalar> {
++        (0..n).map(|i| Scalar::from((i * 7 + 3) as u64)).collect()
++    }
++    fn check(w: &Weights, q: &[Scalar]) {
++        let dense = w.dense();
++        let eq = sumcheck::eq_weights(q);
++        assert_eq!(
++            w.evaluate(q),
++            sumcheck::dot(dense, &eq[w.offset..w.offset + w.len])
++        );
++    }
++    #[test]
++    fn compact_weights_match_dense_for_packing_truncation_and_boolean_challenges() {
++        for p in [point(5), vec![Scalar::ZERO; 5], vec![Scalar::ONE; 5]] {
++            for end in [1, 7, 16, 27, 32] {
++                let eq = sumcheck::eq_weights(&p);
++                assert_eq!(
++                    prefix_index_moment(&p, end),
++                    (0..end).map(|i| Scalar::from(i as u64) * eq[i]).sum()
++                );
++                for w in [
++                    Weights::equality(&p, end, true),
++                    Weights::suffix(&p, end, true),
++                    Weights::sparse_suffix(
++                        vec![
++                            (0, Scalar::from(2)),
++                            (end - 1, Scalar::from(3)),
++                            (end - 1, Scalar::from(5)),
++                        ],
++                        end,
++                        true,
++                    ),
++                ] {
++                    for start in 0..end {
++                        for len in 1..=end - start {
++                            for offset in [0, 1, 32 - len] {
++                                check(&w.slice(start, len, offset), &point(6));
++                            }
++                        }
++                    }
++                }
++            }
++        }
++        for cols in [3, 5, 8] {
++            let w = Weights::tensor(&point(3), &point(3), 5, cols, true);
++            for start in 0..w.len() {
++                check(&w.slice(start, (w.len() - start).min(11), 3), &point(4));
++            }
++        }
++        for period in [1, 3, 7, 8] {
++            let w = Weights::repeat(&point(5), period, 4, true);
++            for start in 0..period {
++                check(&w.slice(start, period - start, 1), &point(4));
++            }
++        }
++    }
++    #[test]
++    fn parallel_suffix_scan_matches_serial() {
++        let mut v: Vec<_> = (0..10003).map(|i| Scalar::from(i * i + 9)).collect();
++        let mut expected = v.clone();
++        let mut sum = Scalar::ZERO;
++        for x in expected.iter_mut().rev() {
++            sum += *x;
++            *x = sum;
++        }
++        suffix_sum(&mut v);
++        assert_eq!(v, expected);
++    }
++}

@@ -1,0 +1,2702 @@
+diff --git a/.gitignore b/.gitignore
+index 507c6dc..c0ece0b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,5 @@
+ /target
+ /comparisons/*/target
+ /results/
++__pycache__/
++*.py[cod]
+diff --git a/README.md b/README.md
+index 60c1a04..70a40e1 100644
+--- a/README.md
++++ b/README.md
+@@ -1,279 +1,201 @@
+ # agnostir: interleaved IOPP experiment
+ 
+-This experiment compares **Brakedown, Expand-Accumulate (EA), BaseFold, ERA,
+-Bolt-min, and Bolt-max as encoders inside the same interleaved evaluation
+-argument**. All rows use the secp256k1 scalar field, BLAKE3-256, Fiat–Shamir,
+-and the same proof serializer and verifier. Proof sizes are measured from the
+-actual serialized proofs, and every timed proof is verified.
++This experiment compares **ERA, BaseFold, Brakedown, and Expand-Accumulate (EA)** as encoders inside
++the same interleaved evaluation argument. All four use the **secp256k1 scalar
++field**, BLAKE3-256, Fiat–Shamir, and the same serializer and verifier. Proof
++sizes are actual serialized lengths; every timed proof is verified.
+ 
+-The results below replace the historical interactive timings and analytical
+-proof-size estimates. **The query counts are conditional on distance and setup
+-assumptions; this is not yet a certified equal-security, 100-bit comparison.**
+-In particular, adapted Bolt-max has an unproved prime-field distance assumption.
++The field is the prime field of order
+ 
+-## Experiment setup
++```text
++0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
++```
++
++Elements have canonical 32-byte encodings. This is the scalar field used by the
++earlier experiment. The main comparison excludes both Bolt variants.
++
++Query counts use `ceil(-300 / log2(1 - delta))`. **This is a conditional
++100-bit query model, not a certified end-to-end 100-bit Fiat–Shamir security
++claim.** The current presets apply the [distance-audit corrections](docs/distance-audit.md).
++See [current calibration details](docs/prime-experiment.md) for the setup
++budgets and remaining numerical qualifications.
+ 
+-The prover commits to a message and proves its multilinear evaluation at a
+-public point. For the reported instance:
++## Experiment setup
+ 
+ | Setting | Value |
+ | --- | --- |
+ | Message | `2^22 = 4,194,304` field elements |
+-| Interleaving | `eta = 6`: 64 contiguous rows |
+-| Message per row | `2^16 = 65,536` elements |
+-| Field | secp256k1 **scalar** field; canonical 32-byte elements |
+-| Commitment and transcript hash | BLAKE3, 32-byte digests, separate domains |
++| Interleaving | `eta = 6`: 64 contiguous rows of 65,536 elements |
++| Field | secp256k1 scalar field, via `ark_secp256k1::Fr` |
++| Commitment and transcript | BLAKE3, 32-byte digests, separate domains |
++| Protocol | `interleaved-fs-v1`, setup recipe v3 |
+ | Benchmark seed | `2025` |
+-| Query model | `q = ceil(-300 / log2(1 - delta))` |
+-| Local workers | 8 Rayon workers |
+-| Sampling | Median of 3 runs after 1 warmup, for each stage |
+-
+-The experiment has three measured stages:
+-
+-1. **Commit:** encode each row, hash columns, and build the retained Merkle tree.
+-2. **Prove:** compute the claimed evaluation, run an initial sumcheck to obtain
+-   a transcript-derived random evaluation point, fold the message rows, and
+-   serialize the folded message and Merkle multiproof for sampled columns.
+-3. **Verify:** parse the proof, replay Fiat–Shamir, check the sumcheck, encode
+-   the folded message, authenticate the sampled columns, and check consistency.
+-
+-The initial sumcheck is included so the row fold is randomized even when the
+-public evaluation point is Boolean. The transcript binds the statement,
+-commitment, setup identifier, dimensions, query count, and protocol version.
+-The verifier rejects malformed field elements, truncated proofs, and trailing
+-bytes. Column queries are sampled uniformly with replacement using rejection
+-sampling. Repeated query columns and shared Merkle siblings are deduplicated
+-by the serializer.
++| Local sampling | 8 Rayon workers; 3 samples after 1 warmup |
++
++The prover commits to the row encodings and proves the message's multilinear
++evaluation at a public point. An initial sumcheck produces a transcript-derived
++random row fold, including when the public point is Boolean. The prover sends
++the folded message and a Merkle multiproof for sampled columns. The verifier
++replays the transcript, checks the sumcheck, re-encodes the folded message, and
++authenticates and checks the sampled columns.
++
++The transcript binds the statement, root, setup ID, dimensions, query count,
++and version. Queries are uniform with replacement; repeated columns and shared
++authentication siblings are deduplicated on the wire. Noncanonical field
++encodings, invalid headers, truncation, inconsistent proofs, and trailing
++bytes are rejected.
+ 
+ ### Encoder presets
+ 
+-These are the settings at row message length `2^16`. Encoded row lengths are
+-exact; target inverse rates can be affected by integer rounding.
++These presets are calibrated only for row message length `2^16`; the CLI
++requires `message-log - eta = 16`.
+ 
+-| CLI name | Encoder parameters | Encoded row length | Assumed full-code distance | Queries |
++| CLI name | Parameters | Encoded row length | Distance used | Queries |
+ | --- | --- | ---: | ---: | ---: |
+-| `brakedown` | Target inverse rate 2; `alpha=0.3`, `cn=10`, `dn=20` | 131,072 | 0.1 | 1,974 |
+-| `ea` | Inverse rate 2; `prob_multiplier=18` | 131,072 | 0.1 | 1,974 |
+-| `basefold` | Inverse rate 2 (`log_rate=1`) | 131,072 | 0.213 | 869 |
+-| `era` | Brakedown base: target inverse rate 1.05, `alpha=0.04`, `cn=5`, `dn=42`; repetition 4 | 275,248 | 0.228 | 804 |
+-| `bolt-min` | Degree-16 weighted sketch; compression 8; rate-1/2 BaseFold syndrome code | 81,920 | 0.0448 | 4,537 |
+-| `bolt-max` | Degree-8 all-one sketch; compression 8; rate-1/2 BaseFold syndrome code | 81,920 | 0.0104 (additional assumption) | 19,891 |
+-
+-ERA uses two independently sampled nonzero multiplier families and two
+-permutations. Both Bolt variants encode `x || BaseFold(Hx)`, with 8,192 syndrome
+-symbols and 16,384 parity symbols per row. They adapt Bolt's sketched-code
+-construction to this field: BaseFold replaces the binary-field additive
+-Reed–Solomon syndrome code. Bolt-max uses ordinary field addition, not XOR.
+-These rows measure the adapted encoders within our interleaved argument.
+-
+-For Bolt-min, the conditional outer distance 0.224 is divided by 5 because
+-parity occupies one fifth of the complete word. For Bolt-max, the assumed
+-kernel distance 0.013 is divided by the inverse rate 1.25, giving 0.0104.
+-The binary LDPC analysis does not establish that prime-field kernel bound.
+-See the [Bolt-min analysis](docs/bolt-adaptation.md) and
+-[Bolt-max assumptions](docs/bolt-max-adaptation.md) for the derivations and limits.
+-
+-The deterministic seed reproduces code setup, message, and public point.
+-Fiat–Shamir challenges come from the transcript, not the seeded RNG. A fixed
+-benchmark seed does not certify the random-setup distribution or its failure
+-probability. The inherited code distances, their applicability to the corrected
+-encoders, and the composed protocol security still require review.
++| `era` | Brakedown base `(alpha, inverse_rate, cn, dn)=(0.04,1.05,5,42)`; repetition 4 | 275,248 | 0.22037 | 836 |
++| `basefold` | Symmetric random foldable code; inverse rate 2 | 131,072 | 0.20106 | 927 |
++| `brakedown` | Inverse rate 2; `alpha=0.3`, `cn=14`, `dn=28` | 131,072 | 0.1 | 1,974 |
++| `ea` | Inverse rate 2; `prob_multiplier=18` | 131,072 | 0.1 (inherited assumption) | 1,974 |
++
++BaseFold's distance allocates a 102-bit total setup budget across 16 random
++levels, giving per-level `lambda=106`. Brakedown's parameters pass Haböck's
++numerical sufficient bound at every recursive level with the same total
++setup budget. ERA uses base distance 0.0009 and a 102-bit CalcDist parameter;
++its numerical distance candidate is rounded down to 0.22037. EA retains the
++earlier distance assumption 0.1 and multiplier 18; no new finite-length EA
++setup certificate is supplied.
++
++The [calibration report](distance-analysis/current-results.json) records these
++calculations. Setup and inputs retain the earlier deterministic `SmallRng`
++benchmark streams; these are reproducibility devices, not cryptographic setup
++randomness or fixed-instance distance certificates. Fiat–Shamir challenges
++come from the BLAKE3 transcript.
+ 
+ ## Measured results
+ 
+-Measured on **14 October 2026**, on an **Apple M2 with 8 cores and 16 GiB RAM**,
+-macOS arm64, Rust/Cargo **1.92.0**, release profile, **no explicit CPU flags**,
+-and 8 Rayon workers. All rows use the setup above. Times are stage medians in
+-milliseconds; proof sizes are exact bytes, excluding the public 32-byte root.
++Measured on **14 October 2026** (local time), on an **Apple M2, 8 cores
++(4 performance + 4 efficiency), 16 GiB RAM**, macOS arm64, Rust/Cargo 1.92.0,
++release profile, no explicit CPU flags, and 8 Rayon workers. Entries are
++stage medians of three runs after one warmup. Proofs exclude the public
++32-byte initial root.
+ 
+-| Encoder | Commit (ms) | Prove (ms) | Verify (ms) | Serialized proof (bytes) | Queries |
++| Encoder | Commit (ms) | Prove (ms) | Verify (ms) | Proof (bytes) | Queries |
+ | --- | ---: | ---: | ---: | ---: | ---: |
+-| Brakedown | 813.373 | 690.072 | 96.272 | 6,429,096 | 1,974 |
+-| EA | 7,473.722 | 690.544 | 593.401 | 6,441,704 | 1,974 |
+-| BaseFold | 526.392 | 677.768 | 32.901 | 4,046,664 | 869 |
+-| ERA | 677.600 | 689.640 | 50.081 | 3,936,296 | 804 |
+-| Bolt-min (adapted) | 695.659 | 902.238 | 85.948 | 11,621,288 | 4,537 |
+-| Bolt-max (adapted; assumed distance) | 182.287 | 927.059 | 255.222 | 39,119,368 | 19,891 |
+-
+-The Bolt rows were added in separate runs on the same host with the same
+-field, hash, dimensions, seed, and timing boundaries. These small local samples
+-are not a controlled AWS scaling study. For example, Bolt-min commitment
+-samples ranged from 630.132 to 891.950 ms. No AWS measurements are reported here.
+-
+-Raw CSVs, logs, environment metadata, source snapshots, and checksums are saved in:
+-
+-- [Original four encoder runs](artifact_results/2026-10-14/) (`interleaved-*.csv`).
+-- [Bolt-min run](artifact_results/2026-10-14-bolt-adapted/), including its saved proof.
+-- [Bolt-max run](artifact_results/2026-10-14-bolt-max/), including its saved proof.
+-
+-Use the CSVs for unrounded timings and the source archives to recover the
+-measured implementation, including changes not captured by a Git commit.
+-Historical root-level reports and `bench_logs/` are not these serialized results.
+-The conjectured-ERA variant is available through `--code conjectured-era`, but
+-has no proven distance guarantee and is not included in this results table.
++| ERA | 701.339 | 696.762 | 52.406 | 4,010,824 | 836 |
++| BaseFold | 533.394 | 689.031 | 35.195 | 4,177,416 | 927 |
++| Brakedown | 1,136.395 | 700.787 | 120.087 | 6,438,728 | 1,974 |
++
++All nine measured proofs verified. ERA has the smallest proof in this
++comparison; BaseFold has the lowest commitment and verification times.
++These small local samples are not an AWS scaling study.
++
++The [run directory](artifact_results/2026-10-14-prime-audited/) contains
++[unrounded summaries](artifact_results/2026-10-14-prime-audited/summary.json),
++raw CSVs, proofs, logs, metadata, calibration, source snapshot, and checksums.
++The source archive recovers the measured implementation, including
++uncommitted files. Older measurements used different graph/distance
++presets and should not be mixed with these results.
+ 
+ ### Timing and proof-size definitions
+ 
+-| CSV output | What is measured |
++| CSV field | What is measured |
+ | --- | --- |
+-| `setup_ms` | Code generation, including graphs, permutations, and coefficients; measured once per process. |
+-| `commit_ms` | Row encoding, column hashing, and the complete retained Merkle tree. |
+-| `prove_ms` | Claimed evaluation, sumcheck, row folding, Fiat–Shamir, multiproof construction, and serialization. |
+-| `verify_ms` | Parsing, Fiat–Shamir replay, sumcheck checks, folded-message encoding, and all column/authentication checks. |
+-| `proof_bytes` | Exact emitted byte-vector length: header, claimed value, sumcheck messages, folded message, and authentication data. |
+-| `commitment_bytes` | Public initial Merkle root: 32 bytes, reported separately. |
+-
+-Setup and message/point generation are outside commit/prove/verify. The public
+-setup, evaluation point, and initial root are outside the proof. The claimed
+-value is transmitted in the proof and checked against the public claim. Query
+-indices are derived from the transcript and need no wire bytes. Divide
+-`proof_bytes` by 1024 for KiB. Add commitment and proving times when comparing
+-total online prover work; a sum of stage medians is not a measured total median.
+-Warmups are omitted from CSV. Verification failure aborts the run.
+-
+-## Build and check
+-
+-Run all commands from the repository root. Use Rust/Cargo **1.92.0** to match
+-the measurements (edition 2024; crate minimum 1.91). Keep `Cargo.lock` and use
+-`--locked`: several Plonky3 dependencies are pinned to a Git revision. The first
+-build needs network access to fetch dependencies; cached builds can add
+-`--offline`. Python 3 is needed for the summary script; it uses only the standard
+-library. The commands below assume Bash.
++| `setup_ms` | Graphs, coefficients, permutations, and code tables; once per process. |
++| `commit_ms` | All row encodings, column hashing, and the retained Merkle tree. |
++| `prove_ms` | Claimed evaluation, initial sumcheck, row folding, Fiat–Shamir, multiproof construction, and serialization. |
++| `verify_ms` | Parsing, Fiat–Shamir, sumcheck checks, folded-message encoding, and all authentication/consistency checks. |
++| `proof_bytes` | Exact byte-vector length, including header, claim, sumcheck messages, folded message, and authentication data. |
++| `commitment_bytes` | Public initial root: 32 bytes, reported separately. |
++
++Setup and input generation are outside the online timings. The public point,
++setup, and initial root are outside the proof; the claimed value is included.
++Add commit and prove times to compare total online prover work; a sum of stage
++medians is not a measured total median. Samples repeat the same setup and
++input. Warmups are omitted from CSV; verification failure aborts the run.
++
++## Build, validate, and reproduce
++
++Use Rust/Cargo **1.92.0** to match the local run (crate minimum 1.91), retain
++`Cargo.lock`, and run from the repository root. Python 3 with the pinned
++NumPy/SciPy dependencies is required for distance calibration:
+ 
+ ```bash
++python3 -m venv /tmp/agnostir-analysis
++source /tmp/agnostir-analysis/bin/activate
++python3 -m pip install -r requirements-analysis.txt
+ cargo build --locked --release --bin interleaved_iopp
+ cargo test --locked --lib
+ cargo test --locked --lib --no-default-features
++python3 -B -m unittest discover -s distance-analysis -v
++python3 -B scripts/calibrate_interleaved.py
+ cargo fmt --all --check
+ cargo clippy --locked --all-targets
+ ```
+ 
+-Default features `parallel` and `cli` are required by the experiment binary.
+-The latest validation passed 189 default-feature and 188 serial library tests.
+-Existing repository Clippy warnings remain. Encoder checks include linearity,
+-systematic coordinates and dense-matrix equivalence; protocol checks include
+-honest proofs, tampering, wrong public claims, and thread consistency.
++The rerun passed 189 default-feature and 188 serial library tests. Checks
++cover encoder linearity and dense-matrix equivalence, RS interpolation,
++honest proofs, wrong claims, tampering, and thread consistency. The distance
++suite contains 16 tests. Existing repository Clippy warnings remain.
+ 
+-## Reproduce the interleaved comparison
+-
+-### Quick functional check
++For a quick functional check (the query override is not security calibrated):
+ 
+ ```bash
+-target/release/interleaved_iopp \
+-  --code era --message-log 14 --eta 2 --seed 2025 \
++target/release/interleaved_iopp --code era --message-log 18 --eta 2 \
+   --queries 32 --threads 8 --samples 1 --warmups 0 --csv
+ ```
+ 
+-Expect one CSV row with `accepted=true`. This small query override checks
+-execution only and has no security calibration. Substitute any of the six code
+-names above to check another encoder. `--help` lists all options.
+-
+-### Full table, raw CSVs, and saved proofs
+-
+-Leave `RUSTFLAGS` unset to match the local build. The following runs only the
+-six interleaved encoder configurations, with 8 workers and 3 samples by default.
+-It creates a fresh timestamped directory and saves the last proof for each code.
++For the full four-row comparison, with a fresh output directory:
+ 
+ ```bash
+-set -euo pipefail
+-export RAYON_NUM_THREADS="${RAYON_NUM_THREADS:-8}"
+-export AGNOSTIR_CHUNK_LEN="${AGNOSTIR_CHUNK_LEN:-8192}"
+-samples="${SAMPLES:-3}"
+-run_dir="results/interleaved-$(date -u +%Y%m%dT%H%M%SZ)"
+-mkdir -p results
+-mkdir "$run_dir"
+-
+-{
+-  date -u
+-  git rev-parse HEAD
+-  git status --short
+-  rustc -vV
+-  cargo -V
+-  uname -a
+-  if command -v lscpu >/dev/null; then lscpu; fi
+-  if command -v sw_vers >/dev/null; then sw_vers; fi
+-  if [[ "$(uname -s)" == Darwin ]]; then
+-    sysctl machdep.cpu.brand_string hw.physicalcpu hw.logicalcpu hw.memsize || true
+-  fi
+-  printf 'threads=%s\nsamples=%s\nwarmups=1\nseed=2025\nRUSTFLAGS=%s\nchunk_len=%s\n' \
+-    "$RAYON_NUM_THREADS" "$samples" "${RUSTFLAGS-}" "$AGNOSTIR_CHUNK_LEN"
+-} > "$run_dir/metadata.txt" 2>&1
+-
+-git diff --binary HEAD > "$run_dir/source.patch"
+-tar --exclude='__pycache__' --exclude='*.pyc' --exclude='.DS_Store' \
+-  -czf "$run_dir/source.tar.gz" \
+-  Cargo.toml Cargo.lock src benches scripts distance-analysis docs README.md AI_DISCLOSURE.md
+-
+-cargo build --locked --release --bin interleaved_iopp > "$run_dir/build.log" 2>&1
+-for code in brakedown ea basefold era bolt-min bolt-max; do
+-  target/release/interleaved_iopp \
+-    --code "$code" --message-log 22 --eta 6 --seed 2025 \
+-    --threads "$RAYON_NUM_THREADS" --samples "$samples" --warmups 1 \
+-    --proof-out "$run_dir/$code.proof" --csv \
+-    > "$run_dir/interleaved-$code.csv" 2> "$run_dir/interleaved-$code.log"
+-done
+-python3 scripts/summarize_artifact.py "$run_dir"/interleaved-*.csv \
+-  > "$run_dir/summary.json"
+-printf 'Results: %s\n' "$run_dir"
++RAYON_NUM_THREADS=8 SAMPLES=3 \
++  bash scripts/reproduce_artifact.sh results/interleaved-local full
+ ```
+ 
+-`summary.json` reports each stage's median, minimum, and maximum, along with
+-proof bytes and acceptance. The summary script rejects failed verification or
+-inconsistent proof lengths within a configuration. `.log` files record the
+-assumed distance and security qualifications. `--proof-out` refuses to overwrite
+-an existing file. Samples repeat the same deterministic instance, rather than
+-sampling new code setups. For the same source, seed, and parameters, proof bytes
+-are deterministic; timing will vary with the machine and system load.
++This builds, runs checks and calibration, benchmarks the four encoders at
++`2^22` elements / `eta=6`, verifies every proof, and saves the last proof per
++encoder. The directory includes raw CSVs, logs, environment metadata,
++`summary.json`, calibration output, a source snapshot containing uncommitted
++and untracked files, and `SHA256SUMS`. A run refuses to reuse its output
++directory. `--proof-out` also refuses to overwrite an existing file.
+ 
+ ### Rerun on a 32-core AWS machine
+ 
+-Before executing the full-table block above on the AWS host, set:
+-
+ ```bash
+-export RUSTFLAGS='-C target-cpu=native'
+-export RAYON_NUM_THREADS=32
+-export SAMPLES=5
++RUSTFLAGS='-C target-cpu=native' RAYON_NUM_THREADS=32 SAMPLES=5 \
++  bash scripts/reproduce_artifact.sh results/interleaved-aws32 full
+ ```
+ 
+-The block rebuilds on that host and applies the same flags to all six rows.
+-Record the instance type and CPU topology with the results. Use `lscpu` to
+-check physical cores versus logical CPUs/vCPUs: 32 Rayon workers do not
+-necessarily mean 32 physical cores. The local run fit on a 16 GiB machine;
+-that is not a peak-memory bound or a measured AWS requirement.
++Record the AWS instance type with the output. Check `lscpu`: 32 vCPUs need not
++be 32 physical cores. Compare 1, 8, 16, and 32 workers in fresh directories,
++keeping source, seed, flags, and parameters fixed. No AWS timing is reported
++here.
+ 
+-Repeat into fresh directories with 1, 8, 16, and 32 workers to measure scaling.
+-Keep source, seed, dimensions, query counts, CPU flags, and chunk length fixed,
+-and avoid competing heavy workloads. Encoding parallelizes across message
+-rows and uses sequential inner encoders when there are enough rows to occupy
+-the workers. Column hashing, Merkle levels, and sufficiently large arithmetic
+-operations also use Rayon; small operations use sequential cutoffs.
+-`AGNOSTIR_CHUNK_LEN` controls ERA's parallel prefix scans and defaults to 8192.
++Row encoding, column hashing, Merkle levels, sumcheck, and large vector
++operations use Rayon. Inner encoders run sequentially when there are enough
++outer rows to occupy the workers. `AGNOSTIR_CHUNK_LEN` controls ERA's
++prefix-scan chunks and defaults to 8192. RS base setup uses batch inversion
++to avoid an inversion for every interpolation coefficient.
+ 
+-Full-size Bolt-min and Bolt-max proofs matched between 8 and 32 workers;
+-Bolt-max also matched with one worker. The 32-worker runs used the local
+-8-core host. Those are functional checks, not evidence of performance on
+-32 physical cores.
++All three encoders produced byte-identical proofs with 1 and 32 workers at
++`2^18` elements, `eta=2`, and 32 queries; see the
++[functional check record](artifact_results/2026-10-14-prime-audited/thread-checks.json).
++These are functional checks on the local 8-core host, not 32-core performance
++measurements.
+ 
+-## Implementation map and further notes
++## Implementation and historical notes
+ 
+-| File | Role in this experiment |
++| File | Role |
+ | --- | --- |
+-| [`src/bin/interleaved_iopp.rs`](src/bin/interleaved_iopp.rs) | CLI, timing boundaries, verification, CSV and proof output. |
+-| [`src/iopp_experiment.rs`](src/iopp_experiment.rs) | Shared encoder presets, deterministic setup, distance assumptions, and query counts. |
+-| [`src/interleaved_iopp/fs.rs`](src/interleaved_iopp/fs.rs) | Fiat–Shamir evaluation argument and initial randomizing sumcheck. |
+-| [`src/proof.rs`](src/proof.rs) and [`src/proof/`](src/proof/) | Canonical transport, transcript, sumcheck, and Merkle multiproofs. |
+-| [`src/commit/codes/`](src/commit/codes/) | Encoder implementations, including both Bolt adaptations. |
+-| [`benches/iopp_bench.rs`](benches/iopp_bench.rs) | Optional Criterion measurements of the same serialized protocol. |
+-| [`scripts/summarize_artifact.py`](scripts/summarize_artifact.py) | CSV validation and stage summaries. |
+-| [`scripts/calibrate_bolt.py`](scripts/calibrate_bolt.py) | Bolt-min ideal-ensemble calculation and separate Bolt-max assumptions. |
+-
+-The historical interleaved experiment needed corrections to Brakedown's graph
+-orientation and linearity, randomization at arbitrary evaluation points,
+-Fiat–Shamir binding, hash domain separation, and actual proof transport.
+-The [audit](docs/artifact-audit.md#findings-and-implemented-repairs) records the
+-findings; the successful implementation tests do not establish the remaining
+-code-distance or composed soundness claims.
+-
+-Substantial code and documentation were produced with Codex assistance; see
+-[AI_DISCLOSURE.md](AI_DISCLOSURE.md). The repository's archival license has not
+-yet been selected. No public artifact submission or AWS run is claimed here.
++| [`src/iopp_experiment.rs`](src/iopp_experiment.rs) | Three shared presets, setup IDs, and query counts. |
++| [`src/commit/codes/`](src/commit/codes/) | Encoder implementations. |
++| [`src/interleaved_iopp/fs.rs`](src/interleaved_iopp/fs.rs) | Serialized Fiat–Shamir argument. |
++| [`src/bin/interleaved_iopp.rs`](src/bin/interleaved_iopp.rs) | Timing boundaries and proof output. |
++| [`scripts/calibrate_interleaved.py`](scripts/calibrate_interleaved.py) | Current distance/setup recalibration. |
++
++The [protocol audit](docs/artifact-audit.md) records earlier repairs to graph
++orientation, linearity, transcript binding, randomization, and proof transport.
++Older six-encoder tables and Bolt reports are historical and do not describe
++the current comparison. Build output stays in the ignored `target/` directory.
++
++Substantial implementation and documentation used Codex assistance; see
++[AI_DISCLOSURE.md](AI_DISCLOSURE.md). No public artifact submission is claimed.
+diff --git a/benches/iopp_bench.rs b/benches/iopp_bench.rs
+index a4f897b..85396f2 100644
+--- a/benches/iopp_bench.rs
++++ b/benches/iopp_bench.rs
+@@ -18,32 +18,13 @@ fn env_number<T: std::str::FromStr>(name: &str, default: T) -> T {
+     })
+ }
+ 
+-fn env_bool(name: &str) -> bool {
+-    env::var(name).is_ok_and(|raw| match raw.trim().to_ascii_lowercase().as_str() {
+-        "1" | "true" | "yes" | "y" | "on" => true,
+-        "0" | "false" | "no" | "n" | "off" => false,
+-        _ => panic!("invalid boolean {name}='{raw}'"),
+-    })
+-}
+-
+ fn bench_iopp(c: &mut Criterion) {
+     let config = ExperimentConfig {
+         message_log: env_number("IOPP_MESSAGE_LOG", DEFAULT_MESSAGE_LOG),
+         eta: env_number("IOPP_ETA", DEFAULT_ETA),
+         seed: env_number("IOPP_SEED", DEFAULT_SEED),
+     };
+-    let only_conjectured = env_bool("IOPP_ONLY_CONJECTURED_ERA");
+-    let mut kinds = if only_conjectured {
+-        Vec::new()
+-    } else {
+-        CodeKind::STANDARD.to_vec()
+-    };
+-    if env_bool("IOPP_SKIP_EA") {
+-        kinds.retain(|kind| *kind != CodeKind::Ea);
+-    }
+-    if only_conjectured || env_bool("IOPP_INCLUDE_CONJECTURED_ERA") {
+-        kinds.push(CodeKind::ConjecturedEra);
+-    }
++    let kinds = CodeKind::STANDARD.to_vec();
+     for &kind in &kinds {
+         config
+             .validate(kind)
+@@ -68,11 +49,6 @@ fn bench_iopp(c: &mut Criterion) {
+             .expect("validated code configuration");
+         let delta = kind.assumed_distance(config.message_log - config.eta);
+         let queries = num_queries_from_delta(delta);
+-        if kind == CodeKind::BoltMax {
+-            eprintln!(
+-                "bolt-max adaptation assumes prime-field kernel distance 0.013; setup failure is not certified"
+-            );
+-        }
+         let encode_segments = |input: &[ark_secp256k1::Fr]| -> Vec<_> {
+             input
+                 .par_chunks(code.message_size())
+diff --git a/distance-analysis/__pycache__/basefold.cpython-314.pyc b/distance-analysis/__pycache__/basefold.cpython-314.pyc
+deleted file mode 100644
+index 6df54ffc249f0a435e8818e2ecf44b4215b2b2a5..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 2485
+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
+NIk7KrbzhLl{{R|_M&SSe
+
+diff --git a/distance-analysis/__pycache__/era.cpython-314.pyc b/distance-analysis/__pycache__/era.cpython-314.pyc
+deleted file mode 100644
+index 42b3577107841ed8954b1679f3fea6250e262c7c..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+HcmV?d00001
+
+literal 17567
+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
+
+diff --git a/distance-analysis/basefold.py b/distance-analysis/basefold.py
+index d2e836c..03d2737 100644
+--- a/distance-analysis/basefold.py
++++ b/distance-analysis/basefold.py
+@@ -1,84 +1,69 @@
++"""BaseFold RFC distance bound, CRYPTO 2024 §1.3 and Theorem 2.
++
++q is log2(|F|), c is inverse rate, d is the number of doublings, k0=1.
++The theorem's lambda is PER LEVEL: setup failure is at most d*2**(-lambda).
++This is the symmetric RFC construction (t, -t), requiring odd characteristic;
++field size alone does not make this bound applicable to a binary variant.
++These are ideal-ensemble bounds, not certificates for a fixed seeded code.
++"""
++
+ import argparse
+ import math
+ 
++
+ def compute_formula(q, c, d, lam):
+-    """
+-    Computes the formula given:
+-    q: value of log(|F|)
+-    c: constant multiplier for n sequence
+-    d: upper bound of summation
+-    lam: lambda value
+-    """
+-    
+-    # Define the common denominator term: log(|F|) - 1.001
+-    # Since q is passed as log(|F|), we use q directly.
+-    denom_log_F = q - 1.001
+-    
+-    if denom_log_F == 0:
+-        raise ValueError("q (log|F|) cannot be 1.001 to avoid division by zero.")
++    """Return the published §1.3 bound with per-level failure 2**(-lam).
+ 
+-    # Let R be the ratio: log(|F|) / (log(|F|) - 1.001)
+-    R = q / denom_log_F
++    The recurrence is t_i = 2*t_(i-1) +
++      (2*log2(n_(i-1)) + lam + 2.002*t_(i-1) + 0.6*n_i)/(q-1.001).
++    Normalizing by n_i gives exactly the closed form formerly used here.
++    The printed Theorem 2 has an indexing/logarithm typo; §1.3 and the
++    n_(d-1)^2 factor in the full proof (Eq. 26) give this recurrence.
++    """
++    if not math.isfinite(q) or q < 10:
++        raise ValueError("Theorem 2 requires log2(|F|) >= 10")
++    if not math.isfinite(c) or c < 1 or not float(c).is_integer():
++        raise ValueError("with k0=1, inverse rate c must be a positive integer")
++    if not isinstance(d, int) or d < 0:
++        raise ValueError("d must be a nonnegative integer")
++    if not math.isfinite(lam) or lam <= 0:
++        raise ValueError("per-level lambda must be positive and finite")
++    zero_fraction = 1 / c
++    n = c
++    for _ in range(d):
++        zero_fraction = (q * zero_fraction + 0.6 + (2 * math.log2(n) + lam) / (2 * n)) / (q - 1.001)
++        n *= 2
++    return max(0.0, 1 - zero_fraction)
+ 
+-    # --- Term 1 ---
+-    # (1/c) * R^d
+-    term1 = (1.0 / c) * (R ** d)
+ 
+-    # --- Term 2 (Summation) ---
+-    sum_val = 0.0
+-    
+-    # Initialize n sequence. 
+-    # The loop runs for i = 1 to d.
+-    # It requires n_{i-1} and n_i.
+-    n_prev = c  # This corresponds to n_{0}
+-    
+-    for i in range(1, d + 1):
+-        # Calculate n_i based on n_{i+1} = 2 * n_i (so n_current = 2 * n_prev)
+-        n_curr = 2 * n_prev
+-        
+-        # Calculate log(n_{i-1}). We use log2 assuming standard information theoretic context.
+-        # If n_prev = 1, log2(n_prev) = 0.
+-        log_n_prev = math.log2(n_prev)
+-        
+-        # Calculate the two parts inside the large brackets
+-        
+-        # Part A: 0.6 / (log|F| - 1.001)
+-        part_a = 0.6 / denom_log_F
+-        
+-        # Part B: (2 * log(n_{i-1}) + lambda) / (n_i * (log|F| - 1.001))
+-        numerator_b = (2 * log_n_prev) + lam
+-        denominator_b = n_curr * denom_log_F
+-        part_b = numerator_b / denominator_b
+-        
+-        # Sum parts A and B
+-        brackets = part_a + part_b
+-        
+-        # Multiply by R^{d-i}
+-        outer_factor = R ** (d - i)
+-        
+-        # Add to total sum
+-        sum_val += outer_factor * brackets
+-        
+-        # Update n_prev for the next iteration
+-        n_prev = n_curr
++def distance_for_setup_bits(q, c, d, setup_bits):
++    """Allocate the union bound over all d random levels explicitly."""
++    if not isinstance(d, int) or d < 0:
++        raise ValueError("d must be a nonnegative integer")
++    if not math.isfinite(setup_bits) or setup_bits <= 0:
++        raise ValueError("setup_bits must be positive and finite")
++    lam = math.ceil(setup_bits + math.log2(max(1, d)))
++    return compute_formula(q, c, d, lam)
+ 
+-    return 1 - (term1 + sum_val)
+ 
+ if __name__ == "__main__":
+-    parser = argparse.ArgumentParser(description="Compute the mathematical formula from the image.")
+-    
+-    parser.add_argument("q", type=float, help="The value of log(|F|)")
+-    parser.add_argument("c", type=float, help="The constant c")
+-    parser.add_argument("d", type=int, help="The integer d (summation limit)")
+-    
+-    # Lambda is required by the formula but wasn't strictly in the 'given' list of the prompt.
+-    # We add it as an optional argument with a default, or you can supply it explicitly.
+-    parser.add_argument("--lam", type=float, default=100.0, help="The value of lambda (default: 100.0)")
+-
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("q", type=float, help="lower bound on log2(|F|)")
++    parser.add_argument("c", type=int, help="inverse rate, with base message length k0=1")
++    parser.add_argument("d", type=int, help="log2(message length)")
++    budget = parser.add_mutually_exclusive_group()
++    budget.add_argument("--lam", type=float, help="per-level lambda (legacy semantics)")
++    budget.add_argument("--setup-bits", type=float, help="total setup budget (default: 100)")
+     args = parser.parse_args()
+-    
+     try:
+-        result = compute_formula(args.q, args.c, args.d, args.lam)
+-        print(f"Result: {result}")
+-    except Exception as e:
+-        print(f"Error: {e}")
+\ No newline at end of file
++        lam = args.lam
++        if lam is None:
++            bits = args.setup_bits if args.setup_bits is not None else 100
++            result = distance_for_setup_bits(args.q, args.c, args.d, bits)
++            lam = math.ceil(bits + math.log2(max(1, args.d)))
++        else:
++            result = compute_formula(args.q, args.c, args.d, lam)
++    except (ValueError, OverflowError) as error:
++        parser.error(str(error))
++    print(f"Numerical ideal-ensemble distance bound: {result:.15g}")
++    print(f"Per-level lambda: {lam}; setup failure <= {args.d} * 2^(-{lam})")
+diff --git a/distance-analysis/brakedown.py b/distance-analysis/brakedown.py
+index 89a257c..9404301 100644
+--- a/distance-analysis/brakedown.py
++++ b/distance-analysis/brakedown.py
+@@ -1,12 +1,18 @@
++"""Haböck, Brakedown's expander code (ePrint 2023/769), §§4–5.
++
++Degree searches are numerical evaluations of sufficient bounds, not measured
++minimum distances. --cn/--dn checks every recursive level of the Rust preset.
++"""
++
+ import math
+ import argparse
++import json
+ 
+ # ==========================================
+ # Constants and Basic Functions
+ # ==========================================
+ 
+-M31 = 2**31 - 1
+-F256 = 2**256 - 1
++SECP256K1_SCALAR = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+ 
+ def log2(x):
+     """Base-2 logarithm."""
+@@ -16,20 +22,22 @@ def log2(x):
+ 
+ def h(x):
+     """Binary entropy function: -x log2(x) - (1-x) log2(1-x)."""
+-    if x <= 0 or x >= 1:
++    if not 0 <= x <= 1:
++        raise ValueError("entropy argument outside [0, 1]")
++    if x == 0 or x == 1:
+         return 0.0
+     return -x * log2(x) - (1 - x) * log2(1 - x)
+ 
+ def h_prime(x):
+     """Derivative of binary entropy: log2((1-x)/x)."""
+-    if x <= 0 or x >= 1:
+-        return 0.0 # technically infinity
++    if not 0 < x < 1:
++        raise ValueError("entropy derivative requires 0 < x < 1")
+     return log2((1 - x) / x)
+ 
+ def h_double_prime(x):
+     """Second derivative of binary entropy: -1 / (ln(2) * x * (1-x))."""
+-    if x <= 0 or x >= 1:
+-        return -float('inf')
++    if not 0 < x < 1:
++        raise ValueError("entropy second derivative requires 0 < x < 1")
+     return -1.0 / (math.log(2) * x * (1 - x))
+ 
+ def log2_binomial(n, k):
+@@ -92,22 +100,25 @@ def alpha_range_trivial(rho, delta):
+     """Returns trivial alpha range [delta/rho, 1 - rho/(1-delta)]."""
+     return [delta / rho, 1 - rho / (1 - delta)]
+ 
+-def alpha_range(rho, delta, n, security_lambda=110, modulus=M31, secant=False):
++def alpha_range(rho, delta, n, security_lambda=110, modulus=SECP256K1_SCALAR, secant=False):
+     """
+-    Computes the alpha range based on tight parameter bounds.
++    Section 4 uniform-coefficient alpha-range diagnostic.
++
++    The degree/check routines additionally apply the nonzero-coefficient
++    correction in Section 5.1. This diagnostic alone is not a certificate.
+     """
+     log2_p = log2(modulus)
+-    
++
+     # Calculate min
+     val_min = (delta / rho) + (1.0 / log2_p) * (
+         (security_lambda / n) + h(delta / rho)
+     )
+-    
++
+     # Calculate max based on secant or tangent approximation
+     if secant:
+         numerator = (
+-            (1 - 1/log2_p) * (1 - rho) - 
+-            2 * delta - 
++            (1 - 1/log2_p) * (1 - rho) -
++            2 * delta -
+             (1/log2_p) * h(delta)
+         )
+         denominator = (
+@@ -117,18 +128,18 @@ def alpha_range(rho, delta, n, security_lambda=110, modulus=M31, secant=False):
+     else:
+         # Tangent approximation
+         numerator = (
+-            (1 - 1/log2_p) * (1 - rho) - 
+-            2 * delta - 
++            (1 - 1/log2_p) * (1 - rho) -
++            2 * delta -
+             (1/log2_p) * delta * h_prime(delta)
+         )
+         denominator = (
+-            1 - 
+-            (1/log2_p) * (1 - security_lambda/n) - 
+-            delta + 
++            1 -
++            (1/log2_p) * (1 - security_lambda/n) -
++            delta +
+             (1/log2_p) * (h(delta) - delta * h_prime(delta))
+         )
+         val_max = numerator / denominator
+-        
++
+     return [val_min, val_max]
+ 
+ # ==========================================
+@@ -141,23 +152,29 @@ def union_bound(n, m, d, b, k):
+     Estimates prob that a random d-left-regular graph has a set of size k
+     mapped to a set of size at most b.
+     """
++    if not (isinstance(n, int) and isinstance(m, int) and n >= 1 and m >= 1
++            and isinstance(d, int) and 1 <= d <= m and 1 <= k <= n):
++        raise ValueError("invalid graph dimensions, degree, or support size")
++    if not math.isfinite(b) or b < 0 or b >= m:
++        raise ValueError("expansion threshold must satisfy 0 <= b < m")
+     b_floor = math.floor(b)
+-    
++
+     # Impossible events check
+-    if d > m or d > b:
++    if d > b_floor:
+         # In the Mathematica script, if d > b, it prints "prob zero" (effectively -inf log prob)
+         return -float('inf')
+ 
+     # Binomial formula in log domain
+     term1 = log2_binomial(n, k)
+     term2 = log2_binomial(m, b_floor)
+-    
++
+     # Inner term: k * (log2(Binomial(floor(b), d)) - log2(Binomial(m, d)))
+-    inner_diff = log2_binomial(b_floor, d) - log2_binomial(m, d)
++    # Avoid subtracting nearly equal lgamma results for small degrees.
++    inner_diff = math.fsum(math.log2((b_floor-j)/(m-j)) for j in range(d))
+     term3 = k * inner_diff
+-    
++
+     result = term1 + term2 + term3
+-    
++
+     # Capped by probability 1 (log 0)
+     return min(result, 0.0)
+ 
+@@ -175,16 +192,16 @@ def large_cases(dims, k_range, b_coeffs, security_lambda, verbose=False):
+     n, m = dims
+     k0, k1 = k_range
+     b0, b1 = b_coeffs
+-    
++
+     def b_func(k):
+         return b0 + b1 * k
+ 
+     # Sanity checks
+-    if b0 < 0 or b1 < 0 or b_func(k1) > m:
++    if b0 < 0 or b1 < 0 or b_func(k1) >= m:
+         print("Non-admissible coefficients for convexity argument.")
+-        if b_func(k1) > m:
++        if b_func(k1) >= m:
+             print(f"b[k1] exceeds m, b[k1]/m = {b_func(k1)/m}")
+-        return None
++        raise ValueError("non-admissible affine expansion bound")
+ 
+     # Define f1(k) = n*h(k/n) + m*h(b(k)/m)
+     def f1(k):
+@@ -227,25 +244,24 @@ def large_cases(dims, k_range, b_coeffs, security_lambda, verbose=False):
+     # Calculate degree bounds
+     d_k0 = d_required(k0)
+     d_k1 = d_required(k1)
+-    
++
+     # Convexity constraint: g1(k1) / g2(k0)
+     # Ensure denominators are not zero/invalid
+-    try:
+-        conv_constraint = g1(k1) / g2(k0)
+-    except:
+-        conv_constraint = 0 # Fallback
++    if not (1 <= k0 <= k1 < n and 0 < b_func(k0) < b_func(k1) < m):
++        raise ValueError("convexity argument requires a positive slope and interior interval")
++    conv_constraint = g1(k1) / g2(k0)
+ 
+     deg_bounds = [d_k0, d_k1, conv_constraint]
+-    
++
+     if min(deg_bounds) < 0:
+         print("Unexpected: one of the quotients is negative")
+-        return None
++        raise ValueError("invalid convexity quotient")
+ 
+     deg = math.ceil(max(deg_bounds))
+ 
+     if deg > m:
+         print("Too large vertex degree for matrix dimension.")
+-        return None
++        raise ValueError("required degree exceeds matrix dimension")
+ 
+     prob = max(f(k0, deg), f(k1, deg))
+ 
+@@ -267,72 +283,76 @@ def small_cases(dims, b_list, k1, security_lambda, dmax):
+     dmax: maximum degree to check
+     """
+     n, m = dims
+-    
++
+     # We want to find smallest d in [1, dmax] such that for all k, prob <= -lambda
+     # Since d is monotonic (higher d -> lower prob), we can search linearly or simpler.
+-    
+-    valid_degrees = []
+-    
++
++    if not b_list:
++        return 0
++
+     # In the Mathematica script, it computes a table of booleans for all d and checks validity.
+     # Here we just iterate d from 1 to dmax.
+-    
++
+     final_d = float('inf')
+     found = False
+ 
+-    for d in range(1, dmax + 1):
++    for d in range(1, min(dmax, m) + 1):
+         is_valid_d = True
+-        
++
+         for i, b_val in enumerate(b_list):
+             k = k1 + i
+-            if k <= 1 and d == 1: continue # Trivial case handling if necessary
+-            
++
+             prob = union_bound(n, m, d, b_val, k)
+             if prob > -security_lambda:
+                 is_valid_d = False
+                 break
+-        
++
+         if is_valid_d:
+             final_d = d
+             found = True
+             break # Smallest d found
+-            
++
+     if not found:
+         print("small cases: too high bound for given dmax. Try to increase it.")
+-        return None
+-        
++        raise ValueError("no admissible degree up to dmax")
++
+     if final_d > m:
+         print("small cases: degree bound exceeds m")
+-        return None
+-        
++        raise ValueError("required degree exceeds matrix dimension")
++
+     return final_d
+ 
+ # ==========================================
+ # Matrix A Weight Calculation
+ # ==========================================
+ 
+-def row_weight_a(n_input, params, modulus=2**127, security=100, threshold=500, 
++def row_weight_a(n_input, params, modulus=SECP256K1_SCALAR, security=100, threshold=500,
+                  secant=False, tangent_point=0, max_degree=50, verbose=False):
+     """
+     Determines vertex degree for compression matrix A.
+     params: {alpha, rho, delta}
+     """
+     alpha, rho, delta = params
+-    
++    validate_parameters(n_input, params, modulus, security)
++
+     wordsize = math.floor((1.0 / rho) * n_input)
+     n = n_input
+     m = math.ceil(alpha * n)
+     k1 = math.floor(delta * wordsize)
+-    
+-    recursive_steps = log2(n) / log2(1.0 / alpha)
+-    
++    if k1 == 0:
++        return 0, -math.inf
++
++    recursive_steps = recursion_bound(n_input, alpha)
++
+     # Adjust lambda based on union bound over recursion steps and range
+-    lambda_adj = security + log2(k1) + log2(recursive_steps)
+-    
+-    log2_p = log2(modulus)
++    lambda_adj = security + log2(max(1, k1)) + log2(4 * recursive_steps)
++
++    log2_p = log2(modulus - 1)
++    field_ratio = log2(modulus) / log2_p
+ 
+     # Function f(k)
+     def f_func(k):
+-        return k + (lambda_adj + n * h(k/n)) / log2_p
++        return field_ratio * k + (lambda_adj + n * h(k/n)) / log2_p
+ 
+     if verbose:
+         print(f"Matrix dimensions {{n,m}} = {{{n},{m}}}")
+@@ -341,12 +361,12 @@ def row_weight_a(n_input, params, modulus=2**127, security=100, threshold=500,
+     # --- Large Cases ---
+     deg_large = 0
+     prob_large = -float('inf')
+-    
++
+     k0 = threshold
+-    
++
+     if k1 >= k0:
+         if verbose: print("--------------- large cases ---------------")
+-        
++
+         # Calculate linear bound b(k) = b0 + b1*k
+         if secant:
+             b1 = f_func(k0) / k0
+@@ -357,7 +377,7 @@ def row_weight_a(n_input, params, modulus=2**127, security=100, threshold=500,
+             p_val = k0 + tangent_point * (k1 - k0)
+             # Derivative of f(x)
+             # f'(x) = 1 + (n * h'(x/n) * (1/n)) / log2_p = 1 + h'(x/n) / log2_p
+-            f_prime = 1 + h_prime(p_val / n) / log2_p
++            f_prime = field_ratio + h_prime(p_val / n) / log2_p
+             b1 = f_prime
+             b0 = f_func(p_val) - b1 * p_val
+             if verbose: print(f"Tangent at {p_val}")
+@@ -365,12 +385,12 @@ def row_weight_a(n_input, params, modulus=2**127, security=100, threshold=500,
+         result = large_cases([n, m], [k0, k1], [b0, b1], lambda_adj, verbose)
+         if result:
+             deg_large, prob_large = result
+-    
++
+     # --- Small Cases ---
+     if verbose: print("--------------- small cases ---------------")
+     upper_small = min(k0 - 1, k1)
+     if verbose: print(f"over interval [1, {upper_small}]")
+-    
++
+     # integerLessThan logic: if int, minus 1, else floor.
+     def integer_less_than(val):
+         if val.is_integer():
+@@ -379,7 +399,7 @@ def row_weight_a(n_input, params, modulus=2**127, security=100, threshold=500,
+ 
+     b_list = []
+     range_small = range(1, upper_small + 1)
+-    
++
+     if secant:
+         # Constant array logic from script
+         val = f_func(upper_small)
+@@ -389,7 +409,7 @@ def row_weight_a(n_input, params, modulus=2**127, security=100, threshold=500,
+         # Table logic
+         for k in range_small:
+             # term = k + (lambda + log2(binom(n,k))) / log2(p)
+-            term = k + (lambda_adj + log2_binomial(n, k)) / log2_p
++            term = field_ratio * k + (lambda_adj + log2_binomial(n, k)) / log2_p
+             b_list.append(integer_less_than(term))
+ 
+     deg_small = small_cases([n, m], b_list, 1, lambda_adj, max_degree)
+@@ -397,41 +417,42 @@ def row_weight_a(n_input, params, modulus=2**127, security=100, threshold=500,
+     print("Matrix A Weight Calculation Results:")
+     print("Small cases degree:", deg_small)
+     print("Large cases degree:", deg_large)
+-    
++
+     d_final = max(deg_small if deg_small else 0, deg_large)
+-    
++
+     # Recalculate max prob for verification (omitted plotting logic)
+-    
++
+     return d_final, prob_large # Returning prob_large as heuristic, script calculates actual max prob
+ 
+ # ==========================================
+ # Matrix B Weight Calculation
+ # ==========================================
+ 
+-def row_weight_b(n_input, params, modulus=2**127, security=100, threshold=500, 
++def row_weight_b(n_input, params, modulus=SECP256K1_SCALAR, security=100, threshold=500,
+                  secant=False, tangent_point=1, max_degree=50, exhaustive_bound=False, verbose=False):
+     """
+     Determines vertex degree for stretching matrix B.
+     params: {alpha, rho, delta}
+     """
+     alpha, rho, delta = params
+-    
++    validate_parameters(n_input, params, modulus, security)
++
+     wordsize = math.floor(n_input / rho)
+     n = math.floor(math.ceil(alpha * n_input) / rho)
+     m = wordsize - n - n_input
+-    
++
+     k1 = math.ceil(delta * n)
+     k2 = math.floor(delta * wordsize)
+-    
+-    recursive_steps = log2(n) / log2(1.0 / alpha)
+-    
+-    lambda_adj = security
+-    if k2 > k1:
+-        lambda_adj += log2(k2 - k1)
+-    lambda_adj += log2(recursive_steps)
+-    
+-    log2_p = log2(modulus)
+-    
++    if k1 > k2:
++        return 0, -math.inf
++
++    recursive_steps = recursion_bound(n_input, alpha)
++
++    lambda_adj = security + log2(max(1, k2 - k1 + 1)) + log2(4 * recursive_steps)
++
++    log2_p = log2(modulus - 1)
++    field_ratio = log2(modulus) / log2_p
++
+     if verbose:
+         print(f"Matrix dimensions {{n,m}} = {{{n},{m}}}")
+         print(f"Expansion interval {{k1,k2}} = {{{k1}, {k2}}}")
+@@ -439,18 +460,18 @@ def row_weight_b(n_input, params, modulus=2**127, security=100, threshold=500,
+     # Function f(k) for B
+     def f_func_b(k):
+         term1 = (wordsize - n) * delta
+-        term2 = k
++        term2 = field_ratio * k
+         term3 = (m + lambda_adj + n * h(k/n)) / log2_p
+         return term1 + term2 + term3
+ 
+     deg_large = 0
+     prob_large = -float('inf')
+     k0_val = max(k1, threshold)
+-    
++
+     # --- Large Cases ---
+     if k2 >= threshold:
+         if verbose: print("--------------- large cases ---------------")
+-        
++
+         if secant:
+             b1 = f_func_b(k0_val) / k0_val
+             b0 = 0.0
+@@ -459,50 +480,50 @@ def row_weight_b(n_input, params, modulus=2**127, security=100, threshold=500,
+             # Derivative D[f]
+             # f(k) = C + k + (C2 + n*h(k/n))/logp
+             # f'(k) = 1 + (n * h'(k/n) * 1/n)/logp = 1 + h'(k/n)/logp
+-            f_prime = 1 + h_prime(p_val / n) / log2_p
++            f_prime = field_ratio + h_prime(p_val / n) / log2_p
+             b1 = f_prime
+             b0 = f_func_b(p_val) - b1 * p_val
+-            
++
+         result = large_cases([n, m], [k0_val, k2], [b0, b1], lambda_adj, verbose)
+         if result:
+             deg_large, prob_large = result
+-    
++
+     # --- Small Cases ---
+     deg_small = 0
+     if k1 < threshold:
+         if verbose: print("--------------- small cases ---------------")
+         upper = min(threshold - 1, k2)
+         if verbose: print(f"over interval [{k1}, {upper}]")
+-        
++
+         def integer_less_than(val):
+             if val.is_integer():
+                 return int(val) - 1
+             return math.floor(val)
+-            
++
+         b_list = []
+         # Range from k1 to upper
+         range_small = range(k1, upper + 1)
+-        
++
+         # Simplified logic from script (exhaustiveBound=False branch usually taken)
+         for k in range_small:
+-            term = k + (wordsize - n)*delta + (m + lambda_adj + log2_binomial(n, k)) / log2_p
++            term = field_ratio * k + (wordsize - n)*delta + (m + lambda_adj + log2_binomial(n, k)) / log2_p
+             b_list.append(integer_less_than(term))
+-            
++
+         deg_small = small_cases([n, m], b_list, k1, lambda_adj, max_degree)
+ 
+     print("Matrix B Weight Calculation Results:")
+     print("Small cases degree:", deg_small)
+     print("Large cases degree:", deg_large)
+-        
++
+     d_final = max(deg_small if deg_small else 0, deg_large)
+-    
++
+     return d_final, prob_large
+ 
+ # ==========================================
+ # Main Execution Example
+ # ==========================================
+ 
+-def main(alpha, beta, r, n, security):
++def main(alpha, beta, r, n, security, modulus=SECP256K1_SCALAR):
+     """Run the full analysis for given alpha, beta, r, n, security."""
+     params = convert_params(alpha, beta, r)
+     n_in = 2**n
+@@ -511,26 +532,131 @@ def main(alpha, beta, r, n, security):
+     delta = params[2]
+ 
+     print(f"Parameters: alpha={alpha}, beta={beta}, r={r}, n=2^{n}={n_in}, security={security}")
++    print(f"Field order: {modulus}; log2(field order)={log2(modulus)}")
++    print("Root-level degree search only; use --cn/--dn to check the entire recursion.")
+     print(f"Converted:  alpha={params[0]}, rho={rho}, delta={delta}")
+     print()
+ 
+     print("Trivial Alpha Range:", alpha_range_trivial(rho, delta))
+ 
+-    range_secant = alpha_range(rho, delta, n_in, security, F256, secant=True)
++    range_secant = alpha_range(rho, delta, n_in, security, modulus, secant=True)
+     print("Alpha Range (Secant):", range_secant)
+ 
+-    range_tangent = alpha_range(rho, delta, n_in, security, F256, secant=False)
++    range_tangent = alpha_range(rho, delta, n_in, security, modulus, secant=False)
+     print("Alpha Range (Tangent):", range_tangent)
+ 
+     print(f"\nCalculating RowWeightA for n={n_in} with params {params}")
+-    d_a, prob_a = row_weight_a(n_in, params, security=security, verbose=True)
++    d_a, prob_a = row_weight_a(n_in, params, modulus=modulus, security=security, verbose=True)
+     print(f"Result Matrix A: d = {d_a}")
+ 
+     print(f"\nCalculating RowWeightB for n={n_in} with params {params}")
+-    d_b, prob_b = row_weight_b(n_in, params, security=security, verbose=True)
++    d_b, prob_b = row_weight_b(n_in, params, modulus=modulus, security=security, verbose=True)
+     print(f"Result Matrix B: d = {d_b}")
+ 
+ 
++def validate_parameters(n, params, modulus, security):
++    alpha, rho, delta = params
++    if not (isinstance(n, int) and n > 0 and 0 < rho < 1
++            and 0 < alpha < 1 - rho and 0 < delta < min(rho, alpha)):
++        raise ValueError("invalid length, rate, compression, or target distance")
++    if not isinstance(modulus, int) or modulus <= 2:
++        raise ValueError("field order must be an integer greater than two")
++    if not math.isfinite(security) or security <= 0:
++        raise ValueError("security must be positive and finite")
++
++
++def recursion_bound(n, alpha):
++    """Upper bound until k<=32, following ceil(alpha*k), not fractional log depth."""
++    count = 0
++    while n > 32:
++        child = math.ceil(alpha * n)
++        if child >= n:
++            raise ValueError("rounded recursion does not shrink")
++        n = child
++        count += 1
++    return max(1, count)
++
++
++def matrix_check(n, m, degree, first, last, output_weight, modulus, event_bits):
++    """Haböck (4), (10), (15), with the nonzero-entry change in §5.1.
++
++    Enumerate EVERY required support weight; no convexity approximation.
++    output_weight is zero for A and delta*(N-N_child) for B. We use the
++    paper's conservative 2**m subset count for B. A small numerical margin
++    is included; this is not interval arithmetic.
++    """
++    if not 1 <= degree <= m:
++        raise ValueError("degree must be between one and the output dimension")
++    count = last - first + 1
++    if count <= 0:
++        return {"passes": True, "weights": 0}
++    if not 1 <= first <= last <= n:
++        raise ValueError("support interval exceeds matrix input dimension")
++    target = event_bits + math.ceil(log2(count)) + 1e-6
++    log_q, log_qm1 = log2(modulus), log2(modulus - 1)
++    graph_max, worst = -math.inf, first
++    for k in range(first, last + 1):
++        # Expansion |Gamma(S)| > b then implies the required coefficient bound.
++        required = output_weight + (k * log_q + target + log2_binomial(n, k)
++                                    + (m if output_weight else 0)) / log_qm1
++        b = math.ceil(required) - 1
++        if b >= m:
++            return {"passes": False, "weights": count, "worst_weight": k,
++                    "reason": "required expansion exceeds available output vertices"}
++        prob = union_bound(n, m, degree, b, k)
++        if prob > graph_max:
++            graph_max, worst = prob, k
++    return {"passes": graph_max <= -target, "weights": count,
++            "worst_weight": worst,
++            "graph_log2_bound_per_weight": graph_max if math.isfinite(graph_max) else None,
++            "required_log2_bound_per_weight": -target}
++
++
++def check_recursive(n_input, alpha, inverse_rate, delta, cn, dn,
++                    modulus=SECP256K1_SCALAR, security=100):
++    """Check the actual rounded dimensions and RS stopping rule in brakedown.rs.
++
++    Allocate 4*K events: A/B times graph/coefficients at each level.
++    Passing is a numerical sufficient ideal-ensemble bound, not a guarantee
++    for the benchmark's deterministic SmallRng seed.
++    """
++    validate_parameters(n_input, [alpha, 1/inverse_rate, delta], modulus, security)
++    if not (isinstance(cn, int) and isinstance(dn, int) and cn > 0 and dn > 0):
++        raise ValueError("degrees must be positive integers")
++    levels, n = [], n_input
++    while True:
++        N = int(n * inverse_rate)
++        child = math.ceil(alpha * n)
++        child_N = int(child * inverse_rate)
++        parity = N - n - child_N
++        if parity < 0:
++            raise ValueError("negative parity dimension after rounding")
++        if child < cn or parity < dn or n <= 32:
++            break
++        if child >= n:
++            raise ValueError("rounded recursion does not shrink")
++        levels.append((n, N, child, child_N, parity))
++        n = child
++    base_dimensions = [n, N]
++    base_passes = N <= modulus and N - n + 1 > delta * N
++    event_bits = security + math.ceil(log2(max(1, 4 * len(levels))))
++    details = []
++    for n, Np, child, child_N, parity in levels:
++        a = matrix_check(n, child, cn, 1, math.floor(delta*Np), 0,
++                         modulus, event_bits)
++        b = matrix_check(child_N, parity, dn, math.floor(delta*child_N)+1,
++                         math.floor(delta*Np), delta*(Np-child_N), modulus, event_bits)
++        details.append({"message_length": n, "block_length": Np,
++                        "A_dimensions": [n, child], "B_dimensions": [child_N, parity],
++                        "A": a, "B": b})
++    return {"bound_passes": base_passes and all(x["A"]["passes"] and x["B"]["passes"] for x in details),
++            "scope": "numerical sufficient bound for ideal independent uniform sampling",
++            "distance_target": delta, "setup_bits": security, "events": 4*len(levels),
++            "per_event_bits": event_bits, "base_rs_passes": base_passes,
++            "base_rs_dimensions": base_dimensions,
++            "levels": details}
++
++
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser(description="Brakedown parameter analysis")
+     parser.add_argument("alpha", type=float, help="Alpha parameter")
+@@ -538,6 +664,24 @@ if __name__ == "__main__":
+     parser.add_argument("r", type=float, help="Rate parameter r")
+     parser.add_argument("-n", type=int, default=15, help="Log2 of input size (default: 15, i.e. n=2^15)")
+     parser.add_argument("-s", "--security", type=int, default=100, help="Security parameter lambda (default: 100)")
++    parser.add_argument("--modulus", type=int, default=SECP256K1_SCALAR,
++                        help="field order (default: secp256k1 scalar modulus)")
++    parser.add_argument("--cn", type=int, help="validate this fixed A degree at every recursive level")
++    parser.add_argument("--dn", type=int, help="validate this fixed B degree at every recursive level")
+     args = parser.parse_args()
+ 
+-    main(args.alpha, args.beta, args.r, args.n, args.security)
+\ No newline at end of file
++    try:
++        if args.n < 0:
++            raise ValueError("n must be a nonnegative log2 input length")
++        if (args.cn is None) != (args.dn is None):
++            raise ValueError("supply both --cn and --dn")
++        if args.cn is None:
++            main(args.alpha, args.beta, args.r, args.n, args.security, args.modulus)
++        else:
++            report = check_recursive(2**args.n, args.alpha, args.r, args.beta / args.r,
++                                     args.cn, args.dn, args.modulus, args.security)
++            print(json.dumps(report, indent=2))
++            if not report["bound_passes"]:
++                raise SystemExit(1)
++    except (ValueError, OverflowError) as error:
++        parser.error(str(error))
+diff --git a/distance-analysis/era.py b/distance-analysis/era.py
+index 7691c4f..0ddf2a7 100644
+--- a/distance-analysis/era.py
++++ b/distance-analysis/era.py
+@@ -1,356 +1,235 @@
+-'''
+-This script follows Figure 1: CalcDist in the ERA analysis section, please refer to the paper for more details.
+-'''
++"""Numerical implementation of the ERA draft's CalcDist figure.
+ 
+-import numpy as np
+-from scipy.optimize import root
+-import argparse
+-import sys
++This checks equations and feasibility; it is NOT an interval-arithmetic proof
++that all solutions of the Hessian system have been found. n and q arguments
++are log2(block length) and log2(field size), respectively.
++"""
+ 
+-def solve_system(c, r, gamma, db):
+-    """
+-    Solves for relative distance of ERA code given c, r, gamma and db.
+-    """
+-
+-    # Pre-compute common constants dependent on c and r
+-    A = 1 - c/r
+-    B = c/r
+-    h_arg_const = B / A
+-    h_arg_const = np.clip(h_arg_const, 1e-16, 1.0 - 1e-16)
+-
+-    # delta initial guess based on setting derivative wrt to d1 = 0 and exponent = -gamma
+-    current_delta_guess = 0.0
+-
+-    # Binary entropy function (using base-2 log)
+-    def H(x):
+-        x = np.clip(x, 1e-16, 1.0 - 1e-16)
+-        return -x * np.log2(x) - (1 - x) * np.log2(1 - x)
+-
+-    # Derivative of binary entropy function
+-    def Hprime(x):
+-        x = np.clip(x, 1e-16, 1.0 - 1e-16)
+-        return np.log2((1 - x) / x)
+-
+-    # Second derivative of binary entropy function
+-    def Hprimeprime(x):
+-        x = np.clip(x, 1e-16, 1.0 - 1e-16)
+-        return -1.0 / (x * (1 - x) * np.log(2))
+-
+-    # Compute exponent 
+-    def exponent_term(d0, d1, delta):
+-
+-        # E1: (1/r) * H(d0)
+-        E1 = (1.0 / r) * H(d0)
+-        
+-        # E2: d0 * (1-c/r) * H(c/(r-c))
+-        E2 = d0 * A * H(h_arg_const)
+-        
+-        # E3: d1 * H( d0(1-c/r)/d1 )
+-        arg_E3 = (d0 * A) / d1
+-        E3 = d1 * H(arg_E3)
+-        
+-        # E4: (1-d1) * H( d0*c / (r*(1-d1)) )
+-        arg_E4 = (d0 * B) / (1 - d1)
+-        E4 = (1 - d1) * H(arg_E4)
+-        
+-        # E5: -H(d0)
+-        E5 = -H(d0)
+-        
+-        # E6: d1 * (1-c/r) * H(c/(r-c))
+-        E6 = d1 * A * H(h_arg_const)
+-        
+-        # E7: delta * H( d1(1-c/r)/delta )
+-        arg_E7 = (d1 * A) / delta
+-        E7 = delta * H(arg_E7)
+-        
+-        # E8: (1-delta) * H( d1*c/r / (1-delta) )
+-        arg_E8 = (d1 * B) / (1 - delta)
+-        E8 = (1 - delta) * H(arg_E8)
+-        
+-        # E9: -H(d1)
+-        E9 = -H(d1)
+-        
+-        total_exponent = E1 + E2 + E3 + E4 + E5 + E6 + E7 + E8 + E9
+-
+-        return total_exponent
+-    
+-    # compute derivative of exponent wrt d1
+-    def d1_prime(d0, d1, delta):
+-
+-        # 1. Derivative of d1 * H( (d0*(1-c/r))/d1 )
+-        # Result: -log2( 1 - d0 * A / d1 )
+-        arg_log1 = 1 - (d0 * A / d1)
+-        arg_log1 = np.maximum(arg_log1, 1e-16)
+-        term_d1_1 = -np.log2(arg_log1)
+-        
+-        # 2. Derivative of (1-d1) * H( (d0*c) / (r*(1-d1)) )
+-        # Result: log2( 1 - d0 * B / (1-d1) )
+-        arg_log2 = 1 - (d0 * B / (1 - d1))
+-        arg_log2 = np.maximum(arg_log2, 1e-16)
+-        term_d1_2 = np.log2(arg_log2)
+-
+-        # 3. Derivative of d1 * (1-c/r) * H(c/(r-c))
+-        # Result: (1-c/r) * H(c/(r-c))
+-        term_d1_3 = A * H(h_arg_const)
+-        
+-        # 4. Derivative of delta * H( d1(1-c/r)/delta )
+-        # Result: (1-c/r) * log2( delta / (d1(1-c/r)) - 1 )
+-        term_d1_4 = A * Hprime(d1 * A / delta)
+-        
+-        # 5. Derivative of (1-delta) * H( d1*c/r / (1-delta) )
+-        # Result: (c/r) * log2( r(1-delta)/(d1*c) - 1 )
+-        term_d1_5 = B * Hprime(d1 * B / (1 - delta))
+-        
+-        # 6. Derivative of -H(d1)
+-        # Result: log2( d1 / (1-d1) )
+-        term_d1_6 = -Hprime(d1)
+-        
+-        total_derivative = term_d1_1 + term_d1_2 + term_d1_3 + term_d1_4 + term_d1_5 + term_d1_6
+-
+-        return total_derivative
+-    
+-    # compute derivative of exponent wrt d1
+-    def d0_prime(d0, d1, delta):
+-
+-        # 1. Derivative of ((1/r) - 1) * H(d0)
+-        # Result: (1/r - 1) * log2( (1-d0)/d0 )
+-        term_d0_1 = (1.0 / r - 1.0) * Hprime(d0)
+-
+-        # 2. Derivative of d0 * (1-c/r) * H(c/(r-c))
+-        # Result: (1-c/r) * H(c/(r-c))
+-        term_d0_2 = A * H(h_arg_const)
+-
+-        # 3. Derivative of d1 * H( d0(1-c/r)/d1 )
+-        # Result: A * log2( (d1 / (d0*A)) - 1 )
+-        term_d0_3 = A * Hprime(d0 * A / d1)
+-
+-        # 4. Derivative of (1-d1) * H( d0*c / (r*(1-d1)) )
+-        # Result: B * log2( (r*(1-d1) / (d0*c)) - 1 )
+-        term_d0_4 = B * Hprime((d0 * B) / (1 - d1))
+-
+-        total_derivative = term_d0_1 + term_d0_2 + term_d0_3 + term_d0_4
+-
+-        return total_derivative
+-
+-    # compute second derivative of exponent wrt d0
+-    def d0_prime_prime(d0, d1, delta):
+-
+-        X = d0 * A / d1
+-        Y = (d0 * B) / (1.0 - d1)
+-
+-        term_00_1 = (1.0 / r - 1.0) * Hprimeprime(d0)
+-        term_00_2 = (A ** 2) / d1 * Hprimeprime(X)
+-        term_00_3 = (B ** 2) / (1.0 - d1) * Hprimeprime(Y)
+-
+-        return term_00_1 + term_00_2 + term_00_3
+-    
+-    # compute second derivative of exponent wrt d1
+-    def d1_prime_prime(d0, d1, delta):
+-
+-        X = d0 * A / d1
+-        Y = (d0 * B) / (1.0 - d1)
+-
+-        term_11_1 = X**2 * Hprimeprime(X) / d1
+-        term_11_2 = Y**2 * Hprimeprime(Y) / (1.0 - d1)
+-        term_11_3 = A**2 * Hprimeprime(d1 * A / delta) / delta
+-        term_11_4 = B**2 * Hprimeprime(d1 * B / (1.0 - delta)) / (1.0 - delta)
+-        term_11_5 = - Hprimeprime(d1)
+-
+-        return term_11_1 + term_11_2 + term_11_3 + term_11_4 + term_11_5
+-        
+-    # compute mixed derivative of exponent wrt d1 and d0
+-    def d0_d1_mixed_prime(d0, d1, delta):
+-
+-        X = d0 * A / d1
+-        Y = (d0 * B) / (1.0 - d1)
+-
+-        # Compute Mixed Partial Derivative E_01 (d^2E / dd0 dd1)
+-        # Formula: (-X^2 * H''(X) + Y^2 * H''(Y)) / d0
+-        return (-X**2 * Hprimeprime(X) + Y**2 * Hprimeprime(Y)) / d0
+-
+-    def solve_for_delta(vars):
+-        d1, delta = vars
+-        d1 = np.clip(d1, 1e-16, 1.0 - 1e-16)
+-        delta = np.clip(delta, 1e-16, 1.0 - 1e-16)
+-
+-        eq1 = d1_prime(db, d1, delta)
+-        eq2 = gamma + exponent_term(db, d1, delta)
+-        return [eq1, eq2]
+-
+-    def verify(vars):
+-        d0, d1, delta = vars
+-        d0 = np.clip(d0, 1e-16, 1.0 - 1e-16)
+-        d1 = np.clip(d1, 1e-16, 1.0 - 1e-16)
+-        delta = np.clip(delta, 1e-16, 1.0 - 1e-16)
+-
+-        eq1 = d0_prime(d0, d1, delta)
+-        eq2 = d1_prime(d0, d1, delta)
+-        eq3 = d0_prime_prime(d0, d1, delta) * d1_prime_prime(d0, d1, delta) - (d0_d1_mixed_prime(d0, d1, delta))**2
+-
+-        return [eq1, eq2, eq3]
+-
+-
+-    # Compute delta_1^* as defined in Figure 1
+-    guesses_first_system = [
+-        [1e-8, 0.1], [1e-6, 0.1], [1e-4, 0.1], [1e-3, 0.1],
+-        [0.1, 0.3], [0.15, 0.4], [0.2, 0.5], [0.3, 0.7],
+-        [0.05, 0.3], [0.2, 0.4], [0.5, 0.8],
+-    ]
+-    sol = None
+-    for x0 in guesses_first_system:
+-        temp_sol = root(solve_for_delta, x0, method='lm')
+-
+-        if temp_sol.success and np.max(np.abs(temp_sol.fun)) < 1e-12 \
+-            and np.all((temp_sol.x > 1e-16)) \
+-            and temp_sol.x[0] > db * (1 - c/r) \
+-            and temp_sol.x[1] > temp_sol.x[0] * (1 - c/r) \
+-            and temp_sol.x[1] < (1.0 - c / r) ** 2:
+-
+-            current_delta_guess = temp_sol.x[1]
+-            print(f"Guess for delta: {current_delta_guess}")
+-            sol = current_delta_guess
+-            break
+-
+-    if sol is None:
+-        print("Failed to compute delta_1^*: likely that the value of n is too small.")
+-        return None
++import argparse
++import math
++from functools import lru_cache
+ 
+-    # Compute delta_2^* as defined in Figure 1
+-    guesses_second_system = [
+-        [x/8, x/2, x] for x in np.arange(0, 1, 0.001) 
+-    ]
+-    best_verify_sol = None
+-    for x0 in guesses_second_system:
+-        verify_sol = root(verify, x0, method='lm')
+-        new_delta_guess = verify_sol.x[2]
+-    
+-        if verify_sol.success and np.max(np.abs(verify_sol.fun)) < 1e-12 \
+-            and np.all((verify_sol.x > 1e-16)) \
+-            and verify_sol.x[1] > verify_sol.x[0] * (1 - c/r) \
+-            and new_delta_guess > verify_sol.x[1] * (1 - c/r) \
+-            and new_delta_guess < (1.0 - c / r) ** 2:
+-
+-            # Pick the solution with the smallest verify_sol.x[2]
+-            if best_verify_sol is None or new_delta_guess < best_verify_sol:
+-                print(f"Found new solution for 3 equations: (d0, d1, delta_2^*) = ({verify_sol.x})")
+-                best_verify_sol = new_delta_guess
+-            
+-
+-    if sol > best_verify_sol:
+-        print(f"Guess for delta: {current_delta_guess} is invalid: exponent not minimized at d0 = {db}. Maximum possible delta: {best_verify_sol}")
+-        sol = best_verify_sol
+-    else:
+-        print(f"Guess for delta: {current_delta_guess} is valid.")
+-
+-    return sol
++import numpy as np
++from scipy.optimize import brentq, root
++from scipy.special import expit, logit, xlogy
++
++
++def entropy(x):
++    if not np.isfinite(x) or not 0 <= x <= 1:
++        raise ValueError("entropy argument outside [0, 1]")
++    return -(xlogy(x, x) + xlogy(1-x, 1-x)) / math.log(2)
++
++
++def entropy_prime(x):
++    if not 0 < x < 1:
++        raise ValueError("entropy derivative requires 0 < x < 1")
++    return (math.log1p(-x) - math.log(x)) / math.log(2)
++
++
++def entropy_second(x):
++    if not 0 < x < 1:
++        raise ValueError("entropy second derivative requires 0 < x < 1")
++    return -1 / (x * (1-x) * math.log(2))
++
++
++class Exponent:
++    """E_perm/n in eq:event-4-exp-term, with its analytic gradient/Hessian."""
++
++    def __init__(self, c, r):
++        if not (isinstance(r, (int, np.integer)) and r >= 4 and
++                math.isfinite(c) and 1 < c < r/2*(1-1/math.sqrt(5))):
++            raise ValueError("CalcDist requires integer r>=4 and 1<c<r/2*(1-1/sqrt(5))")
++        self.r, self.A, self.B = r, 1-c/r, c/r
++        self.constant = self.A * entropy(self.B/self.A)
++
++    def arguments(self, d0, d1, delta):
++        A, B = self.A, self.B
++        if not (0 < d0 < 1 and d0*A < d1 < 1 and d1*A < delta < A*A):
++            raise ValueError("weights outside the interior feasible domain")
++        args = (d0*A/d1, d0*B/(1-d1), d1*A/delta, d1*B/(1-delta))
++        if not all(0 < x < 1 for x in args):
++            raise ValueError("infeasible entropy ratio")
++        return args
++
++    def value(self, d0, d1, delta):
++        x, y, u, v = self.arguments(d0, d1, delta)
++        return ((1/self.r-1)*entropy(d0) + (d0+d1)*self.constant
++                + d1*entropy(x) + (1-d1)*entropy(y)
++                + delta*entropy(u) + (1-delta)*entropy(v) - entropy(d1))
++
++    def derivatives(self, d0, d1, delta):
++        x, y, u, v = self.arguments(d0, d1, delta)
++        A, B = self.A, self.B
++        p, pp = entropy_prime, entropy_second
++        e0 = (1/self.r-1)*p(d0) + self.constant + A*p(x) + B*p(y)
++        e1 = (-math.log1p(-x)+math.log1p(-y))/math.log(2) + self.constant + A*p(u)+B*p(v)-p(d1)
++        e00 = (1/self.r-1)*pp(d0)+A*A/d1*pp(x)+B*B/(1-d1)*pp(y)
++        e11 = x*x/d1*pp(x)+y*y/(1-d1)*pp(y)+A*A/delta*pp(u)+B*B/(1-delta)*pp(v)-pp(d1)
++        e01 = (-x*x*pp(x)+y*y*pp(y))/d0
++        return np.array([e0, e1]), np.array([[e00, e01], [e01, e11]])
++
++    def maximizing_d1(self, d0, delta):
++        # E is strictly concave in d1. Its derivative has opposite infinite
++        # limits at d0*A and delta/A; bracket the unique interior maximum.
++        lo, hi = d0*self.A, delta/self.A
++        gap = hi-lo
++        if gap <= 0:
++            raise ValueError("empty d1 interval")
++        margin = max(gap*1e-11, 8*math.ulp(hi))
++        a, b = lo+margin, hi-margin
++        if a >= b:
++            raise ValueError("d1 interval is too narrow for float64")
++        return brentq(lambda d1: self.derivatives(d0, d1, delta)[0][1], a, b,
++                      xtol=1e-14, rtol=1e-14)
++
++
++def _validate_inputs(r, secparam, db, n_log, q_log=None):
++    if not isinstance(r, (int, np.integer)) or r < 4:
++        raise ValueError("r must be an integer >=4")
++    if not math.isfinite(secparam) or secparam <= 0 or not 0 < db < 1:
++        raise ValueError("positive security and 0<base distance<1 required")
++    if not math.isfinite(n_log) or not 0 <= n_log <= 1000:
++        raise ValueError("invalid log2 block length")
++    if q_log is not None and (not math.isfinite(q_log) or q_log <= 1):
++        raise ValueError("log2 field size must exceed one")
++
++
++def field_bound_log2(c, r, secparam, db, n_log):
++    """Log2 of the right side of CalcDist step 1 (a bound on q-1)."""
++    alpha = 1 - (c/(math.e*r))**(c/r)
++    return (-math.log2(db) + (r-r*alpha+1+c*alpha)*math.log2(math.e)
++            + c*alpha*math.log2(r/c) - (r-r*alpha)*math.log2(1-alpha)
++            + r*(2*secparam+4+4*n_log)/(db*2**n_log)) / (c-1)
+ 
+ 
+ def compute_c_from_q_bound(r, secparam, db, n_lower_bound, q_lower_bound):
+-    """
+-    Calculates the lower bound for q based on step 1 of Figure 1.
+-    """
+-    def rhs_log2(c_val):
+-        alpha = 1 - (c_val / (np.e * r)) ** (c_val / r)
+-        term1 = -np.log2(db) 
+-        term2 = (r - r * alpha + 1 + c_val * alpha) * np.log2(np.e) 
+-        term3 = c_val * alpha * np.log2(r / c_val)
+-        term4 = - (r - r * alpha) * np.log2(1 - alpha)
+-        term5 = (r * (2 * secparam + 4 + 4 * n_lower_bound)) / (db * (2 ** n_lower_bound))
+-        return (term1 + term2 + term3 + term4 + term5) / (c_val - 1)
+-    
+-    # Find c such that rhs_log2(c) = q_lower_bound
+-    def equation_to_solve(c_val):
+-        return rhs_log2(c_val) - q_lower_bound
+-
+-    # Initial guesses for c    
+-    c_guesses = [1.1, 1.5, 2.0, 3.0, 5.0, 10.0]
+-
+-    c_value = None
+-    for x0 in c_guesses:
+-        temp_sol = root(equation_to_solve, x0, method='lm')
+-        if temp_sol.success and temp_sol.x > 1:
+-            c_value = temp_sol.x[0]
+-            break
+-
+-    return c_value
++    _validate_inputs(r, secparam, db, n_lower_bound, q_lower_bound)
++    # Figure 1 equates q_min - 1, NOT q_min, to its RHS.
++    target = q_lower_bound + math.log1p(-2.0**(-q_lower_bound))/math.log(2)
++    lower = math.nextafter(1.0, math.inf)
++    upper = math.nextafter(r/2*(1-1/math.sqrt(5)), 1.0)
++    fun = lambda c: field_bound_log2(c, r, secparam, db, n_lower_bound)-target
++    if fun(upper) >= 0:
++        return None
++    c = brentq(fun, lower, upper, xtol=5e-15, rtol=1e-14)
++    if abs(fun(c)) > 1e-8 * max(1, abs(target)):
++        return None
++    # Round toward the feasible (larger c) side, then check the inequality.
++    c = math.nextafter(c, upper)
++    for _ in range(128):
++        if fun(c) <= 0:
++            return c
++        c = math.nextafter(c, upper)
++    return None
+ 
+ 
+ def compute_gamma_from_n_bound(r, c, secparam, n_lower_bound):
+-    """
+-    Calculates the value of gamma based on step 2 of Figure 1.
+-    """
+-    term_inside_log = (c**2 * (r-c)**3) / (r**5)
++    _validate_inputs(r, secparam, 0.5, n_lower_bound)
++    Exponent(c, r)
+     n = 2**n_lower_bound
+-    return (secparam + 1 + np.log2(term_inside_log) + 7 * np.log2(n + 1)) / n
+-
+-
+-def run_simulation():
+-    r_values = [4, 6, 8, 10, 16, 25, 50, 100]
+-    db_values = [0.001, 0.003, 0.01, 0.03]
+-    n_val = 20.0
+-    q_val = 256.0
+-    secparam = 100
+-
+-    lines = []
+-    header = f"| delta_B \\ r | " + " | ".join([f"{r}" for r in r_values]) + " |"
+-    separator = "| :--- | " + " | ".join([":---:" for _ in r_values]) + " |"
+-    lines.extend([header, separator])
+-
+-    for db in db_values:
+-        row_str = f"| **{db}** |"
+-        for r in r_values:
+-
+-            c = compute_c_from_q_bound(r, secparam, db, n_val, q_val)
+-            c_upper_bound = (r / 2) * (1 - 1 / np.sqrt(5))
+-
+-            gamma = compute_gamma_from_n_bound(r, c, secparam, n_val)
+-            
+-            val_str = "-"
+-            if c is not None and (1 < c < c_upper_bound):
+-                # 3. Solve System
+-                delta = solve_system(c, r, gamma, db)
+-                if delta is not None:
+-                    val_str = f"{delta:.4f}"
+-                else:
+-                    val_str = "No Sol"
+-            else:
+-                val_str = "Inv c"
+-            
+-            row_str += f" {val_str} |"
+-        lines.append(row_str)
+-
+-    with open("table.txt", "w", encoding="ascii") as outfile:
+-        outfile.write("\n".join(lines) + "\n")
+-
+-
+-if __name__ == "__main__":
+-
+-    # run_simulation()
+-
+-    parser = argparse.ArgumentParser(description="Given lower bounds on block length (n) and field size (q), compute the relative distance of ERA code given repetition parameter r and base code distance db.")
+-    
+-    parser.add_argument("-n", type=float, default=20.0, help="Lower bound for block length (n) in log2")
+-    parser.add_argument("-q", type=float, default=192.0, help="Lower bound for field size (q) in log2")
+-    parser.add_argument("-secparam", type=int, default=100, help="Soundness parameter")
+-    parser.add_argument("-r", type=int, required=True, help="Repetition parameter")
+-    parser.add_argument("-db", type=float, required=True, help="Relative distance of base code")
++    return (secparam+1+math.log2(c*c*(r-c)**3/r**5)+7*math.log2(n+1))/n
++
++
++@lru_cache(maxsize=256)
++def critical_delta(c, r):
++    """Step 4: smallest admissible root FOUND, not an all-roots certificate."""
++    exponent = Exponent(c, r)
++    A = exponent.A
++
++    def unpack(z):
++        # Interior parameterization prevents evaluating fictitious clipped
++        # entropy values outside the weight polytope.
++        s0, s1, s2 = expit(z)
++        delta = A*A*s2
++        d1 = delta/A*s1
++        d0 = d1/A*s0
++        return d0, d1, delta
++
++    def equations(z):
++        try:
++            with np.errstate(over='raise', invalid='raise', divide='raise'):
++                d0, d1, delta = unpack(z)
++                grad, hessian = exponent.derivatives(d0, d1, delta)
++                # det(H)=0 iff H11-H01^2/H00=0; scaling avoids huge determinants.
++                schur = hessian[1, 1]-hessian[0, 1]**2/hessian[0, 0]
++                return [grad[0], grad[1], schur*d1]
++        except (ValueError, ZeroDivisionError, FloatingPointError):
++            return [1e6, 1e6, 1e6]
++
++    candidates = []
++    for s0 in (0.03, 0.15, 0.5):
++        for s1 in (0.08, 0.3, 0.7):
++            for s2 in (0.15, 0.4, 0.7, 0.9):
++                result = root(equations, logit([s0, s1, s2]), method='hybr', tol=1e-10)
++                if not result.success or not np.all(np.isfinite(result.x)):
++                    continue
++                point = unpack(result.x)
++                try:
++                    with np.errstate(over='raise', invalid='raise', divide='raise'):
++                        grad, hessian = exponent.derivatives(*point)
++                except (ValueError, FloatingPointError, ZeroDivisionError):
++                    continue
++                if not np.all(np.isfinite(grad)) or not np.all(np.isfinite(hessian)):
++                    continue
++                det = np.linalg.det(hessian)
++                scale = max(1, abs(hessian[0, 0]*hessian[1, 1]), hessian[0, 1]**2)
++                if np.max(np.abs(grad)) < 1e-8 and abs(det)/scale < 1e-9:
++                    candidates.append(point)
++    if not candidates:
++        return None
++    return min(candidates, key=lambda point: point[2])
++
++
++def solve_details(c, r, gamma, db):
++    exponent = Exponent(c, r)
++    if not (0 < gamma < db < 1):
++        raise ValueError("the ERA theorem requires 0<gamma<base distance<1")
++    A = exponent.A
++
++    def boundary_value(delta):
++        d1 = exponent.maximizing_d1(db, delta)
++        return gamma+exponent.value(db, d1, delta)
++
++    lower, upper = db*A*A*(1+1e-5), A*A*(1-1e-8)
++    try:
++        delta1 = brentq(boundary_value, lower, upper, xtol=1e-13, rtol=1e-13)
++    except ValueError:
++        return None
++    d1 = exponent.maximizing_d1(db, delta1)
++    if abs(boundary_value(delta1)) > 1e-9:
++        return None
++    critical = critical_delta(c, r)
++    if critical is None:
++        return None
++    return {"delta": min(delta1, critical[2]), "delta1": delta1,
++            "d1_at_delta1": d1, "delta2": critical[2],
++            "critical_point": list(critical),
++            "scope": "numerical CalcDist candidate; no certified all-roots isolation"}
+ 
+-    args = parser.parse_args()
+ 
+-    c = compute_c_from_q_bound(args.r, args.secparam, args.db, args.n, args.q)
+-    c_upper_bound = (args.r / 2) * (1 - 1 / np.sqrt(5))
+-    if c is None \
+-        or not (1 < c < c_upper_bound):
+-        print(f"Error: Could not compute a valid c value. For r={args.r}, need 1 < c < {c_upper_bound}. Got {c}. Likely that the value of q/n/db is too small.")
+-        sys.exit(1)
+-    print(f"Computed c: {c}")
+-
+-    gamma = compute_gamma_from_n_bound(args.r, c, args.secparam, args.n)
+-    print(f"Computed gamma: {gamma}")
+-
+-    result = solve_system(c, args.r, gamma, args.db)
+-    if result is not None:
+-        print(f"ERA code has relative distance: {result}")
+-    else:
+-        print("Error: Could not compute relative distance.")
+-        sys.exit(1)
+\ No newline at end of file
++def solve_system(c, r, gamma, db):
++    """Compatibility API; return None if either root computation fails."""
++    result = solve_details(c, r, gamma, db)
++    return None if result is None else result['delta']
++
++
++if __name__ == '__main__':
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('-n', type=float, default=20, help='log2 of minimum ERA block length')
++    parser.add_argument('-q', type=float, default=192, help='lower bound on log2 field size')
++    parser.add_argument('-secparam', type=int, default=100)
++    parser.add_argument('-r', type=int, required=True)
++    parser.add_argument('-db', type=float, required=True, help='separately justified base-code distance')
++    args = parser.parse_args()
++    try:
++        c = compute_c_from_q_bound(args.r, args.secparam, args.db, args.n, args.q)
++        if c is None:
++            raise ValueError('no feasible c satisfies the field-size bound')
++        gamma = compute_gamma_from_n_bound(args.r, c, args.secparam, args.n)
++        result = solve_details(c, args.r, gamma, args.db)
++        if result is None:
++            raise ValueError('failed to find and validate both CalcDist roots')
++    except (ValueError, OverflowError) as error:
++        parser.error(str(error))
++    import json
++    print(json.dumps({'c': c, 'gamma': gamma, **result}, indent=2))
+diff --git a/scripts/reproduce_artifact.sh b/scripts/reproduce_artifact.sh
+index 943425e..dbc5a7c 100644
+--- a/scripts/reproduce_artifact.sh
++++ b/scripts/reproduce_artifact.sh
+@@ -13,6 +13,7 @@ export AGNOSTIR_CHUNK_LEN="${AGNOSTIR_CHUNK_LEN:-8192}"
+ samples="${SAMPLES:-5}"
+ {
+   date -u '+started_utc=%Y-%m-%dT%H:%M:%SZ'
++  printf 'protocol=interleaved-fs-v1\nfield=secp256k1-scalar\n'
+   git rev-parse HEAD || true
+   git status --short || true
+   rustc -vV
+@@ -20,7 +21,7 @@ samples="${SAMPLES:-5}"
+   uname -a
+   command -v lscpu >/dev/null && lscpu || true
+   if [[ "$(uname -s)" == Darwin ]]; then
+-    sysctl machdep.cpu.brand_string hw.physicalcpu hw.logicalcpu hw.memsize || true
++    system_profiler SPHardwareDataType | rg 'Model Name|Chip:|Memory:|Total Number of Cores' || true
+   fi
+   printf 'mode=%s\nthreads=%s\nsamples=%s\nwarmups=1\nRUSTFLAGS=%s\nchunk_len=%s\n' "$mode" "$RAYON_NUM_THREADS" "$samples" "${RUSTFLAGS-}" "$AGNOSTIR_CHUNK_LEN"
+ } > "$output_dir/metadata.txt" 2>&1
+@@ -40,30 +41,35 @@ with tarfile.open(sys.argv[1], 'w:gz') as archive:
+             if file.is_file() and not file.is_symlink() and not {'__pycache__','target'}.intersection(file.parts) and file.suffix != '.pyc' and file.name != '.DS_Store':
+                 archive.add(file,recursive=False)
+ PY
+-cargo build --locked --release --bins > "$output_dir/build.log" 2>&1
++cargo build --locked --release --bin interleaved_iopp > "$output_dir/build.log" 2>&1
+ cargo test --locked --lib > "$output_dir/tests.log" 2>&1
+ cargo test --locked --lib --no-default-features > "$output_dir/tests-serial.log" 2>&1
+-python3 scripts/calibrate_bolt.py > "$output_dir/bolt-calibration.json"
+-if [[ "$mode" == smoke ]]; then
+-  target/release/compare_iopps --smoke --threads "$RAYON_NUM_THREADS" --samples 1 > "$output_dir/comparison.csv" 2> "$output_dir/comparison.log"
+-  target/release/interleaved_iopp --message-log 14 --eta 2 --queries 32 --threads "$RAYON_NUM_THREADS" --samples 1 --csv > "$output_dir/interleaved-era.csv" 2> "$output_dir/interleaved-era.log"
+-  target/release/interleaved_iopp --code bolt-min --message-log 14 --eta 2 --queries 32 --threads "$RAYON_NUM_THREADS" --samples 1 --csv > "$output_dir/interleaved-bolt-min.csv" 2> "$output_dir/interleaved-bolt-min.log"
+-  target/release/interleaved_iopp --code bolt-max --message-log 14 --eta 2 --queries 32 --threads "$RAYON_NUM_THREADS" --samples 1 --csv > "$output_dir/interleaved-bolt-max.csv" 2> "$output_dir/interleaved-bolt-max.log"
+-else
+-  for code in brakedown ea basefold era bolt-min bolt-max; do
+-    target/release/interleaved_iopp --code "$code" --message-log 22 --eta 6 --threads "$RAYON_NUM_THREADS" --samples "$samples" --csv > "$output_dir/interleaved-$code.csv" 2> "$output_dir/interleaved-$code.log"
+-  done
+-  target/release/compare_iopps --threads "$RAYON_NUM_THREADS" --samples "$samples" > "$output_dir/comparison.csv" 2> "$output_dir/comparison.log"
+-fi
+-python3 scripts/summarize_artifact.py "$output_dir"/*.csv > "$output_dir/summary.json"
+-# The same-field adaptation is part of the common interleaved loop. The
+-# different-field upstream commitment benchmark is an optional reference only.
+-if [[ "${INCLUDE_BOLT_REFERENCE:-0}" == 1 ]]; then
++python3 -B -m unittest discover -s distance-analysis -v > "$output_dir/distance-tests.log" 2>&1
++python3 -B scripts/calibrate_interleaved.py > "$output_dir/calibration.json"
++for code in brakedown ea basefold era; do
++  if [[ "$mode" == smoke ]]; then
++    target/release/interleaved_iopp --code "$code" --message-log 18 --eta 2 --queries 32 --threads "$RAYON_NUM_THREADS" --samples 1 --csv > "$output_dir/interleaved-$code.csv" 2> "$output_dir/interleaved-$code.log"
++  else
++    target/release/interleaved_iopp --code "$code" --message-log 22 --eta 6 --threads "$RAYON_NUM_THREADS" --samples "$samples" --proof-out "$output_dir/$code.proof" --csv > "$output_dir/interleaved-$code.csv" 2> "$output_dir/interleaved-$code.log"
++  fi
++done
++if [[ "${INCLUDE_CODESWITCHING:-0}" == 1 ]]; then
++  cargo build --locked --release --bin compare_iopps > "$output_dir/codeswitching-build.log" 2>&1
+   if [[ "$mode" == smoke ]]; then
+-    MESSAGE_LOG=14 ETA=2 SAMPLES=1 bash scripts/reproduce_bolt.sh "$output_dir/bolt-min"
++    target/release/compare_iopps --smoke --threads "$RAYON_NUM_THREADS" --samples 1 > "$output_dir/comparison.csv" 2> "$output_dir/comparison.log"
+   else
+-    bash scripts/reproduce_bolt.sh "$output_dir/bolt-min"
++    target/release/compare_iopps --threads "$RAYON_NUM_THREADS" --samples "$samples" > "$output_dir/comparison.csv" 2> "$output_dir/comparison.log"
+   fi
+ fi
++python3 scripts/summarize_artifact.py "$output_dir"/*.csv > "$output_dir/summary.json"
+ date -u '+completed_utc=%Y-%m-%dT%H:%M:%SZ' >> "$output_dir/metadata.txt"
++python3 - "$output_dir" <<'PY'
++import hashlib,sys
++from pathlib import Path
++directory=Path(sys.argv[1])
++with (directory/'SHA256SUMS').open('w') as output:
++    for file in sorted(directory.iterdir()):
++        if file.is_file() and file.name != 'SHA256SUMS':
++            output.write(f'{hashlib.sha256(file.read_bytes()).hexdigest()}  {file.name}\n')
++PY
+ printf 'Results: %s\n' "$output_dir"
+diff --git a/scripts/reproduce_interleaved.sh b/scripts/reproduce_interleaved.sh
+index 097f353..4c69e82 100755
+--- a/scripts/reproduce_interleaved.sh
++++ b/scripts/reproduce_interleaved.sh
+@@ -30,9 +30,6 @@ output_dir=$(cd "$output_dir" && pwd)
+ export RAYON_NUM_THREADS="${RAYON_NUM_THREADS:-8}"
+ export AGNOSTIR_CHUNK_LEN="${AGNOSTIR_CHUNK_LEN:-8192}"
+ export IOPP_SEED="${IOPP_SEED:-2025}"
+-export IOPP_INCLUDE_CONJECTURED_ERA=1
+-export IOPP_ONLY_CONJECTURED_ERA=0
+-export IOPP_SKIP_EA=0
+ 
+ # Keep Criterion outputs for each instance under this run directory, rather than
+ # overwriting a previous benchmark in target/criterion.
+@@ -63,7 +60,7 @@ git ls-files --cached --others --exclude-standard --deduplicate -z -- Cargo.toml
+     if [[ -f "$source_file" ]]; then printf '%s\0' "$source_file"; fi
+   done | tar -czf "$output_dir/source.tar.gz" --null -T - 2> "$output_dir/source-archive.log"
+ 
+-for instance in '18 4' '22 6'; do
++for instance in '18 2' '22 6'; do
+   read -r IOPP_MESSAGE_LOG IOPP_ETA <<< "$instance"
+   export IOPP_MESSAGE_LOG IOPP_ETA
+   label="k${IOPP_MESSAGE_LOG}_eta${IOPP_ETA}"
+diff --git a/scripts/summarize_artifact.py b/scripts/summarize_artifact.py
+index f2503f0..23a8b00 100644
+--- a/scripts/summarize_artifact.py
++++ b/scripts/summarize_artifact.py
+@@ -14,7 +14,7 @@ for name in sys.argv[1:]:
+             if row['accepted'] != 'true':
+                 raise SystemExit(f'Failed verification in {name}: {row}')
+             identity = tuple(row.get(k, '') for k in (
+-                'protocol', 'code', 'message_log', 'eta', 'output_log',
++                'protocol', 'field', 'code', 'message_log', 'eta', 'output_log',
+                 'output_log_rate', 'terminal_log', 'threads', 'seed', 'queries'))
+             groups[identity].append(row)
+ summary = []
+diff --git a/src/bin/interleaved_iopp.rs b/src/bin/interleaved_iopp.rs
+index b6aead8..8c234e8 100644
+--- a/src/bin/interleaved_iopp.rs
++++ b/src/bin/interleaved_iopp.rs
+@@ -86,14 +86,9 @@ fn main() -> Result<(), String> {
+             "conditional-100-bit"
+         }
+     );
+-    if args.code == CodeKind::BoltMax {
+-        eprintln!(
+-            "bolt-max adaptation: kernel_delta=0.013 is an unproved prime-field assumption; full_code_delta=0.0104; no certified setup-failure bound"
+-        );
+-    }
+     if args.csv {
+         println!(
+-            "code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted"
++            "protocol,field,code,message_log,eta,seed,threads,sample,queries,block_length,setup_ms,commit_ms,prove_ms,verify_ms,proof_bytes,commitment_bytes,accepted"
+         );
+     }
+     for sample in 0..args.samples + args.warmups {
+@@ -121,7 +116,7 @@ fn main() -> Result<(), String> {
+         let sample = sample - args.warmups;
+         if args.csv {
+             println!(
+-                "{},{},{},{},{},{sample},{queries},{},{setup_ms:.6},{commit_ms:.6},{prove_ms:.6},{verify_ms:.6},{},32,true",
++                "interleaved-fs-v1,secp256k1-scalar,{},{},{},{},{},{sample},{queries},{},{setup_ms:.6},{commit_ms:.6},{prove_ms:.6},{verify_ms:.6},{},32,true",
+                 args.code.name(),
+                 config.message_log,
+                 config.eta,
+diff --git a/src/commit/codes/brakedown.rs b/src/commit/codes/brakedown.rs
+index df0f449..3876eaf 100644
+--- a/src/commit/codes/brakedown.rs
++++ b/src/commit/codes/brakedown.rs
+@@ -3,6 +3,21 @@
+ use crate::{ErrorCorrectingCode, FieldElement};
+ use rand::{Rng, seq::index::sample};
+ 
++fn invert_nonzero<F: FieldElement>(values: &mut [F]) {
++    let mut prefixes = Vec::with_capacity(values.len());
++    let mut product = F::ONE;
++    for &value in values.iter() {
++        prefixes.push(product);
++        product *= value;
++    }
++    let mut inverse = product.inverse().expect("distinct RS evaluation points");
++    for (value, prefix) in values.iter_mut().zip(prefixes).rev() {
++        let original = *value;
++        *value = inverse * prefix;
++        inverse *= original;
++    }
++}
++
+ #[derive(Debug, Clone, Copy)]
+ pub struct BrakedownParams {
+     pub alpha: f64,
+@@ -89,7 +104,7 @@ impl<F: FieldElement> BrakedownCode<F> {
+                 child: Box::new(Self::new(y, params, rng)),
+             }
+         } else {
+-            // Messages are evaluations at 0,...,k-1. Interpolate them at k,...,n-1.
++            // Messages are evaluations at indexed, distinct field points.
+             // This preserves the systematic layout and gives an MDS base code.
+             assert!(u32::try_from(codeword_length).is_ok());
+             let mut barycentric = Vec::with_capacity(message_size);
+@@ -99,24 +114,19 @@ impl<F: FieldElement> BrakedownCode<F> {
+                     .filter(|&j| j != i)
+                     .map(|j| xi - F::from_u32(j as u32))
+                     .fold(F::ONE, |a, b| a * b);
+-                barycentric.push(
+-                    denominator
+-                        .inverse()
+-                        .expect("field too small for base code"),
+-                );
++                barycentric.push(denominator);
+             }
++            invert_nonzero(&mut barycentric);
+             let parity = (message_size..codeword_length)
+                 .map(|j| {
+                     let x = F::from_u32(j as u32);
+-                    let product = (0..message_size)
++                    let mut differences: Vec<_> = (0..message_size)
+                         .map(|i| x - F::from_u32(i as u32))
+-                        .fold(F::ONE, |a, b| a * b);
++                        .collect();
++                    let product = differences.iter().copied().fold(F::ONE, |a, b| a * b);
++                    invert_nonzero(&mut differences);
+                     (0..message_size)
+-                        .map(|i| {
+-                            product
+-                                * barycentric[i]
+-                                * (x - F::from_u32(i as u32)).inverse().unwrap()
+-                        })
++                        .map(|i| product * barycentric[i] * differences[i])
+                         .collect()
+                 })
+                 .collect();
+diff --git a/src/iopp_experiment.rs b/src/iopp_experiment.rs
+index 5123da4..0303e35 100644
+--- a/src/iopp_experiment.rs
++++ b/src/iopp_experiment.rs
+@@ -1,46 +1,31 @@
+-//! Shared parameters and encoders for the interleaved IOPP demo and benchmarks.
+-//!
+-//! Distance values are inputs to the experiment's query-count model. This module
+-//! does not certify the distance of a sampled code or its setup failure probability.
+-
+-use ark_secp256k1::Fr as SecpScalar;
+-use rand::{SeedableRng, rngs::SmallRng};
++//! Shared presets for the four-code interleaved comparison.
++//! Distance inputs are numerical ideal-ensemble bounds, not instance certificates.
+ 
+ use crate::{
+-    BasefoldCode, BasefoldParams, BoltCode, BrakedownCode, BrakedownParams, EaCode, EaParams,
+-    EraCode, ErrorCorrectingCode, FieldElement, random_permutation,
++    BasefoldCode, BasefoldParams, BrakedownCode, BrakedownParams, EaCode, EaParams, EraCode,
++    ErrorCorrectingCode, FieldElement, random_permutation,
+ };
++use ark_secp256k1::Fr as SecpScalar;
++use rand::{SeedableRng, rngs::SmallRng};
+ 
+-pub const DEFAULT_MESSAGE_LOG: usize = 18;
+-pub const DEFAULT_ETA: usize = 5;
++pub const DEFAULT_MESSAGE_LOG: usize = 22;
++pub const DEFAULT_ETA: usize = 6;
+ pub const DEFAULT_SEED: u64 = 2025;
+ pub const SECURITY_BITS: f64 = 100.0;
+ pub const ERA_REPETITION: usize = 4;
+ 
+-/// Encoder choices; Basefold here means its linear code, not its recursive IOPP.
++/// These are encoders inside the common argument, not their native PCS protocols.
+ #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+ #[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
+ pub enum CodeKind {
+     Brakedown,
+     Ea,
+     Basefold,
+-    /// Bolt-min sketch with a BaseFold syndrome code over secp256k1 scalars.
+-    BoltMin,
+-    /// Bolt-max all-one sketch; prime-field kernel distance is an assumption.
+-    BoltMax,
+     Era,
+-    ConjecturedEra,
+ }
+ 
+ impl CodeKind {
+-    pub const STANDARD: [Self; 6] = [
+-        Self::Brakedown,
+-        Self::Ea,
+-        Self::Basefold,
+-        Self::Era,
+-        Self::BoltMin,
+-        Self::BoltMax,
+-    ];
++    pub const STANDARD: [Self; 4] = [Self::Brakedown, Self::Ea, Self::Basefold, Self::Era];
+ 
+     #[must_use]
+     pub const fn name(self) -> &'static str {
+@@ -48,73 +33,28 @@ impl CodeKind {
+             Self::Brakedown => "brakedown",
+             Self::Ea => "ea",
+             Self::Basefold => "basefold",
+-            Self::BoltMin => "bolt-min",
+-            Self::BoltMax => "bolt-max",
+             Self::Era => "era",
+-            Self::ConjecturedEra => "conjectured_era",
+         }
+     }
+ 
+-    /// Assumed relative distance used to choose the number of column queries.
++    /// Distance inputs; EA retains its inherited assumption. See the calibration script.
+     #[must_use]
+     pub fn assumed_distance(self, segment_message_log: usize) -> f64 {
++        assert_eq!(
++            segment_message_log, 16,
++            "only 65536-symbol rows are calibrated"
++        );
+         match self {
+-            Self::Brakedown | Self::Ea => 0.1,
+-            // C(x)=x||B(Hx): d(C)>=min(d(ker H),d(B)). The kernel
+-            // ensemble bound is m/16, while B occupies 1/5 of the word.
+-            // B's estimates below round down the repository's BaseFold formula
+-            // at log2|F|=255 and setup budget 102. They remain conditional on
+-            // that analysis and setup model; see docs/bolt-adaptation.md.
+-            Self::BoltMin => {
+-                let outer_delta = match segment_message_log {
+-                    12 => 0.246,
+-                    13 => 0.240,
+-                    14 => 0.235,
+-                    15 => 0.229,
+-                    16 => 0.224,
+-                    17 => 0.219,
+-                    18 => 0.213,
+-                    19 => 0.208,
+-                    20 => 0.202,
+-                    21 => 0.197,
+-                    22 => 0.191,
+-                    _ => unreachable!("validate the configuration before looking up distance"),
+-                };
+-                outer_delta / 5.0
+-            }
+-            // Assumed kernel distance is relative to m, not the full 5m/4
+-            // word. The binary LDPC analysis does not prove this over Fr.
+-            // This is below the conditional outer distance / 5 throughout
+-            // the supported sizes. See docs/bolt-max-adaptation.md.
+-            Self::BoltMax => 0.013 / 1.25,
+-            Self::Basefold => match segment_message_log {
+-                10 => 0.246,
+-                11 => 0.240,
+-                12 => 0.235,
+-                13 => 0.230,
+-                14 => 0.224,
+-                15 => 0.219,
+-                16 => 0.213,
+-                17 => 0.208,
+-                18 => 0.202_586_068_445_465_9,
+-                19 => 0.197,
+-                20 => 0.192,
+-                21 => 0.186,
+-                22 => 0.181,
+-                _ => unreachable!("validate the configuration before looking up distance"),
+-            },
+-            Self::Era | Self::ConjecturedEra => match segment_message_log {
+-                12 => 0.204,
+-                13 => 0.226,
+-                14 => 0.227,
+-                18 => 0.224_403_355_646_751_46,
+-                _ => 0.228,
+-            },
++            Self::Brakedown => 0.1,
++            Self::Ea => 0.1,
++            // Total 102-bit setup budget: lambda=106 across 16 levels.
++            Self::Basefold => 0.20106,
++            Self::Era => 0.22037,
+         }
+     }
+ }
+ 
+-/// `message_log` and `eta` are logarithms: there are `2^eta` contiguous rows.
++/// There are 2^eta contiguous rows, each containing 2^(message_log-eta) symbols.
+ #[derive(Debug, Clone, Copy)]
+ pub struct ExperimentConfig {
+     pub message_log: usize,
+@@ -133,22 +73,19 @@ impl Default for ExperimentConfig {
+ }
+ 
+ impl ExperimentConfig {
+-    /// Bind the deterministic setup recipe, dimensions and encoder version.
+     #[must_use]
+     pub fn code_id(self, kind: CodeKind) -> [u8; 32] {
+-        let mut h = blake3::Hasher::new_derive_key("agnostir experimental code setup v2");
++        let mut h = blake3::Hasher::new_derive_key("agnostir experimental code setup v3");
+         h.update(kind.name().as_bytes());
+-        if kind == CodeKind::BoltMin {
+-            h.update(b"secp256k1-sketch-basefold-v1;degree=16;compression=8;outer-log-rate=1");
+-        }
+-        if kind == CodeKind::BoltMax {
+-            h.update(b"secp256k1-sketch-basefold-v1;degree=8;coefficients=all-one;compression=8;outer-log-rate=1");
++        if kind == CodeKind::Brakedown {
++            h.update(b"alpha=0.3;inverse-rate=2;cn=14;dn=28");
+         }
+         h.update(&self.seed.to_le_bytes());
+         h.update(&(self.message_log as u64).to_le_bytes());
+         h.update(&(self.eta as u64).to_le_bytes());
+         *h.finalize().as_bytes()
+     }
++
+     pub fn validate(self, kind: CodeKind) -> Result<(), String> {
+         if self.message_log >= usize::BITS as usize || self.eta >= self.message_log {
+             return Err(format!(
+@@ -158,15 +95,10 @@ impl ExperimentConfig {
+                 self.message_log
+             ));
+         }
+-        let log_segment = self.message_log - self.eta;
+-        let supported = if kind == CodeKind::Basefold {
+-            10..=22
+-        } else {
+-            12..=22
+-        };
+-        if !supported.contains(&log_segment) {
++        let row_log = self.message_log - self.eta;
++        if row_log != 16 {
+             return Err(format!(
+-                "{} requires message-log - eta in {supported:?}, got {log_segment}",
++                "{} is calibrated for message-log - eta = 16, got {row_log}",
+                 kind.name()
+             ));
+         }
+@@ -177,12 +109,10 @@ impl ExperimentConfig {
+     pub const fn message_size(self) -> usize {
+         1usize << self.message_log
+     }
+-
+     #[must_use]
+     pub const fn rows(self) -> usize {
+         1usize << self.eta
+     }
+-
+     #[must_use]
+     pub const fn segment_message_size(self) -> usize {
+         1usize << (self.message_log - self.eta)
+@@ -192,17 +122,22 @@ impl ExperimentConfig {
+         self.validate(kind)?;
+         let mut rng = SmallRng::seed_from_u64(self.seed);
+         let size = self.segment_message_size();
+-        let code = match kind {
++        Ok(match kind {
+             CodeKind::Brakedown => ExperimentalCode::Brakedown(BrakedownCode::new(
+                 size,
+                 BrakedownParams {
+                     alpha: 0.3,
+                     inverse_rate: 2.0,
+-                    cn: 10,
+-                    dn: 20,
++                    cn: 14,
++                    dn: 28,
+                 },
+                 &mut rng,
+             )),
++            CodeKind::Basefold => ExperimentalCode::Basefold(BasefoldCode::new(
++                size,
++                BasefoldParams { log_rate: 1 },
++                &mut rng,
++            )),
+             CodeKind::Ea => ExperimentalCode::Ea(EaCode::new(
+                 size,
+                 EaParams {
+@@ -211,15 +146,8 @@ impl ExperimentConfig {
+                 },
+                 &mut rng,
+             )),
+-            CodeKind::Basefold => ExperimentalCode::Basefold(BasefoldCode::new(
+-                size,
+-                BasefoldParams { log_rate: 1 },
+-                &mut rng,
+-            )),
+-            CodeKind::BoltMin => ExperimentalCode::BoltMin(BoltCode::new(size, &mut rng)),
+-            CodeKind::BoltMax => ExperimentalCode::BoltMax(BoltCode::new_max(size, &mut rng)),
+-            CodeKind::Era | CodeKind::ConjecturedEra => {
+-                let base_code = BrakedownCode::new(
++            CodeKind::Era => {
++                let base = BrakedownCode::new(
+                     size,
+                     BrakedownParams {
+                         alpha: 0.04,
+@@ -229,23 +157,17 @@ impl ExperimentConfig {
+                     },
+                     &mut rng,
+                 );
+-                let n = base_code.block_length() * ERA_REPETITION;
++                let n = base.block_length() * ERA_REPETITION;
+                 let p1 = random_permutation(&mut rng, n);
+                 let p2 = random_permutation(&mut rng, n);
+                 let m1 = (0..n).map(|_| nonzero_scalar(&mut rng)).collect();
+                 let m2 = (0..n).map(|_| nonzero_scalar(&mut rng)).collect();
+-                let code = EraCode::new(base_code, ERA_REPETITION, p1, p2, m1, m2);
+-                if kind == CodeKind::Era {
+-                    ExperimentalCode::Era(code)
+-                } else {
+-                    ExperimentalCode::ConjecturedEra(code)
+-                }
++                ExperimentalCode::Era(EraCode::new(base, ERA_REPETITION, p1, p2, m1, m2))
+             }
+-        };
+-        Ok(code)
++        })
+     }
+ 
+-    /// Message and evaluation point use a separate stream from code setup.
++    /// Reproducible public inputs, separately seeded from setup.
+     #[must_use]
+     pub fn message_and_point(self) -> (Vec<SecpScalar>, Vec<SecpScalar>) {
+         let mut rng = SmallRng::seed_from_u64(self.seed.wrapping_add(1));
+@@ -257,11 +179,6 @@ impl ExperimentConfig {
+             .collect();
+         (message, point)
+     }
+-
+-    #[must_use]
+-    pub fn challenge_rng(self) -> SmallRng {
+-        SmallRng::seed_from_u64(self.seed.wrapping_add(2))
+-    }
+ }
+ 
+ #[derive(Debug)]
+@@ -269,58 +186,40 @@ pub enum ExperimentalCode {
+     Brakedown(BrakedownCode<SecpScalar>),
+     Ea(EaCode<SecpScalar>),
+     Basefold(BasefoldCode<SecpScalar>),
+-    BoltMin(BoltCode),
+-    BoltMax(BoltCode),
+     Era(EraCode<BrakedownCode<SecpScalar>, SecpScalar>),
+-    ConjecturedEra(EraCode<BrakedownCode<SecpScalar>, SecpScalar>),
+ }
+-
+ impl ExperimentalCode {
+-    /// Avoid nested parallel prefix sums when encoding many rows concurrently.
++    /// Use sequential inner scans when outer rows already occupy the workers.
+     #[must_use]
+-    pub fn encode_row(&self, message: &[SecpScalar], sequential_era: bool) -> Vec<SecpScalar> {
++    pub fn encode_row(&self, message: &[SecpScalar], sequential: bool) -> Vec<SecpScalar> {
+         match self {
+-            Self::Brakedown(code) => code.encode(message),
+-            Self::Ea(code) => code.encode(message),
+-            Self::Basefold(code) if sequential_era => code.encode_sequential(message),
+-            Self::Basefold(code) => code.encode(message),
+-            Self::BoltMin(code) | Self::BoltMax(code) if sequential_era => {
+-                code.encode_sequential(message)
+-            }
+-            Self::BoltMin(code) | Self::BoltMax(code) => code.encode(message),
+-            Self::Era(code) if sequential_era => code.encode_era_sequential(message),
+-            Self::Era(code) => code.encode_era(message),
+-            Self::ConjecturedEra(code) if sequential_era => {
+-                code.encode_conjectured_era_sequential(message)
+-            }
+-            Self::ConjecturedEra(code) => code.encode_conjectured_era(message),
++            Self::Brakedown(c) => c.encode(message),
++            Self::Ea(c) => c.encode(message),
++            Self::Basefold(c) if sequential => c.encode_sequential(message),
++            Self::Basefold(c) => c.encode(message),
++            Self::Era(c) if sequential => c.encode_era_sequential(message),
++            Self::Era(c) => c.encode_era(message),
+         }
+     }
+ }
+-
+ impl ErrorCorrectingCode for ExperimentalCode {
+     type Alphabet = SecpScalar;
+-
+     fn message_size(&self) -> usize {
+         match self {
+             Self::Brakedown(c) => c.message_size(),
+             Self::Ea(c) => c.message_size(),
+             Self::Basefold(c) => c.message_size(),
+-            Self::BoltMin(c) | Self::BoltMax(c) => c.message_size(),
+-            Self::Era(c) | Self::ConjecturedEra(c) => c.message_size(),
++            Self::Era(c) => c.message_size(),
+         }
+     }
+-
+     fn block_length(&self) -> usize {
+         match self {
+             Self::Brakedown(c) => c.block_length(),
+             Self::Ea(c) => c.codeword_length(),
+             Self::Basefold(c) => c.codeword_length(),
+-            Self::BoltMin(c) | Self::BoltMax(c) => c.block_length(),
+-            Self::Era(c) | Self::ConjecturedEra(c) => c.block_length(),
++            Self::Era(c) => c.block_length(),
+         }
+     }
+-
+     fn encode(&self, message: &[SecpScalar]) -> Vec<SecpScalar> {
+         self.encode_row(message, false)
+     }
+@@ -340,7 +239,7 @@ pub fn num_queries_from_delta(delta: f64) -> usize {
+ ///
+ /// Returns `None` outside `2 <= queries <= block_length`, its supported regime.
+ /// Queries in the actual protocol are drawn with replacement; this model does
+-/// not account for collisions. The implementation sends independent paths.
++/// not account for collisions. The serialized implementation deduplicates shared siblings.
+ /// Excludes the public root, evaluation point, indices, and serialization framing.
+ #[must_use]
+ pub fn shared_path_proof_size_kib(
+@@ -376,11 +275,8 @@ mod tests {
+         for (kind, queries) in [
+             (CodeKind::Brakedown, 1974),
+             (CodeKind::Ea, 1974),
+-            (CodeKind::Basefold, 869),
+-            (CodeKind::BoltMin, 4537),
+-            (CodeKind::BoltMax, 19891),
+-            (CodeKind::Era, 804),
+-            (CodeKind::ConjecturedEra, 804),
++            (CodeKind::Basefold, 927),
++            (CodeKind::Era, 836),
+         ] {
+             config.validate(kind).unwrap();
+             assert_eq!(num_queries_from_delta(kind.assumed_distance(16)), queries);
+@@ -388,11 +284,11 @@ mod tests {
+     }
+ 
+     #[test]
+-    fn sketch_variants_have_distinct_setup_identifiers() {
++    fn encoders_have_distinct_setup_identifiers() {
+         let config = ExperimentConfig::default();
+         assert_ne!(
+-            config.code_id(CodeKind::BoltMin),
+-            config.code_id(CodeKind::BoltMax)
++            config.code_id(CodeKind::Basefold),
++            config.code_id(CodeKind::Era)
+         );
+     }
+ 

@@ -1,0 +1,26 @@
+[
+  {
+    "proof": "checkpoint/era-checkpoint-3-7.proof",
+    "bytes": 259368,
+    "sha256": "dd67f9a38f3c1b2d3a4711ae0fa210afa38797b10dad9dd1e1ab9057c2c79da2",
+    "identical": true
+  },
+  {
+    "proof": "joint/era-corrected.proof",
+    "bytes": 259592,
+    "sha256": "3f305ca6c5e017c4ef8fa32a406539228e43520315644ee4c3c93210ce3987c2",
+    "identical": true
+  },
+  {
+    "proof": "smoke/basefold-local.proof",
+    "bytes": 17192,
+    "sha256": "05a7d0143533be04d26e51f2243759e2887c3729539a02ef125e281e32455e27",
+    "identical": true
+  },
+  {
+    "proof": "smoke/era-corrected.proof",
+    "bytes": 232712,
+    "sha256": "af422bdb2170e6ad0b2be38dcf05ca061e57910dcf5aeead78c49f0cfd9e37ef",
+    "identical": true
+  }
+]

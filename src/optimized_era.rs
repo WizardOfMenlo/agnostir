@@ -200,7 +200,7 @@ where
     ) -> Vec<C::Alphabet> {
         debug_assert!(self.validate_parameters());
 
-        let profiling = std::env::var("AGNOSTIR_PROFILE_ENCODE_NAIVE").is_ok();
+        let profiling = std::env::var("ERA_PROFILE_ENCODE_NAIVE").is_ok();
         let mut t_encode_segments = 0.0f64;
         let mut t_first_perm_mul = 0.0f64;
         let mut t_first_prefix = 0.0f64;
@@ -674,7 +674,7 @@ where
 fn chunk_len_override() -> Option<usize> {
     static OVERRIDE: OnceLock<Option<usize>> = OnceLock::new();
     *OVERRIDE.get_or_init(|| {
-        std::env::var("AGNOSTIR_CHUNK_LEN")
+        std::env::var("ERA_CHUNK_LEN")
             .ok()
             .and_then(|value| value.parse::<usize>().ok())
             .filter(|&value| value > 0)

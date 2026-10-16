@@ -1,0 +1,7 @@
+test_opened_pairs_have_no_authentication_at_bottom_level (test_large_iopp_plan.MultiproofExpectation.test_opened_pairs_have_no_authentication_at_bottom_level) ... ok
+test_uniform_queries_with_replacement_and_padded_tails (test_large_iopp_plan.MultiproofExpectation.test_uniform_queries_with_replacement_and_padded_tails) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.004s
+
+OK

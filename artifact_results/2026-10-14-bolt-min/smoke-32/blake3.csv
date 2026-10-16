@@ -1,2 +1,0 @@
-code,scope,field,hash,message_log,eta,seed,threads,sample,degree,compression,block_length,setup_ms,buffer_ms,expander_ms,rs_ms,merkle_ms,commit_ms,commitment_bytes,root_hex,encoder_checked,merkle_checked
-bolt-min,commitment-only,GF(2^32),blake3,14,2,2025,32,0,16,8,5120,2.348416,0.012333,0.317209,0.056416,1.409542,1.795500,32,cf7179cbf1394b0b1072323a179ae2829579c84cc793b1d4024a3fde088485da,true,true

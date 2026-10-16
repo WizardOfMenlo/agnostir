@@ -1,0 +1,62 @@
+[
+  {
+    "code": "era",
+    "message_log": 18,
+    "eta": 2,
+    "queries": 32,
+    "seed": 2025,
+    "threads": [
+      1,
+      32
+    ],
+    "accepted": true,
+    "identical": true,
+    "bytes": 2115976,
+    "sha256": "b58b4e3ba5dfffa1a0db1afb5ac51be7f97c2bad7b0bff3badfa67b5be986f02"
+  },
+  {
+    "code": "basefold",
+    "message_log": 18,
+    "eta": 2,
+    "queries": 32,
+    "seed": 2025,
+    "threads": [
+      1,
+      32
+    ],
+    "accepted": true,
+    "identical": true,
+    "bytes": 2114376,
+    "sha256": "bb2255fec8062ce497b8984c16762067487aa22ad35a12f9fbdb75c0d9539347"
+  },
+  {
+    "code": "brakedown",
+    "message_log": 18,
+    "eta": 2,
+    "queries": 32,
+    "seed": 2025,
+    "threads": [
+      1,
+      32
+    ],
+    "accepted": true,
+    "identical": true,
+    "bytes": 2114088,
+    "sha256": "eb361714a8ad082f96e1398a8b94f20a4ed37f55d43aab363a659c0fb1041232"
+  },
+  {
+    "code": "ea",
+    "message_log": 18,
+    "eta": 2,
+    "queries": 32,
+    "seed": 2025,
+    "threads": [
+      1,
+      32
+    ],
+    "accepted": true,
+    "identical": true,
+    "bytes": 2114920,
+    "sha256": "5356f700c60812fa412670eadebe5e875f4d63a9552423a3d916b2893201c081"
+  }
+]

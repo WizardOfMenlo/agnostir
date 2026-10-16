@@ -1,0 +1,488 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon    288MB
+Step 1/11 : FROM rust:1.92.0-bookworm@sha256:e90e846de4124376164ddfbaab4b0774c7bdeef5e738866295e5a90a34a307a2
+ ---> e90e846de412
+Step 2/11 : ARG RUSTFLAGS=""
+ ---> Running in 3270532c3b72
+ ---> Removed intermediate container 3270532c3b72
+ ---> c6c530ca052e
+Step 3/11 : ENV RUSTFLAGS=${RUSTFLAGS} PYTHONDONTWRITEBYTECODE=1
+ ---> Running in 50951f567759
+ ---> Removed intermediate container 50951f567759
+ ---> be91b831ac03
+Step 4/11 : RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv     && rm -rf /var/lib/apt/lists/* && python3 -m venv /opt/analysis
+ ---> Running in 7dd226d288c6
+Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [353 kB]
+Fetched 9392 kB in 1s (12.3 MB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+python3 is already the newest version (3.11.2-1+b1).
+python3 set to manually installed.
+The following additional packages will be installed:
+  libpython3.11-minimal libpython3.11-stdlib python3-pip-whl
+  python3-setuptools-whl python3.11 python3.11-minimal python3.11-venv
+Suggested packages:
+  python3.11-doc binfmt-support
+The following NEW packages will be installed:
+  python3-pip-whl python3-setuptools-whl python3-venv python3.11-venv
+The following packages will be upgraded:
+  libpython3.11-minimal libpython3.11-stdlib python3.11 python3.11-minimal
+4 upgraded, 4 newly installed, 0 to remove and 107 not upgraded.
+Need to get 8086 kB of archives.
+After this operation, 3180 kB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11 amd64 3.11.2-6+deb12u9 [575 kB]
+Get:2 http://deb.debian.org/debian-security bookworm-security/main amd64 libpython3.11-stdlib amd64 3.11.2-6+deb12u9 [1798 kB]
+Get:3 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11-minimal amd64 3.11.2-6+deb12u9 [2055 kB]
+Get:4 http://deb.debian.org/debian-security bookworm-security/main amd64 libpython3.11-minimal amd64 3.11.2-6+deb12u9 [821 kB]
+Get:5 http://deb.debian.org/debian bookworm/main amd64 python3-pip-whl all 23.0.1+dfsg-1 [1717 kB]
+Get:6 http://deb.debian.org/debian bookworm/main amd64 python3-setuptools-whl all 66.1.1-1+deb12u2 [1112 kB]
+Get:7 http://deb.debian.org/debian-security bookworm-security/main amd64 python3.11-venv amd64 3.11.2-6+deb12u9 [5896 B]
+Get:8 http://deb.debian.org/debian bookworm/main amd64 python3-venv amd64 3.11.2-1+b1 [1200 B]
+[91mdebconf: delaying package configuration, since apt-utils is not installed
+[0mFetched 8086 kB in 0s (232 MB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 23258 files and directories currently installed.)
+Preparing to unpack .../0-python3.11_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking python3.11 (3.11.2-6+deb12u9) over (3.11.2-6+deb12u6) ...
+Preparing to unpack .../1-libpython3.11-stdlib_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking libpython3.11-stdlib:amd64 (3.11.2-6+deb12u9) over (3.11.2-6+deb12u6) ...
+Preparing to unpack .../2-python3.11-minimal_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking python3.11-minimal (3.11.2-6+deb12u9) over (3.11.2-6+deb12u6) ...
+Preparing to unpack .../3-libpython3.11-minimal_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking libpython3.11-minimal:amd64 (3.11.2-6+deb12u9) over (3.11.2-6+deb12u6) ...
+Selecting previously unselected package python3-pip-whl.
+Preparing to unpack .../4-python3-pip-whl_23.0.1+dfsg-1_all.deb ...
+Unpacking python3-pip-whl (23.0.1+dfsg-1) ...
+Selecting previously unselected package python3-setuptools-whl.
+Preparing to unpack .../5-python3-setuptools-whl_66.1.1-1+deb12u2_all.deb ...
+Unpacking python3-setuptools-whl (66.1.1-1+deb12u2) ...
+Selecting previously unselected package python3.11-venv.
+Preparing to unpack .../6-python3.11-venv_3.11.2-6+deb12u9_amd64.deb ...
+Unpacking python3.11-venv (3.11.2-6+deb12u9) ...
+Selecting previously unselected package python3-venv.
+Preparing to unpack .../7-python3-venv_3.11.2-1+b1_amd64.deb ...
+Unpacking python3-venv (3.11.2-1+b1) ...
+Setting up python3-setuptools-whl (66.1.1-1+deb12u2) ...
+Setting up python3-pip-whl (23.0.1+dfsg-1) ...
+Setting up libpython3.11-minimal:amd64 (3.11.2-6+deb12u9) ...
+Setting up python3.11-minimal (3.11.2-6+deb12u9) ...
+Setting up libpython3.11-stdlib:amd64 (3.11.2-6+deb12u9) ...
+Setting up python3.11 (3.11.2-6+deb12u9) ...
+Setting up python3.11-venv (3.11.2-6+deb12u9) ...
+Setting up python3-venv (3.11.2-1+b1) ...
+ ---> Removed intermediate container 7dd226d288c6
+ ---> d7321f68eb5d
+Step 5/11 : ENV PATH="/opt/analysis/bin:${PATH}"
+ ---> Running in 8f048b9b688e
+ ---> Removed intermediate container 8f048b9b688e
+ ---> 0e6bad46552d
+Step 6/11 : WORKDIR /artifact
+ ---> Running in 1141b1aca497
+ ---> Removed intermediate container 1141b1aca497
+ ---> 1940e7b4e654
+Step 7/11 : COPY . .
+ ---> b153b9a7e2b9
+Step 8/11 : RUN if [ -d dependencies/wheels ]; then       python -m pip install --no-index --find-links dependencies/wheels -r requirements-analysis.txt;     else python -m pip install --no-cache-dir -r requirements-analysis.txt; fi
+ ---> Running in a953a9d0e9f8
+Looking in links: dependencies/wheels
+Processing ./dependencies/wheels/numpy-2.4.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
+Processing ./dependencies/wheels/scipy-1.17.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl
+Installing collected packages: numpy, scipy
+Successfully installed numpy-2.4.1 scipy-1.17.0
+ ---> Removed intermediate container a953a9d0e9f8
+ ---> 55ff259c3b11
+Step 9/11 : RUN if [ -d dependencies/vendor ]; then       mkdir -p .cargo && cp dependencies/cargo-config.toml .cargo/config.toml;     fi     && cargo build --locked --release --bin interleaved_iopp --bin compare_iopps     && cargo test --release --locked --lib --no-run     && cargo test --release --locked --lib --no-default-features --no-run     && rustc -Vv > artifact/container-compiler.txt     && python -m pip freeze > artifact/container-python.txt     && dpkg-query -W > artifact/container-system-packages.txt
+ ---> Running in 2d7cb8fe8d1b
+[91m   Compiling proc-macro2 v1.0.104
+   Compiling quote v1.0.42
+   Compiling unicode-ident v1.0.22
+[0m[91m   Compiling cfg-if v1.0.4
+[0m[91m   Compiling autocfg v1.5.0
+[0m[91m   Compiling libc v0.2.179
+[0m[91m   Compiling zerocopy v0.8.31
+[0m[91m   Compiling libm v0.2.15
+[0m[91m   Compiling either v1.15.0
+[0m[91m   Compiling crossbeam-utils v0.8.21
+[0m[91m   Compiling once_cell v1.21.3
+[0m[91m   Compiling rayon-core v1.13.0
+[0m[91m   Compiling paste v1.0.15
+[0m[91m   Compiling serde_core v1.0.228
+[0m[91m   Compiling getrandom v0.3.4
+[0m[91m   Compiling serde v1.0.228
+[0m[91m   Compiling pin-project-lite v0.2.16
+[0m[91m   Compiling version_check v0.9.5
+[0m[91m   Compiling strength_reduce v0.2.4
+[0m[91m   Compiling scopeguard v1.2.0
+[0m[91m   Compiling tracing-core v0.1.36
+[0m[91m   Compiling itertools v0.14.0
+[0m[91m   Compiling lock_api v0.4.14
+[0m[91m   Compiling typenum v1.19.0
+[0m[91m   Compiling arrayvec v0.7.6
+[0m[91m   Compiling allocator-api2 v0.2.21
+[0m[91m   Compiling num-traits v0.2.19
+[0m[91m   Compiling generic-array v0.14.7
+[0m[91m   Compiling spin v0.10.0
+[0m[91m   Compiling ahash v0.8.12
+[0m[91m   Compiling itertools v0.13.0
+[0m[91m   Compiling hashbrown v0.15.5
+[0m[91m   Compiling find-msvc-tools v0.1.7
+[0m[91m   Compiling shlex v1.3.0
+[0m[91m   Compiling crossbeam-epoch v0.9.18
+[0m[91m   Compiling utf8parse v0.2.2
+[0m[91m   Compiling thiserror v2.0.17
+[0m[91m   Compiling regex-syntax v0.8.8
+[0m[91m   Compiling syn v2.0.113
+[0m[91m   Compiling crossbeam-deque v0.8.6
+[0m[91m   Compiling cc v1.2.52
+[0m[91m   Compiling getrandom v0.2.17
+[0m[91m   Compiling num-integer v0.1.46
+[0m[91m   Compiling rand_core v0.9.3
+[0m[91m   Compiling rand_core v0.6.4
+[0m[91m   Compiling num-bigint v0.4.6
+[0m[91m   Compiling anstyle-parse v0.2.7
+[0m[91m   Compiling anstyle v1.0.13
+[0m[91m   Compiling is_terminal_polyfill v1.70.2
+[0m[91m   Compiling log v0.4.29
+[0m[91m   Compiling[0m[91m anstyle-query v1.1.5
+[0m[91m   Compiling colorchoice v1.0.4
+[0m[91m   Compiling[0m[91m rayon v1.11.0
+[0m[91m   Compiling lazy_static v1.5.0
+[0m[91m   Compiling[0m[91m crypto-common v0.1.7
+[0m[91m   Compiling sharded-slab v0.1.7
+[0m[91m   Compiling[0m[91m tracing-log v0.2.0
+[0m[91m   Compiling anstream v0.6.21
+[0m[91m   Compiling[0m[91m digest v0.10.7
+[0m[91m   Compiling thread_local v1.1.9
+[0m[91m   Compiling nu-ansi-term v0.50.3
+[0m[91m   Compiling ppv-lite86 v0.2.21
+[0m[91m   Compiling[0m[91m transpose v0.2.3
+[0m[91m   Compiling[0m[91m regex-automata v0.4.13
+[0m[91m   Compiling[0m[91m heck v0.5.0
+[0m[91m   Compiling[0m[91m rand_chacha v0.9.0
+[0m[91m   Compiling rand_chacha v0.3.1
+[0m[91m   Compiling blake3 v1.8.3
+[0m[91m   Compiling clap_lex v0.7.6
+[0m[91m   Compiling strsim v0.11.1
+[0m[91m   Compiling smallvec v1.15.1
+[0m[91m   Compiling rand v0.9.2
+[0m[91m   Compiling rand v0.8.5
+[0m[91m   Compiling clap_builder v4.5.54
+[0m[91m   Compiling rand_pcg v0.3.1
+[0m[91m   Compiling constant_time_eq v0.4.2
+[0m[91m   Compiling[0m[91m arrayref v0.3.9
+[0m[91m   Compiling[0m[91m equivalent v1.0.2
+[0m[91m   Compiling cpufeatures v0.2.17
+[0m[91m   Compiling[0m[91m foldhash v0.2.0
+[0m[91m   Compiling hashbrown v0.16.1
+[0m[91m   Compiling[0m[91m ark-std v0.5.0
+[0m[91m   Compiling rand_distr v0.4.3
+[0m[91m   Compiling p3-maybe-rayon v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m voracious_radix_sort v1.2.0
+[0m[91m   Compiling[0m[91m rip_shuffle v0.2.0
+[0m[91m   Compiling matchers v0.2.0
+[0m[91m   Compiling serde_derive v1.0.228
+   Compiling tracing-attributes v0.1.31
+[0m[91m   Compiling enum-ordinalize-derive v4.3.2
+   Compiling zeroize_derive v1.4.3
+   Compiling ark-serialize-derive v0.5.0
+   Compiling ark-ff-asm v0.5.0
+[0m[91m   Compiling ark-ff-macros v0.5.0
+[0m[91m   Compiling thiserror-impl v2.0.17
+[0m[91m   Compiling[0m[91m clap_derive v4.5.49
+[0m[91m   Compiling ark-serialize v0.5.0
+[0m[91m   Compiling[0m[91m enum-ordinalize v4.3.2
+[0m[91m   Compiling zeroize v1.8.2
+[0m[91m   Compiling[0m[91m educe v0.6.0
+[0m[91m   Compiling[0m[91m tracing v0.1.44
+[0m[91m   Compiling tracing-subscriber v0.3.22
+[0m[91m   Compiling[0m[91m clap v4.5.54
+[0m[91m   Compiling[0m[91m ark-ff v0.5.0
+[0m[91m   Compiling p3-util v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling bincode v1.3.3
+[0m[91m   Compiling tracing-forest v0.3.0
+[0m[91m   Compiling[0m[91m p3-field v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-matrix v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-symmetric v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m p3-dft v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m p3-multilinear-util v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m p3-interpolation v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-mds v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-poseidon2 v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-monty-31 v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-challenger v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-commit v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-goldilocks v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-koala-bear v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-baby-bear v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-merkle-tree v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m ark-poly v0.5.0
+[0m[91m   Compiling[0m[91m ark-ec v0.5.0
+[0m[91m   Compiling ark-secp256k1 v0.5.0
+[0m[91m   Compiling ark-bls12-381 v0.5.0
+[0m[91m   Compiling agnostir v0.1.0 (/artifact)
+[0m[91mwarning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  [0m[91m| help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+[0m[91mwarning: unreachable `pub` item
+  --> src/commit/merkle.rs:31:1
+   |
+31 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+[0m[91mwarning: `agnostir` (lib) generated 3 warnings (run `cargo fix --lib -p agnostir` to apply 3 suggestions)
+[0m[91m    Finished `release` profile [optimized + debuginfo] target(s) in 23.44s
+[0m[91m   Compiling libc v0.2.179
+   Compiling zerocopy v0.8.31
+[0m[91m   Compiling either v1.15.0
+[0m[91m   Compiling num-traits v0.2.19
+[0m[91m   Compiling regex-syntax v0.8.8
+[0m[91m   Compiling zerocopy-derive v0.8.31
+[0m[91m   Compiling zmij v1.0.14
+[0m[91m   Compiling rustix v1.1.3
+[0m[91m   Compiling bitflags v2.10.0
+[0m[91m   Compiling linux-raw-sys v0.11.0
+[0m[91m   Compiling serde_json v1.0.149
+[0m[91m   Compiling alloca v0.4.0
+[0m[91m   Compiling memchr v2.7.6
+[0m[91m   Compiling ciborium-io v0.2.2
+[0m[91m   Compiling plotters-backend v0.3.7
+[0m[91m   Compiling fastrand v2.3.0
+[0m[91m   Compiling itoa v1.0.17
+[0m[91m   Compiling rayon v1.11.0
+[0m[91m   Compiling itertools v0.14.0
+[0m[91m   Compiling itertools v0.13.0
+[0m[91m   Compiling plotters-svg v0.3.7
+[0m[91m   Compiling bit-vec v0.8.0
+[0m[91m   Compiling quick-error v1.2.3
+[0m[91m   Compiling cast v0.3.0
+[0m[91m   Compiling same-file v1.0.6
+[0m[91m   Compiling fnv v1.0.7
+[0m[91m   Compiling walkdir v2.5.0
+[0m[91m   Compiling oorandom v11.1.5
+[0m[91m   Compiling unarray v0.1.4
+[0m[91m   Compiling anes v0.1.6
+[0m[91m   Compiling bit-set v0.8.0
+[0m[91m   Compiling num-integer v0.1.46
+[0m[91m   Compiling plotters v0.3.7
+[0m[91m   Compiling[0m[91m num-bigint v0.4.6
+[0m[91m   Compiling[0m[91m transpose v0.2.3
+[0m[91m   Compiling getrandom v0.3.4
+   Compiling getrandom v0.2.17
+[0m[91m   Compiling wait-timeout v0.2.1
+   Compiling page_size v0.6.0
+[0m[91m   Compiling rand_core v0.6.4
+[0m[91m   Compiling rand_core v0.9.3
+[0m[91m   Compiling tinytemplate v1.2.1
+[0m[91m   Compiling rand_pcg v0.3.1
+[0m[91m   Compiling rand_xorshift v0.4.0
+[0m[91m   Compiling criterion-plot v0.8.1
+[0m[91m   Compiling regex-automata v0.4.13
+[0m[91m   Compiling tempfile v3.24.0
+[0m[91m   Compiling rusty-fork v0.3.1
+[0m[91m   Compiling p3-util v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m p3-maybe-rayon v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m voracious_radix_sort v1.2.0
+[0m[91m   Compiling ppv-lite86 v0.2.21
+[0m[91m   Compiling ahash v0.8.12
+[0m[91m   Compiling[0m[91m half v2.7.1
+[0m[91m   Compiling ciborium-ll v0.2.2
+[0m[91m   Compiling rand_chacha v0.9.0
+[0m[91m   Compiling[0m[91m rand_chacha v0.3.1
+[0m[91m   Compiling ciborium v0.2.2
+[0m[91m   Compiling rand v0.9.2
+[0m[91m   Compiling[0m[91m rand v0.8.5
+[0m[91m   Compiling p3-field v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling proptest v1.9.0
+[0m[91m   Compiling ark-std v0.5.0
+   Compiling rand_distr v0.4.3
+[0m[91m   Compiling ark-serialize v0.5.0
+[0m[91m   Compiling ark-ff v0.5.0
+[0m[91m   Compiling rip_shuffle v0.2.0
+[0m[91m   Compiling p3-matrix v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-symmetric v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling matchers v0.2.0
+   Compiling regex v1.12.2
+[0m[91m   Compiling tracing-subscriber v0.3.22
+[0m[91m   Compiling p3-dft v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-multilinear-util v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-interpolation v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling criterion v0.8.1
+[0m[91m   Compiling[0m[91m p3-mds v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-poseidon2 v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-monty-31 v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m p3-challenger v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m p3-commit v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling[0m[91m p3-baby-bear v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-koala-bear v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-merkle-tree v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-goldilocks v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling tracing-forest v0.3.0
+[0m[91m   Compiling ark-poly v0.5.0
+[0m[91m   Compiling[0m[91m ark-ec v0.5.0
+[0m[91m   Compiling ark-bls12-381 v0.5.0
+   Compiling ark-secp256k1 v0.5.0
+[0m[91m   Compiling agnostir v0.1.0 (/artifact)
+[0m[91mwarning: unused import: `Field`
+   --> src/lib.rs:576:32
+    |
+576 |         use ark_ff::{FftField, Field};
+    |                                ^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+[0m[91mwarning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+[0m[91mwarning: unreachable `pub` item
+  --> src/commit/merkle.rs:31:1
+   |
+31 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+[0m[91mwarning: `agnostir` (lib test) generated 4 warnings (run `cargo fix --lib -p agnostir --tests` to apply 3 suggestions)
+    Finished `release` profile [optimized + debuginfo] target(s) in 28.97s
+[0m[91m  Executable unittests src/lib.rs (target/release/deps/agnostir-4e99cd023709389b)
+[0m[91m   Compiling tracing-core v0.1.36
+   Compiling p3-maybe-rayon v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling once_cell v1.21.3
+[0m[91m   Compiling rand v0.9.2
+[0m[91m   Compiling p3-util v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling thiserror v2.0.17
+[0m[91m   Compiling regex-automata v0.4.13
+[0m[91m   Compiling clap_builder v4.5.54
+[0m[91m   Compiling rand_chacha v0.9.0
+[0m[91m   Compiling ahash v0.8.12
+   Compiling tempfile v3.24.0
+[0m[91m   Compiling ark-poly v0.5.0
+[0m[91m   Compiling tracing v0.1.44
+[0m[91m   Compiling rusty-fork v0.3.1
+[0m[91m   Compiling p3-field v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling proptest v1.9.0
+[0m[91m   Compiling p3-matrix v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-symmetric v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling ark-ec v0.5.0
+[0m[91m   Compiling p3-dft v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-interpolation v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-multilinear-util v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling regex v1.12.2
+[0m[91m   Compiling p3-mds v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling clap v4.5.54
+[0m[91m   Compiling criterion v0.8.1
+[0m[91m   Compiling[0m[91m p3-poseidon2 v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-monty-31 v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-challenger v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling ark-bls12-381 v0.5.0
+   Compiling ark-secp256k1 v0.5.0
+[0m[91m   Compiling p3-commit v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-baby-bear v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-goldilocks v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+   Compiling p3-koala-bear v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling p3-merkle-tree v0.4.1 (https://github.com/Plonky3/Plonky3.git?rev=a9d5bbb#a9d5bbb5)
+[0m[91m   Compiling agnostir v0.1.0 (/artifact)
+[0m[91mwarning: unused import: `Field`
+   --> src/lib.rs:576:32
+    |
+576 |         use ark_ff::{FftField, Field};
+    |                                ^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+[0m[91mwarning: unreachable `pub` item
+ --> src/commit/mod.rs:1:1
+  |
+1 | pub mod codes;
+  | ---^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+  = note: requested on the command line with `-W unreachable-pub`
+
+warning: unreachable `pub` item
+ --> src/commit/mod.rs:2:1
+  |
+2 | pub mod merkle;
+  | ---^^^^^^^^^^^
+  | |
+  | help: consider restricting its visibility: `pub(crate)`
+  |
+  = help: or consider exporting it for use by other crates
+
+[0m[91mwarning: unreachable `pub` item
+  --> src/commit/merkle.rs:31:1
+   |
+31 | pub fn blake3_merkle_root(leaves: &[[u8; 32]]) -> [u8; 32] {
+   | ---^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   | |
+   | help: consider restricting its visibility: `pub(crate)`
+   |
+   = help: or consider exporting it for use by other crates
+
+[0m[91mwarning: `agnostir` (lib test) generated 4 warnings (run `cargo fix --lib -p agnostir --tests` to apply 3 suggestions)
+    Finished `release` profile [optimized + debuginfo] target(s) in 15.69s
+[0m[91m  Executable unittests src/lib.rs (target/release/deps/agnostir-7c828c6b517137cf)
+[0m ---> Removed intermediate container 2d7cb8fe8d1b
+ ---> 2a5c87d9cd93
+Step 10/11 : ENTRYPOINT ["bash", "artifact/run.sh"]
+ ---> Running in e48c2f1e7405
+ ---> Removed intermediate container e48c2f1e7405
+ ---> 786360ff4fde
+Step 11/11 : CMD ["smoke", "/results/smoke"]
+ ---> Running in ab94a21fd12d
+ ---> Removed intermediate container ab94a21fd12d
+ ---> ac6a45b4c0a8
+Successfully built ac6a45b4c0a8
+Successfully tagged agnostir-artifact:20261016
