@@ -17,7 +17,7 @@ compact verifier weight evaluations, and a switch to recursive BaseFold.
 
 ## Submission contents and status
 
-The prepared main source archive is **`era-codes-artifact-20261016-final.tar.gz`**.
+The prepared main source archive is **`era-codes-artifact-20261016-submission-llncs.tar.gz`**.
 It contains source, tests, fixed parameters, compact raw reference measurements,
 the supplied paper PDF, dependency/license records, the AI disclosure, a pinned
 Docker build recipe, and scripts for both experiments. The
@@ -112,9 +112,11 @@ Fiat-Shamir, and exact serialized proof lengths. No command benchmarks 2^29.
 | `full28` | All six full-size cases sequentially | 128 GiB machine; budget about one hour |
 
 Timing ranges are planning allowances, not measurements of every container mode.
-The historical paper table is the median of three samples on an Apple M2;
-`paper22` defaults to one sample. `SAMPLES=3` is available
-if a reviewer wishes to repeat that aggregation, but is not needed for smoke.
+The paper's updated Table 3 uses one AWS Docker sample with eight workers, an
+8-CPU quota and an 8 GiB cap. Earlier three-sample Apple M2 measurements are
+retained separately in `evidence/paper22/`; the current Table 3 measurements
+are in `evidence/container-validation/validation/paper22/`. `SAMPLES=3` is
+available for additional repetitions but is not needed for smoke.
 The full-size modes fix 16 threads and one sample.
 
 ```sh
@@ -142,10 +144,10 @@ type if using AWS. The generic command leaves it unspecified.
 See [paper map and deviations](paper-map.md), [reference measurements](results.md), [parameters](parameters.md),
 [implementation changes and limitations](changes.md), and [submission metadata](submission.json).
 The supplied paper is in `paper/paper.pdf` at the package root.
-Its Table 3 / Appendix D.1 is the original 2^22 common-interleaved comparison.
-The 2^28 AWS measurements and the optimized code-switching implementation are
-explicitly additional results. Appendix D.2/Table 4/Figure 7 use an older proof
-size model and are not claimed to be reproduced by the measured proof bytes.
+Appendix D.1 / Tables 3 and 4 report the AWS common-interleaved comparisons
+at 2^22 and 2^28. Appendix D.3 / Table 6 reports the complete IOPP comparison
+at 2^28. Appendix D.2 / Table 5 and Figure 7 retain the analytical proof-size
+model; those estimates are distinct from the measured serialized proof bytes.
 
 Both full-size comparisons use an on-demand AWS r7a.4xlarge, 16 physical AMD EPYC
 9R14 cores and 128 GiB advertised RAM, Rust 1.92.0 with target-cpu=native.
@@ -211,6 +213,9 @@ inspection; rerunning the artifact generates fresh proofs without that archive.
 - `src/proof/`: transcript, Merkle proofs, sumcheck, fractional GKR, compact weights.
 - `src/bin/{interleaved_iopp,compare_iopps}.rs`: timing and serialization harnesses.
 - `distance-analysis/`: BaseFold, ERA and Habock-Brakedown numerical calculations.
+  It also contains `exponent-behavior.ipynb`, the original interactive notebook
+  referenced in the paper; `distance-analysis/README.md` explains how to launch
+  it with the optional requirements in `distance-analysis/requirements-notebook.txt`.
 - `scripts/`: parameter planning and full-size runner; `artifact/`: reviewer entry points.
 
 The baseline is a local implementation using pinned Plonky3 dependencies,

@@ -17,7 +17,7 @@ runner records every concrete command in each output directory.
 These are the original common-interleaved presets, including their original
 base encoders. The later sparse-base parameter changes apply to the ERA
 codeswitching experiment below. The input size and interleaving choices are
-additional AWS results; the paper's Table 3 uses 2^22 elements with eta=6 for
+reported in the paper's Table 4; Table 3 uses 2^22 elements with eta=6 for
 all four codes. Its query counts are respectively 836, 927, 1974, and 1974.
 
 ## ERA codeswitching IOPP, 2^28 elements

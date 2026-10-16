@@ -12,7 +12,7 @@ for name in ['Cargo.toml','Cargo.lock','LICENSE','AI_DISCLOSURE.md','Dockerfile'
     copy(ROOT/name)
 for directory in ['src','benches','artifact','distance-analysis']:
     for path in sorted((ROOT/directory).rglob('*')):
-        if path.is_file() and path.suffix not in ['.pyc'] and path.name not in ['.DS_Store','package.py','paper.pdf'] and '__pycache__' not in path.parts:
+        if path.is_file() and path.suffix not in ['.pyc'] and path.name not in ['.DS_Store','package.py','paper.pdf'] and not {'__pycache__', '.ipynb_checkpoints'}.intersection(path.parts):
             copy(path)
 for name in ['calibrate_interleaved.py','audit_distances.py','calibrate_custom.py','plan_large_iopp.py','run_large_iopp_plan.py','test_large_iopp_plan.py','check_era_sparse_base.py','search_era_base.py','search_era_joint.py','summarize_iopp_profile.py']:
     copy(ROOT/'scripts'/name)

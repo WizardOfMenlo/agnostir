@@ -100,3 +100,43 @@ paths are distinguished explicitly. The documented full-size plan, timing and
 proof-size tables, README links, and packaged evidence commands are checked
 against the retained records. This is a documentation update; scientific
 sources, parameters, expected proof hashes and measured CSVs remain unchanged.
+
+## Submission refresh: full paper and original notebook
+
+The earlier `-submission` release included the 79-page full paper, with the
+main content ending on page 29, current GitHub links, and the AWS measurements
+in Tables 3, 4, and 6. Table 5 and Figure 7 retain the analytical estimates.
+The paper map and README references now follow that version. The benchmark
+Dockerfile, Rust sources, numerical analysis scripts, final parameters, raw
+measurements, and expected proof hashes are unchanged from `-final`.
+
+The original `distance-analysis/exponent-behavior.ipynb` was restored from the
+old analysis repository with its calculation/plotting cells unchanged. It has
+a Python 3 kernel, a provenance/introduction cell, and pinned optional Jupyter
+requirements. All notebook cells executed successfully in a temporary Python
+environment; the widget state contained the four-panel plot and no errors.
+Its exponent, both derivatives, and split-term sum agreed with the current
+ERA implementation at twelve feasible parameter points (tolerance 1e-12).
+This is a functional check, not a proof of a distance bound.
+
+The notebook is included as optional explanatory material. Its Jupyter
+dependencies are installed separately; the benchmark Docker workflow does
+not need them. Generated notebook checkpoint directories are excluded from
+Docker context and source packaging. No Docker rebuild or performance rerun
+is claimed for this documentation/notebook refresh.
+
+
+## Submission layout restored to LLNCS
+
+The current `-submission-llncs` release restores `\fullfalse` and the previous
+LLNCS formatting. The complete PDF is 84 pages, with the main content ending
+on page 30. It retains the current chapters, AWS results, GitHub links,
+notebook reference, and appendix proofs. All 131 existing labels and 43 local
+TeX inputs are retained; all eleven restated statements keep their original
+numbers. All 389 named internal links resolve, and all ten measured timing
+and proof-size rows are present in the rebuilt PDF.
+
+The bundled PDF and paper map use this layout. Code, benchmark parameters,
+notebook, dependencies, Dockerfile, and measurement evidence are unchanged
+from `-submission`. This is a paper-layout and packaging update; it introduces
+no new benchmark or Docker execution claims.

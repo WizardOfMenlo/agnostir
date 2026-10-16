@@ -25,6 +25,12 @@ libraries. Their exact filenames and SHA-256 values are recorded in the
 dependency manifest. Python package metadata declares BSD-family licensing;
 consult the included full notices for bundled components.
 
+The optional `distance-analysis/exponent-behavior.ipynb` additionally uses
+JupyterLab, Matplotlib, and ipywidgets, with direct versions pinned in
+`distance-analysis/requirements-notebook.txt`. These packages and their
+transitive dependencies are installed separately for the interactive notebook;
+they are not bundled in the benchmark image or optional dependency archive.
+
 The Dockerfile fetches the pinned official Rust/Debian base and Debian packages
 from their distributors. The main artifact does not redistribute that OS image.
 System package versions and compiler/Python versions from the tested image are

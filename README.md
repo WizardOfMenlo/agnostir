@@ -21,13 +21,13 @@ Start with the [artifact reproduction guide](artifact/README.md) for Docker,
 resources, and all run modes. [Parameters](artifact/parameters.md),
 [reference results](artifact/results.md), and the
 [paper-to-artifact map](artifact/paper-map.md) describe the final comparison.
-The supplied paper's Table 3 is supported; its older Table 4/Figure 7 analytical
-estimates are distinguished from current measured proof sizes. The artifact
+The supplied paper's Tables 3, 4, and 6 report the AWS measurements;
+Table 5/Figure 7 retain the analytical estimates, separately from measured proof sizes. The artifact
 implements encoders and evaluation arguments, not a complete zero-knowledge SNARK.
 
 ## Prepared submission
 
-The current main archive is `era-codes-artifact-20261016-final.tar.gz`, recorded
+The current main archive is `era-codes-artifact-20261016-submission-llncs.tar.gz`, recorded
 with its exact size and checksum in the [submission record](docs/artifact-submission.md).
 It contains source, tests, fixed parameters, compact raw reference evidence,
 reproduction scripts, Dockerfile, paper PDF, license notices, and the AI disclosure.
@@ -73,7 +73,7 @@ budgets and remaining numerical qualifications.
 | Commitment and transcript | BLAKE3, 32-byte digests, separate domains |
 | Protocol | `interleaved-fs-v1`, setup recipe v3 |
 | Benchmark seed | `2025` |
-| Historical paper sampling | 8 Rayon workers; 3 samples after 1 warmup |
+| Paper sampling | AWS Docker; 8 Rayon workers; 1 sample after 1 warmup |
 | New reproduction default | 8 Rayon workers; 1 sample after 1 warmup |
 
 The prover commits to the row encodings and proves the message's multilinear
@@ -118,29 +118,29 @@ come from the BLAKE3 transcript.
 
 ## Paper-sized interleaved results: 2^22
 
-Measured on **14 October 2026** (local time), on an **Apple M2, 8 cores
-(4 performance + 4 efficiency), 16 GiB RAM**, macOS arm64, Rust/Cargo 1.92.0,
-release profile, no explicit CPU flags, and 8 Rayon workers. Entries are
-stage medians of three runs after one warmup. Proofs exclude the public
-32-byte initial root.
+Measured on **16 October 2026** on an **AWS r7a.4xlarge**, AMD EPYC 9R14,
+Linux x86-64, Rust 1.92.0 with `target-cpu=native`, inside Docker with an
+8-CPU quota, 8 GiB memory cap, and 8 Rayon workers. Each row is one measured
+sample after one warmup. Proofs exclude the public 32-byte initial root.
+These are the updated paper's Table 3 measurements.
 
 | Encoder | Commit (ms) | Prove (ms) | Verify (ms) | Proof (bytes) | Queries |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| ERA | 731.398 | 713.131 | 52.291 | 4,010,824 | 836 |
-| BaseFold | 544.411 | 702.622 | 36.226 | 4,177,416 | 927 |
-| Brakedown | 1,179.932 | 711.054 | 122.155 | 6,438,728 | 1,974 |
-| EA | 8,524.394 | 763.297 | 617.407 | 6,443,944 | 1,974 |
+| ERA | 547.936 | 404.666 | 61.858 | 4,010,824 | 836 |
+| BaseFold | 432.036 | 410.508 | 30.499 | 4,177,416 | 927 |
+| Brakedown | 1,012.292 | 421.097 | 147.110 | 6,438,728 | 1,974 |
+| EA | 6,696.191 | 409.794 | 811.055 | 6,443,944 | 1,974 |
 
-All twelve measured proofs verified. ERA has the smallest proof in this
-comparison; BaseFold has the lowest commitment and verification times.
-These small local samples are not an AWS scaling study.
+All four measured proofs verified and matched the earlier reference proofs
+byte-for-byte. ERA has the smallest proof; BaseFold has the lowest commitment
+and verification times. One sample does not establish timing variance.
 
-The [run directory](artifact_results/2026-10-14-prime-four/) contains
-[unrounded summaries](artifact_results/2026-10-14-prime-four/summary.json),
-raw CSVs, proofs, logs, metadata, calibration, source snapshot, and checksums.
-All four rows were measured together using the same source and parameters.
-The source archive includes uncommitted files. Older measurements used
-different graph/distance presets and should not be mixed with these results.
+The [AWS Docker run directory](artifact_results/2026-10-16-submission-validation/validation/paper22/)
+contains the raw CSVs, logs and proof-validation record. The earlier Apple M2
+three-sample measurements remain in
+[the historical run directory](artifact_results/2026-10-14-prime-four/).
+The 2^28 runs below used 16 workers, so the two sizes are not a fixed-worker
+scaling experiment.
 
 ### Timing and proof-size definitions
 
@@ -195,6 +195,11 @@ has an `O(n log k')` non-power-of-two tensor calculation. These and other
 
 ## Build, validate, and reproduce from the repository
 
+The original interactive [exponent notebook](distance-analysis/exponent-behavior.ipynb)
+is retained alongside the distance scripts. See its
+[installation and launch instructions](distance-analysis/README.md); it uses
+Python 3 and optional Jupyter/plotting dependencies.
+
 Use Rust/Cargo **1.92.0** to match the local run (crate minimum 1.91), retain
 `Cargo.lock`, and run from the repository root. Python 3.11+ with the pinned
 NumPy/SciPy dependencies is required for distance calibration:
@@ -231,8 +236,7 @@ For all four encoders with the paper's `2^22` / `eta=6` configuration:
 THREADS=8 SAMPLES=1 bash artifact/run.sh paper22 results/paper22
 ```
 
-Every new run defaults to one warmup and one measured sample. The historical
-paper table above retains its original three-sample medians. Outputs include
+Every new run defaults to one warmup and one measured sample. The table above uses the AWS Docker measured sample. Outputs include
 raw CSVs, proofs, logs, environment information, proof checks and checksums;
 choose a fresh output directory each time.
 

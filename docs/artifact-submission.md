@@ -3,10 +3,12 @@
 ## Current source distribution
 
 The prepared main submission is
-`results/submission-20261016/era-codes-artifact-20261016-final.tar.gz`
-(1,406,955 bytes; SHA-256
-`7ee84ca8693a5a687e4311e5037073df523eaff276358894502f22f1d9cf165a`). All 625 manifest-listed files were verified directly from the
+`results/submission-20261016/era-codes-artifact-20261016-submission-llncs.tar.gz`
+(1,447,084 bytes; SHA-256
+`a8df4fada7ad56042d9496db738d1e5b15f49de37c5cc54a1783f75395a7a731`). All 628 manifest-listed files were verified directly from the
 archive. This release is prepared locally and has not been uploaded.
+It supersedes the earlier `-submission` archive and restores the LLNCS paper
+layout (`\fullfalse`). The notebook and updated AWS evaluation are retained.
 
 The archive's root `README.md` is generated from `artifact/README.md`; the
 repository root README describes the checkout and both final comparisons.
@@ -62,30 +64,47 @@ Current sources therefore are not claimed to be byte-identical to every
 historical measured source. Protocol domain labels and raw records retain
 their original identifiers for proof compatibility and provenance.
 
-The final README pass changed documentation, release metadata and packaging
-link rewrites only. Scientific sources, dependencies, final parameters,
-expected proof hashes and measured evidence are unchanged from the preceding
-disclosure release. Validation checked both READMEs' numerical tables against
-the saved measurements, local links, shell-command syntax, the 625-file
-packaged manifest, saved-evidence summarization, and a dry run selecting exactly
-six 2^28 cases with 16 workers, one warmup and one sample. No benchmark was
-rerun for this documentation edit. The local receipt is
-`results/submission-20261016/final-readme-validation.json`.
+The submission refresh includes the original interactive exponent notebook
+with its calculation/plotting cells unchanged, a Python 3 kernel and pinned
+optional dependencies. The current 84-page LLNCS paper includes the main text,
+bibliography, appendices, GitHub links and AWS measurements. Its main content
+ends on page 30. Tables 3, 4 and 6 are measured results; Table 5 and Figure 7
+retain the analytical estimates. The paper map and README references were
+updated to match.
 
-The supplied paper is unchanged. Table 3's original configuration is supported;
-the older Table 4/Figure 7 analytical estimates are not claimed as reproduced
-by current proof bytes. The complete-IOPP baseline is the local recursive
-BaseFold implementation. Numerical distance, soundness, and verifier-complexity
-qualifications remain in [the scientific limits](../artifact/changes.md).
+The benchmark Dockerfile is unchanged. Jupyter is optional explanatory tooling
+and has separate installation instructions in `distance-analysis/README.md`;
+it is not required for any benchmark mode. Generated notebook checkpoint
+folders are excluded from Docker context and packaging. The original
+notebook executed successfully under Python 3, including the widget plot,
+and its formulas agreed with the current ERA implementation at twelve feasible
+parameter points.
+
+Validation compared 73 execution/configuration files and all 140 evidence files
+with `-final`; they are unchanged. It checked the updated Table 3 against all
+four AWS CSV rows, 27 local documentation links, notebook inclusion, exact PDF
+identity, shell syntax, saved-evidence summarization, and all 628 archived
+manifest entries. No Docker rebuild or benchmark rerun was needed or claimed.
+Receipts are `results/submission-20261016/submission-refresh-validation.json`
+and `submission-release.json`. The LLNCS refresh is recorded in
+`submission-llncs-release.json`; it verifies 628 archive entries, PDF identity,
+all 131 labels, eleven restated statements, 389 internal links, and the ten
+measured rows. `SHA256SUMS` records each archive checksum.
+
+The complete-IOPP baseline remains local recursive BaseFold. Numerical distance,
+soundness, and verifier-complexity qualifications remain in
+[the scientific limits](../artifact/changes.md).
 
 ## Historical source releases
 
 These previous local archives remain immutable; the current submission is the
-`-final` archive above. All filenames below are relative to
+`-submission-llncs` archive above. All filenames below are relative to
 `results/submission-20261016/`.
 
 | Archive | Bytes | SHA-256 |
 | --- | ---: | --- |
+| `era-codes-artifact-20261016-submission.tar.gz` | 1,477,308 | `b525b53d7e7161b43c643463c892db737173ccdff089178c7b8642b7836bfd63` |
+| `era-codes-artifact-20261016-final.tar.gz` | 1,406,955 | `7ee84ca8693a5a687e4311e5037073df523eaff276358894502f22f1d9cf165a` |
 | `era-codes-artifact-20261016-original.tar.gz` | 1,390,044 | `c46751503bce0b528814aa15e24621e319c0632abc4c06fbfbeeaf3adea3dfc9` |
 | `era-codes-artifact-20261016-cleanup.tar.gz` | 1,398,223 | `7ec6ed54d5c53923ebb3ddcddf8841edc7f070ba66c39599d78ebcf0cfa3475b` |
 | `era-codes-artifact-20261016.tar.gz` | 1,398,882 | `8bfb25fee309c593e630cd8080fa42d60d40489e0d0e45ac84db5923e593ce25` |

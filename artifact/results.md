@@ -2,7 +2,7 @@
 
 All online times below are seconds; setup is excluded. Proof bytes are exact.
 
-## Additional AWS experiments at 2^28
+## Paper Tables 4 and 6: AWS experiments at 2^28
 
 | Protocol | Commit | Evaluation prove | Total prover | Verify | Proof bytes | Peak GiB |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -15,7 +15,22 @@ All online times below are seconds; setup is excluded. Proof bytes are exact.
 
 The first four rows share the common interleaved argument and are one comparison. The last two are complete IOPPs and are a separate comparison. All used 16 workers, one warmup and one measured sample on the same on-demand r7a.4xlarge.
 
-## Supplied paper, Table 3 (2^22)
+## Paper Table 3: AWS Docker at 2^22
+
+| Encoder | Commit ms | Prove ms | Verify ms | Proof bytes |
+| --- | ---: | ---: | ---: | ---: |
+| ERA | 547.936 | 404.666 | 61.858 | 4,010,824 |
+| BaseFold-code | 432.036 | 410.508 | 30.499 | 4,177,416 |
+| Brakedown | 1,012.292 | 421.097 | 147.110 | 6,438,728 |
+| EA | 6,696.191 | 409.794 | 811.055 | 6,443,944 |
+
+AWS r7a.4xlarge, Rust 1.92.0, `target-cpu=native`, Docker with eight workers,
+an eight-CPU quota and an 8 GiB memory cap; eta=6. One measured sample after
+one warmup, recorded October 16, 2026. Raw samples are under
+`evidence/container-validation/validation/paper22/`; all four proofs match
+the historical reference proofs byte-for-byte. No timing variance is inferred.
+
+## Historical Apple M2 measurements at 2^22
 
 | Encoder | Commit ms | Prove ms | Verify ms | Proof bytes |
 | --- | ---: | ---: | ---: | ---: |

@@ -33,7 +33,7 @@ inputs to the final reproduction workflow.
 
 Current and historical release files and their checksums are under
 `results/submission-20261016/`. The main prepared submission is
-`era-codes-artifact-20261016-final.tar.gz`; see
+`era-codes-artifact-20261016-submission-llncs.tar.gz`; see
 [the submission record](artifact-submission.md) for its exact hash and version.
 The following supporting and historical archives are also retained:
 

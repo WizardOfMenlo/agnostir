@@ -3,6 +3,7 @@ target
 results
 artifact_results
 **/__pycache__
+**/.ipynb_checkpoints
 **/*.pyc
 **/.DS_Store
 **/*.pem

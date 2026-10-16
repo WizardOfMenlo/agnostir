@@ -18,14 +18,14 @@ BaseFold implementation. The artifact contains exact serialized proof-size
 measurements, commitment/proving/verification timings, numerical distance
 calculations, tests, fixed parameter files, and a pinned Docker build recipe.
 The README maps each component to the supplied paper and explicitly records
-deviations. Table 3's original configuration is supported; the additional
-2^28 AWS results and corrected implementation are identified separately.
-The older analytical estimates in Table 4/Figure 7 are not claimed as reproduced
-by the current measured wire format. This is an encoder/IOPP artifact, not a
+deviations. Tables 3 and 4 report the AWS common-interleaved measurements at
+2^22 and 2^28; Table 6 reports the complete IOPP comparison at 2^28. The
+analytical estimates in Table 5/Figure 7 remain separate from the measured
+wire format. The original interactive exponent notebook is also included. This is an encoder/IOPP artifact, not a
 complete zero-knowledge SNARK implementation.
 
 Version and acquisition
-The attached era-codes-artifact-20261016-final.tar.gz is self-contained source plus
+The attached era-codes-artifact-20261016-submission-llncs.tar.gz is self-contained source plus
 compact reference evidence, documentation, and the paper PDF. SHA256SUMS and
 SOURCE_VERSION.json identify this exact snapshot, including uncommitted work;
 the Git base revision alone does not identify it. Optional dependency and

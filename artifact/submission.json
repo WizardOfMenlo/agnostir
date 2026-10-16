@@ -23,9 +23,9 @@
     }
   ],
   "artifact_contact": "abaweja@upenn.edu",
-  "version": "era-codes-artifact-2026-10-16-final",
+  "version": "era-codes-artifact-2026-10-16-submission-llncs",
   "paper_file": "paper/paper.pdf",
-  "metadata_source": "Authors/affiliations/emails from sibling paper TeX; included PDF retains anonymous review formatting.",
+  "metadata_source": "Authors/affiliations/emails from the current paper; the included 84-page LLNCS PDF has the main text through page 30, bibliography, appendices, and AWS measurements.",
   "license": "MIT",
   "submission_status": "prepared locally, not uploaded",
   "paper_abstract_file": "artifact/paper-abstract.txt",
@@ -33,7 +33,7 @@
   "requirements_url": "https://asiacrypt.iacr.org/2026/artifacts.php",
   "submission_url": "https://submit.iacr.org/ac2026artifact/",
   "published_deadline": "2026-10-15 (timezone not stated on requirements page; portal availability not verified)",
-  "acquisition": "Attached era-codes-artifact-20261016-final.tar.gz source archive; see README.md for reproduction.",
+  "acquisition": "Attached era-codes-artifact-20261016-submission-llncs.tar.gz source archive; see README.md for reproduction.",
   "ai_disclosure": {
     "model": "GPT-6 Astra",
     "interface": "OpenAI Codex",
@@ -44,5 +44,7 @@
     "responsibility": "The human authors retain responsibility for the scientific claims, implementation, content, and final submission.",
     "supplement": "AI_DISCLOSURE.md",
     "policy_url": "https://asiacrypt.iacr.org/2026/aipolicy.php"
-  }
+  },
+  "repository_url": "https://github.com/WizardOfMenlo/agnostir/",
+  "notebook": "distance-analysis/exponent-behavior.ipynb"
 }
